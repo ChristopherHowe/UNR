@@ -44,24 +44,24 @@ int main(){
         char input[100];
         char command[20];
         scanf(" %[^\n]", input);
-        printf("read input to be %s", input);
+        printf("read input to be %s\n", input);
         int numArgs = parseInput(input, command, args);
         printf("Parsed Command: %s\n", command);
         printArgs(args, numArgs);
         if (strcmp(command,"cd") == 0){
             if (numArgs >= 2){
-                printf("SimpleShell: cd: too many arguments");
+                printf("SimpleShell: cd: too many arguments\n");
                 continue;
             }
             changeDirectories(args[0]);
-
-        } else {
+        } else if (strcmp(command,"exit") == 0){
+            break;
+        } 
+        else {
             printf("input: %s\n",input);
             executeCommand(command, args, numArgs);
         }
-
     }
-    
     return 0;
 }
 
