@@ -1,0 +1,9 @@
+config:
+  numEpisodes: 20000
+  numBins: 25
+  alpha: 0.1
+  alphaDecay: 0.996
+  gamma: 0.9
+  epsilonStart: 0.9
+  epsilonEnd: 0.05
+  epsilonEndEpisode: 10000

@@ -1,0 +1,9 @@
+numEpisodes
+numBinsState1
+numBinsState2
+alpha,
+alphaDecay,
+gamma,
+epsilonStart,
+epsilonEnd,
+epsilonDecay,
