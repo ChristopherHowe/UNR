@@ -1,0 +1,7 @@
+    chris@laptop:~$ nslookup c.r06.twtrdns.net
+    Server:		127.0.0.53
+    Address:	127.0.0.53#53
+
+    Non-authoritative answer:
+    Name:	c.r06.twtrdns.net
+    Address: 205.251.194.151

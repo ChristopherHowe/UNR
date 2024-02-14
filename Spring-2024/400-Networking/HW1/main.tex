@@ -1,0 +1,136 @@
+\documentclass{assignment-x}
+
+\usepackage{multicol}
+
+\hmwkClass{CPE 400}
+\hmwkTitle{Homework 1}
+\hmwkDueDate{February 6, 2023}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Igor Remizov}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+
+\maketitle
+
+\pagebreak
+\section{Part 1}
+\subsection{Description}
+Assume a node A is sending a packet to router B who is forwarding the packet to destination C. A – B link has transmission rate of 4 Megabit/second while B – C link has transmission rate of 6 Megabit/second. There is only one packet that needs to traverse from A – B – C. The packet size is 10000 Bytes.
+
+\img{ABC}{Part 1 Diagram}
+
+\subsection{What are the transmission delays over link A – B and link B- C? Show your answer with clear explanation.}
+The transmission delay between two nodes is equal to $L/R$, where $L$ is the size of the packet and $R$ is the rate in bits per second. The transmission delay is how long it takes to get all the packets into the wire. The $A-B$ link has a transmission rate of $4mbps$ and the packet is $10kb = 0.01mb$. The $B-C$ link has a transmission rate of $6mbps$. 
+$$Delay(A-B) = L/R=0.01mb/4mbps= 0.0025s = 2.5ms$$
+$$Delay(B-C) = L/R=0.01mb/6mbps=0.00167s = 1.67ms$$
+
+
+\subsection{Assume nodal processing delay at B is 5 millisecond and queuing delay at B is 2 milliseconds. Then what is the total delay from node A to node C? Assume zero propagation delay. Show your answer with clear explanation.}
+
+To Determine the total delay, we need to combine the Node Delay, The Noode Processing Delay, the transmission delay and the propagation delay. This includes both the transmission delay from A to B and from B to C. There is no queuing delay or processing delay at A or C so we will assume that they are the initial/final destination and that the packet is received/sent instantaneously.
+
+$$Total Delay = Transmission\ Delay(A-B)+Queueing\ Delay(B)+ Processing\ Delay(B) + Transmission\ Delay(B-C)$$
+$$Total Delay = 2.5ms+2ms+ 5ms + 1.67ms = 11.17ms = $$
+
+
+\section{Part 2 - WireShark}
+\subsection{Screenshots of the packets}
+\img{part2-Request}{GET request from browser to gaia.cs.umass.edul}[1\linewidth]
+\img{part2-Response}{Response From gaia.cs.umass.edu}[1\linewidth]
+
+\subsection{Is your browser running HTTP version 1.0 or 1.1?}
+My Browser uses HTTP Version 1.1. You can see this clearly in the GET/wireshark-labs/HTTP-wiresharkfile1.html HTTP/1.1.
+\subsection{What is the IP address of the client? Of the gaia.cs.umass.edu server?}
+The address of the client is $192.168.86.66$. This is seen in the Internet Protocol section under the src field. The address of the server is $128.119.245.12$. This can be seen in the internet protocol section under the Dst field.
+\subsection{What is the status code returned from the server to your browser?}
+\subsection{When was the HTML file that you are retrieving last modified at the server?}
+The server returned the status code of 200 on this request. This can be seen in the HTTP Protocol section at the top. The file was last modified on 2/14/24 at 6:59 GMT which can be seen in the Last-Modified field on the response packet.
+\subsection{Which port is the request going to?}
+The request went from random port on the client/browser (port 50618) and went to port 80 on the server which is the default port for http requests.
+\subsection{From which port, the client is making the request?}
+The request went from random port on the client/browser (port 50618) and went to port 80 on the server which is the default port for http requests.
+
+\section{Part 3}
+\subsection{Screenshots of the packets}
+\img{part3-Request1}{Initial GET request from browser to gaia.cs.umass.edul}[1\linewidth]
+\img{part3-Response1}{Initial response From gaia.cs.umass.edu}[1\linewidth]
+\img{part3-Request2}{Second GET request from browser to gaia.cs.umass.edul}[1\linewidth]
+\img{part3-Response2}{Second response From gaia.cs.umass.edu}[1\linewidth]
+
+
+\subsection{Inspect the contents of the first HTTP GET request from your browser to the server. Do you see an “IF-MODIFIED-SINCE” line in the HTTP GET? Inspect the contents of the server response. Did the server explicitly return the contents of the file? How can you tell?}
+On the initial request, there is no field named IF-MODIFIED-SINCE. This is because the cache is cleared and the browser has not cached the webpage. Because of this, the server returned the page.
+\subsection{Now inspect the contents of the second HTTP GET request from your browser to the server. Do you see an “IF-MODIFIED-SINCE:” line in the HTTP GET? If so, what information follows the “IF-MODIFIED-SINCE:” header? What is the HTTP status code and phrase returned from the server in response to this second HTTP GET? Explain.}
+On the second request, the browser has cached the web page. When it sends the GET request, it includes a header $If-Modified-Since:\ Wed,\ 14\ Feb\ 2024\ 06:59:01\ GMT$ This header denotes that the browser has a cached version of the file last modified at 6:59:01 GMT. The request asks the server if the version of this object has been updated more recently than that. The Server has not been updated since then. Instead of returning the object it returns a Response with $304\ Not\ Modified$ This tells the browser to use the version it has cached.
+
+\section{Part 4}
+
+\subsection{What is the IP address of the web server? Which server returned the answer? Give the IP address of this server. Is this authoritative answer or non-authoritative answer?}
+I used nslookup to find the address of twitter.com. After running nslookup twitter.com, I found it's server address to be 104.244.42.129. This is the non authoritative answer. It may have been cached or from another non authoritative server. In addition to finding the ipv4 address (DNS query type A). nslookup also requested the ipv6 addresses (DNS type AAAA). The entire transaction is detailed in Figure \ref{fig:part4-all} . Figure \ref{fig:part4-request1} shows the initial request from  nslookup and Figure \ref{fig:part4-response1} shows the response from the router.
+
+\img{part4-all}{All the DNS packets}
+\img{part4-request1}{Initial request from nslookup}[0.8\linewidth]
+\img{part4-response1}{Response from router}[0.8\linewidth]
+
+
+\subsection{What is/are the IP address(s) of the authoritative DNS servers for Twitter?}
+To get the IP of the authoritative DNS server for Twitter, I ran `nslookup -type=NS twitter.com`. This gave the output shown in figure \ref{fig:getAuthoritative}. These list all of the authoritative DNS Servers for the twitter domain. Then, I checked that one of these were authoritative by running `nslookup twitter.com c.r06.twtrdns.net` (Figure \ref{fig:CheckAuthoritative}). Essentially, I asked c.r06.twtrdns.net for twitters IP address and since nslookup ommitted the "Non-authoritative answer" line, it must be the authoritative Server. Finally, I ran `nslookup c.r06.twtrdns.net` to get the Ip of that server. I found the IP of the DNS server to be $205.251.194.151$ (Figure \ref{fig:AuthoritativeIP}).
+
+These results were confirmed by wireshark. See Figure \ref{fig:part4-all2} for the all the packets that resulted in this transaction. All packets sent between 127.0.0.1 and 127.0.0.53 are transactions between the loopback address and the internal DNS Server. Packets 26 and 27 represent the intial NS Query for twitters authoritative server. We will try to find the authoritative IP of the first one. Packet 28 and 29 is nslookup asking for the ip of this server (ipv4 and ipv6 versions).  Packet 30 is a response from the internal dns server for that address. It determined it to be 205.251.199.195. Packets 31 and 32 show the local machine asking for the ipv6 equivilant address. packet 33 is the response to packet 29. packets 34,38,39, and 40 are nslookup asking the authoritative server for the ip of twitter.com (ipv4 and ipv6).
+\img{part4-all2}{Wireshark Packets for question 2}
+
+
+\pagebreak\
+\begin{figure}
+  \begin{minted}[bgcolor=lightgray]{shell}
+    chris@laptop:~$ nslookup -type=NS twitter.com
+    Server:		127.0.0.53
+    Address:	127.0.0.53#53
+    
+    Non-authoritative answer:
+    twitter.com	nameserver = c.r06.twtrdns.net.
+    twitter.com	nameserver = d.u06.twtrdns.net.
+    twitter.com	nameserver = b.r06.twtrdns.net.
+    twitter.com	nameserver = b.u06.twtrdns.net.
+    twitter.com	nameserver = d.r06.twtrdns.net.
+    twitter.com	nameserver = a.r06.twtrdns.net.
+    twitter.com	nameserver = c.u06.twtrdns.net.
+    twitter.com	nameserver = a.u06.twtrdns.net.
+    
+    Authoritative answers can be found from:
+    \end{minted}
+  \caption{Get Authoritative DNS of Twitter}
+  \label{fig:getAuthoritative}
+\end{figure}
+
+
+\begin{figure}
+  \begin{minted}[bgcolor=lightgray]{shell}
+    chris@laptop:~$ nslookup twitter.com c.r06.twtrdns.net
+    Server:		c.r06.twtrdns.net
+    Address:	205.251.194.151#53
+    
+    Name:	twitter.com
+    Address: 104.244.42.1
+  \end{minted}
+  \caption{Check Authoritative Status}
+  \label{fig:CheckAuthoritative}
+\end{figure}
+
+\begin{figure}
+  \begin{minted}[bgcolor=lightgray]{shell}
+    chris@laptop:~$ nslookup c.r06.twtrdns.net
+    Server:		127.0.0.53
+    Address:	127.0.0.53#53
+    
+    Non-authoritative answer:
+    Name:	c.r06.twtrdns.net
+    Address: 205.251.194.151
+  \end{minted}
+  \caption{Get Authoritative IP}
+  \label{fig:AuthoritativeIP}
+\end{figure}
+
+\pagebreak
+\end{document}
