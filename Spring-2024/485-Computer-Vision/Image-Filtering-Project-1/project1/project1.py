@@ -49,6 +49,7 @@ def generate_gaussian(sigma, filter_w, filter_h):
     # print("after making mask:\n", mask)
     return mask
 
+# TODO: add support for filters of even w or even h
 def apply_filter(image: np.ndarray, filter: np.ndarray, pad_pixels: int, pad_value: int):        
     def correlation(image: np.ndarray, mask: np.ndarray, img_x: int, img_y: int):
         mask_w =  mask.shape[0]
@@ -170,15 +171,14 @@ def rotate(image, theta):
         x1 = math.floor((x0 - xc) * cosTheta - (y0 - yc) * sinTheta + xc)
         y1 = math.floor((x0 - xc) * sinTheta + (y0 - yc) * cosTheta + yc)
         return x1, y1
-
-    img_w = image.shape[0]
-    img_h = image.shape[1] 
+    
+    def pointInImg(x,y):
+        return x < img_w and x >=0 and y < img_h and y >= 0
 
     new_img = np.zeros((img_w, img_h, 3), dtype=np.uint8)
-    visited = np.zeros((img_w, img_h), dtype=bool)
 
-    cosTheta = math.cos(theta)
-    sinTheta = math.sin(theta)
+    cosTheta = math.cos(-1 * theta)
+    sinTheta = math.sin(-1 * theta)
     
     img_w = image.shape[0]
     img_h = image.shape[1]
@@ -186,32 +186,46 @@ def rotate(image, theta):
     center_x:int = math.floor(img_w / 2 + 0.5) - 1
     center_y:int = math.floor(img_h / 2 + 0.5) - 1
     
-    print("Center: ", center_x,",",center_y)
     for img_x in range(img_w):
         for img_y in range(img_h):
-            new_x, new_y = rotate_point(img_x, img_y, center_x, center_y, cosTheta, sinTheta)
-            og_px = image[img_x][img_y]
-            if new_x < img_w and new_x >=0 and new_y < img_h and new_y >= 0: # not sure if this is necessary, makes sure new pixels can't be outside of original image range
-                new_img[new_x][new_y] = og_px
-                visited[new_x][new_y] = True
-                print("og:",img_x,",",img_y," new:",new_x,",",new_y)
-
-    display_img(new_img)
-    cosTheta = math.cos(-1 * theta)
-    sinTheta = math.sin(-1 * theta)
-    for img_x in range(img_w):
-        for img_y in range(img_h):
-            if not visited[img_x][img_y]:
-                print("filling not visited: ", img_x,",", img_y)
-                src_x, src_y = rotate_point(img_x, img_y, center_x,center_y, cosTheta, sinTheta)
-                if src_x < img_w and src_x >=0 and src_y < img_h and src_y >= 0:   
-                    og_px = image[src_x][src_y]
-                    new_img[img_x][img_y] = og_px
-
-
+            src_x, src_y = rotate_point(img_x, img_y, center_x, center_y, cosTheta, sinTheta)
+            if pointInImg(src_x,src_y):
+                og_px = image[src_x][src_y]
+                new_img[img_x][img_y] = og_px
 
     return new_img
-# def edge_detection(image):
+
+# TODO: fix smoothing so that not reliant on even mask size
+def edge_detection(image):
+    img_w = image.shape[0]
+    img_h = image.shape[1]
+
+    def smoothImg(image):
+        gaussian_size = int(min(img_w, img_h) / 30)
+        gaussian_size = max(gaussian_size, 5)
+        gaussian_size = gaussian_size + 1 if gaussian_size % 2 == 0 else gaussian_size # ensure odd since apply filter doesn't support even yet 
+        gaussian = generate_gaussian(math.floor(gaussian_size / 5), gaussian_size,gaussian_size)
+        padding_size = math.floor(gaussian_size/2)
+        return apply_filter(image, gaussian, padding_size, 1)
+    
+    def applyFirstDeriv(image): 
+        sobelKernel = np.array([-1,0,1])
+        testDot = np.zeros((7,7,3),dtype=np.uint8)
+        testDot[2:5, 2:5] = [255,255,255]
+        displaySmall(testDot,"Before First Derivative")
+        testDot = apply_filter(testDot, sobelKernel,1,0)
+        displaySmall(testDot,"After First Derivative")
+
+
+    
+    # Enhancement
+    # Thresholding/detection
+    # Localization
+
+    
+    # new_img = np.copy(image)
+    # return smoothImg(new_img)
+    applyFirstDeriv(image)
 
 def main():
     imgNames = ['eye.png','clipped-trees.png','low-contrast-forest.png','low-contrast-rose.png','pretty-tree.png','sandwhich.png']
@@ -222,18 +236,24 @@ def main():
     # checkered_array = np.zeros((4, 4, 3), dtype=np.uint8)
     # checkered_array[1::2, ::2] = [255, 255, 255]
     # checkered_array[::2, 1::2] =  [255, 255, 255]
-    # testDot = np.zeros((7,7,3),dtype=np.uint8)
-    # testDot[2:5, 2:5] = [255,255,255]
+    testDot = np.zeros((7,7,3),dtype=np.uint8)
+    testDot[2:5, 2:5] = [255,255,255]
+    mask=np.array([-1,0,1])
+    apply_filter(testDot,mask,1,0)
+
     # bigTestDot= scaled = cv2.resize(testDot, (500, 500), interpolation=cv2.INTER_NEAREST)
     
     # gaussian = generate_gaussian(5,25,25)
     # img = apply_filter(img, gaussian,12,0)
+
     # img = median_filtering(img,21,21)
     # img = hist_eq(img)
     # display_img(img)
-    displaySmall(img)
-    img = rotate(img, math.pi/6)
-    displaySmall(img)
+    # displaySmall(img)
+    # img = rotate(img, math.pi/6)
+    # displaySmall(img)
+    # edge_detection(img)
+    # displaySmall(img,"after edge")
 
 # entry point
 main()
