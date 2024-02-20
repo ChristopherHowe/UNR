@@ -162,34 +162,78 @@ def hist_eq(image):
     plt.show()
     return new_img
 
-            
+# rotates around the center of the image
+# theta should be in radians
+def rotate(image, theta):
+    # source: https://danceswithcode.net/engineeringnotes/rotations_in_2d/rotations_in_2d.html
+    def rotate_point(x0, y0, xc, yc, cosTheta, sinTheta):
+        x1 = math.floor((x0 - xc) * cosTheta - (y0 - yc) * sinTheta + xc)
+        y1 = math.floor((x0 - xc) * sinTheta + (y0 - yc) * cosTheta + yc)
+        return x1, y1
+
+    img_w = image.shape[0]
+    img_h = image.shape[1] 
+
+    new_img = np.zeros((img_w, img_h, 3), dtype=np.uint8)
+    visited = np.zeros((img_w, img_h), dtype=bool)
+
+    cosTheta = math.cos(theta)
+    sinTheta = math.sin(theta)
+    
+    img_w = image.shape[0]
+    img_h = image.shape[1]
+
+    center_x:int = math.floor(img_w / 2 + 0.5) - 1
+    center_y:int = math.floor(img_h / 2 + 0.5) - 1
+    
+    print("Center: ", center_x,",",center_y)
+    for img_x in range(img_w):
+        for img_y in range(img_h):
+            new_x, new_y = rotate_point(img_x, img_y, center_x, center_y, cosTheta, sinTheta)
+            og_px = image[img_x][img_y]
+            if new_x < img_w and new_x >=0 and new_y < img_h and new_y >= 0: # not sure if this is necessary, makes sure new pixels can't be outside of original image range
+                new_img[new_x][new_y] = og_px
+                visited[new_x][new_y] = True
+                print("og:",img_x,",",img_y," new:",new_x,",",new_y)
+
+    display_img(new_img)
+    cosTheta = math.cos(-1 * theta)
+    sinTheta = math.sin(-1 * theta)
+    for img_x in range(img_w):
+        for img_y in range(img_h):
+            if not visited[img_x][img_y]:
+                print("filling not visited: ", img_x,",", img_y)
+                src_x, src_y = rotate_point(img_x, img_y, center_x,center_y, cosTheta, sinTheta)
+                if src_x < img_w and src_x >=0 and src_y < img_h and src_y >= 0:   
+                    og_px = image[src_x][src_y]
+                    new_img[img_x][img_y] = og_px
 
 
 
-        
-
-# def rotate(image, theta):
+    return new_img
 # def edge_detection(image):
 
 def main():
     imgNames = ['eye.png','clipped-trees.png','low-contrast-forest.png','low-contrast-rose.png','pretty-tree.png','sandwhich.png']
-    img = load_img('images(greyscale)/' + imgNames[3])
-    img = cv2.resize(img, (500, 250), interpolation=cv2.INTER_NEAREST)
-    display_img(img)
+    img = load_img('images(greyscale)/' + imgNames[0])
+    img = cv2.resize(img, (500, 500), interpolation=cv2.INTER_NEAREST)
+    # display_img(img)
 
     # checkered_array = np.zeros((4, 4, 3), dtype=np.uint8)
     # checkered_array[1::2, ::2] = [255, 255, 255]
     # checkered_array[::2, 1::2] =  [255, 255, 255]
-    # testDot = np.zeros((4,4,3),dtype=np.uint8)
-    # testDot[1:3, 1:3] = [255,255,255]
+    # testDot = np.zeros((7,7,3),dtype=np.uint8)
+    # testDot[2:5, 2:5] = [255,255,255]
     # bigTestDot= scaled = cv2.resize(testDot, (500, 500), interpolation=cv2.INTER_NEAREST)
     
     # gaussian = generate_gaussian(5,25,25)
     # img = apply_filter(img, gaussian,12,0)
     # img = median_filtering(img,21,21)
-    img = hist_eq(img)
-    display_img(img)
-
+    # img = hist_eq(img)
+    # display_img(img)
+    displaySmall(img)
+    img = rotate(img, math.pi/6)
+    displaySmall(img)
 
 # entry point
 main()
