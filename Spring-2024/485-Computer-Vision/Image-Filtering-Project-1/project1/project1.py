@@ -50,44 +50,60 @@ def generate_gaussian(sigma, filter_w, filter_h):
     return mask
 
 # TODO: add support for filters of even w or even h
-def apply_filter(image: np.ndarray, filter: np.ndarray, pad_pixels: int, pad_value: int):        
+# apply filter should not require masks to be displayable
+def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value: int):        
     def correlation(image: np.ndarray, mask: np.ndarray, img_x: int, img_y: int):
-        mask_w =  mask.shape[0]
-        mask_h = mask.shape[1]
-        
-        if mask_w % 2 ==1 and mask_h % 2 == 1: # odd mask size
-            val = 0
-            for mask_x in range(mask_w):
-                for mask_y in range(mask_h):
-                    x_diff = int(mask_x-(mask_w/2)+0.5)
-                    y_diff = int(mask_y-(mask_h/2)+0.5)
-                    pixel =  image[img_x + x_diff][img_y + y_diff]
-                    val += pixel[0] * mask[mask_x][mask_y]
-            return val
-        elif mask_w % 2 ==0 and mask_h % 2 == 0: # even mask size
-            raise ValueError("Correlation function does not support even mask sizes")
+        val = 0
+        for mask_x in range(mask_w):
+            for mask_y in range(mask_h):
+                x_diff = int(mask_x-(mask_w/2)+0.5)
+                y_diff = int(mask_y-(mask_h/2)+0.5)
+                pixel =  image[img_x + x_diff][img_y + y_diff]
+                step = pixel[0] * mask[mask_x][mask_y]
+                # print("handling correlation for mask x: ",mask_x,"mask y:",mask_y," img x:",img_x," img y:",img_y, "step:", step)
+                val += step
+        return val
     
     def handlePadding(image, pad_value, pad_pixels):
-        img = image
         pad_values=((pad_pixels,pad_pixels),(pad_pixels,pad_pixels),(0,0))
         if pad_value == 0:
-            img = np.pad(image, pad_values, mode='constant', constant_values=0)
+            image = np.pad(image, pad_values, mode='constant', constant_values=0)
         else:
-            img = np.pad(image, pad_values, mode='edge')
-        return img
-        
-    displaySmall(image,"Before Filtering")
+            image = np.pad(image, pad_values, mode='edge')
+        return image
+    
+    def handleMaskCheck(mask: np.ndarray):
+        if mask.ndim == 1: # make 1D arrays into 2D with width 1
+            mask = mask.reshape(1,-1)
+        if mask.ndim > 2:
+            raise ValueError("Does not support masks with a higher dimension than 2")
+        for i in range(mask.ndim):
+            if mask.shape[i] % 2 == 0:
+                raise ValueError("Correlation function does not support even mask sizes")
+            if math.floor(mask.shape[i]/2) > pad_pixels:
+                raise ValueError("number of pixels to pad is not substantial enough to handle the mask size")
+        return mask
 
+
+    # displaySmall(image,"Before Filtering")
+
+    mask = handleMaskCheck(mask)
+    mask_w = mask.shape[0]
+    mask_h = mask.shape[1] if mask.ndim == 2 else 0
+
+    print(mask)
     img = handlePadding(image, pad_value, pad_pixels)
-    new_img = np.zeros((img.shape[0],img.shape[1],3), dtype=np.uint8)
+    # displaySmall(image,"After padding")
+
+    new_img = np.zeros((img.shape[0],img.shape[1],3), dtype=img.dtype)
 
     for img_x in range(pad_pixels, img.shape[0]-pad_pixels):
         for img_y in range(pad_pixels, img.shape[1]-pad_pixels):
-            v = correlation(img, filter, img_x, img_y)
+            v = correlation(img,mask,img_x,img_y)
             print("applying correlation for x:",img_x," y:",img_y," v:",v)
             new_img[img_x][img_y] = v 
     
-    displaySmall(new_img,"After Filtering")
+    # displaySmall(new_img,"After Filtering")
 
     return new_img
 
@@ -209,12 +225,14 @@ def edge_detection(image):
         return apply_filter(image, gaussian, padding_size, 1)
     
     def applyFirstDeriv(image): 
-        sobelKernel = np.array([-1,0,1])
-        testDot = np.zeros((7,7,3),dtype=np.uint8)
-        testDot[2:5, 2:5] = [255,255,255]
-        displaySmall(testDot,"Before First Derivative")
-        testDot = apply_filter(testDot, sobelKernel,1,0)
-        displaySmall(testDot,"After First Derivative")
+        horizontalKernal = np.array([[-1,0,1]])
+        verticalKernel = np.array([[-1],[0],[1]])
+        # displaySmall(image,"Before Horizontal First Derivative")
+        image = apply_filter(image, horizontalKernal,1,0)
+        # displaySmall(image,"After  Horizontal First Derivative")
+        image = apply_filter(image, verticalKernel,1,0)
+        # displaySmall(image,"After  Vertical First Derivative")
+        return image
 
 
     
@@ -223,27 +241,28 @@ def edge_detection(image):
     # Localization
 
     
-    # new_img = np.copy(image)
+    new_img = np.copy(image)
     # return smoothImg(new_img)
-    applyFirstDeriv(image)
+    new_img = smoothImg(new_img)
+    new_img = applyFirstDeriv(new_img)
+    return new_img
 
 def main():
     imgNames = ['eye.png','clipped-trees.png','low-contrast-forest.png','low-contrast-rose.png','pretty-tree.png','sandwhich.png']
     img = load_img('images(greyscale)/' + imgNames[0])
-    img = cv2.resize(img, (500, 500), interpolation=cv2.INTER_NEAREST)
+    img = cv2.resize(img, (250, 250), interpolation=cv2.INTER_NEAREST)
     # display_img(img)
 
     # checkered_array = np.zeros((4, 4, 3), dtype=np.uint8)
     # checkered_array[1::2, ::2] = [255, 255, 255]
     # checkered_array[::2, 1::2] =  [255, 255, 255]
-    testDot = np.zeros((7,7,3),dtype=np.uint8)
-    testDot[2:5, 2:5] = [255,255,255]
-    mask=np.array([-1,0,1])
-    apply_filter(testDot,mask,1,0)
+    # gaussian = generate_gaussian(1,5,5)
+
+    # testDot = np.zeros((7,7,3),dtype=np.uint8)
+    # testDot[2:5, 2:5] = [255,255,255]
 
     # bigTestDot= scaled = cv2.resize(testDot, (500, 500), interpolation=cv2.INTER_NEAREST)
     
-    # gaussian = generate_gaussian(5,25,25)
     # img = apply_filter(img, gaussian,12,0)
 
     # img = median_filtering(img,21,21)
@@ -252,7 +271,8 @@ def main():
     # displaySmall(img)
     # img = rotate(img, math.pi/6)
     # displaySmall(img)
-    # edge_detection(img)
+    img = edge_detection(img)
+    display_img(img)
     # displaySmall(img,"after edge")
 
 # entry point
