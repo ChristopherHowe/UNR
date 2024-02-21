@@ -268,17 +268,21 @@ def edge_detection(image):
         new_img = np.mean(new_img, axis=2) # Greyscale
 
         print("Determining Mx")
-        Mx = apply_filter(new_img, x_deriv_G,math.floor(gaussianSize/2),1)
+        Mx = apply_filter(new_img, x_deriv_G, math.floor(gaussianSize/2),1)
+        displayFractionPoints(Mx, "Mx")
         print("Determining My")
-        My = apply_filter(new_img, y_deriv_G,math.floor(gaussianSize/2),1)
+        My = apply_filter(new_img, y_deriv_G, math.floor(gaussianSize/2),1)
+        displayFractionPoints(My, "My")
+
         
         print("Creating the Gradiant")
         gradiant = np.zeros((img_w, img_h,2), dtype = new_img.dtype)
         for img_x in range(img_w):
             for img_y in range(img_h):
                 magnitude = math.sqrt(math.pow(Mx[img_x][img_y],2) + math.pow(My[img_x][img_y],2))
-                angle = math.atan2(My[img_x][img_x], My[img_x][img_y])
-                gradiant[img_x][img_y]= [magnitude, angle]
+                # magnitude = Mx[img_x][img_y] + My[img_x][img_y]
+                angle = math.atan2(Mx[img_x][img_y], My[img_x][img_y])
+                gradiant[img_x][img_y] = [magnitude, angle]
         return gradiant
 
     def nonMaximaSupression(gradiant: np.ndarray):
@@ -302,11 +306,13 @@ def edge_detection(image):
                     edges[img_x][img_y] = suppressIfNotPeak(px,edges[img_x+1][img_y-1],edges[img_x-1][img_y+1])
         return edges
                 
-    def threshold(img: np.ndarray, threshold: int):
-        new_img = np.where(img < threshold,  0, 1)
-        return new_img
+    
     
     def hysteresisThreshold(img: np.ndarray, low: int, high: int):
+        def threshold(img: np.ndarray, threshold: int):
+            new_img = np.where(img < threshold,  0, 1)
+            return new_img
+        
         def neighborNotZero(img_x,img_y):
             for i in range(-1,2):
                 for j in range(-1,2):
@@ -323,12 +329,11 @@ def edge_detection(image):
                     result[img_x][img_y] = neighborNotZero(img_x,img_y)
         return result
 
-
-
-    
     # Localization
     
     new_img = np.copy(image)
+    print("Applying general smoothing")
+    new_img = apply_filter(new_img,generate_gaussian(1,3,3),2,1)
     gradiant = smoothAndMakeGradiant(new_img,3)
     magnitudeMap = gradiant[:,:,0:1]
     angleMap = gradiant[:,:,1:]
@@ -338,23 +343,17 @@ def edge_detection(image):
     edges = nonMaximaSupression(gradiant)
     displayFractionPoints(edges,"Edges")
     print("edges max:", np.max(edges),"min:", np.min(edges))
-    betterEdges = hysteresisThreshold(edges, 10,10)
+    betterEdges = hysteresisThreshold(edges, 0.5,1)
     displayFractionPoints(betterEdges,"Hysterized Edges")
     
-
-    # print("Making thresholded map")
-    # new_img = threshold(new_img,10)
-    # displayFractionPoints(new_img,"Thresholded")
-
-    # return smoothImg(new_img)
-    # new_img = smoothImg(new_img)
-    # new_img = applyFirstDeriv(new_img)
-    return betterEdges
+    return (betterEdges*255).astype(np.uint8)
 
 def main():
     imgNames = ['eye.png','clipped-trees.png','low-contrast-forest.png','low-contrast-rose.png','pretty-tree.png','sandwhich.png']
-    img = load_img('images(greyscale)/' + imgNames[5])
-    img = cv2.resize(img, (800, 800), interpolation=cv2.INTER_NEAREST)
+    img = load_img('images(greyscale)/' + imgNames[3])
+    # ratio = img.shape[0]/img.shape[1]
+    # height=500
+    # img = cv2.resize(img, (height, int(height*ratio)))
     display_img(img)
 
     # checkered_array = np.zeros((4, 4, 3), dtype=np.uint8)
@@ -376,8 +375,7 @@ def main():
     # img = rotate(img, math.pi/6)
     # displaySmall(img)
     img = edge_detection(img)
-    # display_img(img)
-    # displaySmall(img,"after edge")
+    display_img(img)
 
 # entry point
 main()
