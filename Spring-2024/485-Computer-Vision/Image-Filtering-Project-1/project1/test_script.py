@@ -15,13 +15,13 @@ img = p1.load_img("test_img.jpg")
 p1.display_img(img)
 
 #Generate 1D gaussian filter
-gaussian1D = generate_gaussian(sigma, filter_size, 1)
+gaussian1D = p1.generate_gaussian(sigma, filter_size, 1)
 
 #Filter image with 1D gaussian
 filtered_img = p1.apply_filter(img, gaussian1D, 0, 0)
 
 #Generate 2D gaussian filter
-gaussian2D = generate_gaussian(sigma, filter_size, filter_size)
+gaussian2D = p1.generate_gaussian(sigma, filter_size, filter_size)
 
 #Filter image with 2D gaussian
 filtered_img = p1.apply_filter(img, gaussian2D, 0, 0)

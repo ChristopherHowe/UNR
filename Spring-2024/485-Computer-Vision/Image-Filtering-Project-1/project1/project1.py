@@ -60,6 +60,8 @@ def generate_gaussian(sigma, filter_w, filter_h):
 # TODO: add support for filters of even w or even h
 # TODO: make sure the func does not change the og image
 # TODO: make sure this works for intensities
+# TODO: make sure this works for no padding(cut the image down)
+
 # apply filter should not require masks to be displayable
 def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value: int):        
     def correlation(image: np.ndarray, mask: np.ndarray, img_x: int, img_y: int):
@@ -68,18 +70,16 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
             for mask_y in range(mask_h):
                 x_diff = int(mask_x-(mask_w/2)+0.5)
                 y_diff = int(mask_y-(mask_h/2)+0.5)
-                pixel =  image[img_x + x_diff][img_y + y_diff]
-                src_val = pixel if np.isscalar(pixel) else pixel[0]
+                src_val = np.mean(image[img_x + x_diff][img_y + y_diff])
                 step = src_val * mask[mask_x][mask_y]
-                # print("handling correlation for mask x: ",mask_x,"mask y:",mask_y," img x:",img_x," img y:",img_y, "step:", step)
                 val += step
         return val
     
-    def handlePadding(image, pad_value, pad_pixels):
+    def handlePadding(image):
         pad_values=()
         if image.ndim == 3:
             pad_values=((pad_pixels,pad_pixels),(pad_pixels,pad_pixels),(0,0))
-        else:
+        elif image.ndim == 2:
             pad_values=((pad_pixels,pad_pixels),(pad_pixels,pad_pixels))
 
         if pad_value == 0:
@@ -88,13 +88,23 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
             image = np.pad(image, pad_values, mode='edge')
         return image, pad_values
     
-    def unpad(x, pad_width):
-        # this unpad function comes from this stack overflow question https://stackoverflow.com/a/57956349
-        slices = []
-        for c in pad_width:
-            e = None if c[1] == 0 else -c[1]
-            slices.append(slice(c[0], e))
-        return x[tuple(slices)]
+    def handleUnpadding(image, prevPadding):
+        def unpad(x, pad_width):
+            # this unpad function comes from this stack overflow question https://stackoverflow.com/a/57956349
+            slices = []
+            for c in pad_width:
+                e = None if c[1] == 0 else -c[1]
+                slices.append(slice(c[0], e))
+            return x[tuple(slices)]
+        if pad_pixels >= req_w_space and pad_pixels >= req_h_space:
+            image = unpad(new_img, prevPadding)
+        else:
+            if image.ndim == 3:
+                pad_values = ((req_w_space,req_w_space),(req_h_space,req_h_space),(0,0))
+            elif image.ndim == 2:
+                pad_values = ((req_w_space,req_w_space),(req_h_space,req_h_space))
+            image = unpad(new_img, pad_values)
+        return image
 
     
     def handleMaskCheck(mask: np.ndarray):
@@ -105,8 +115,6 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
         for i in range(mask.ndim):
             if mask.shape[i] % 2 == 0:
                 raise ValueError("Correlation function does not support even mask sizes")
-            if math.floor(mask.shape[i]/2) > pad_pixels:
-                raise ValueError("number of pixels to pad (" + str(pad_pixels) + ") is not substantial enough to handle the mask size(", str(mask.shape[i]) + ")")
         return mask
 
 
@@ -115,30 +123,35 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
     mask = handleMaskCheck(mask)
     mask_w = mask.shape[0]
     mask_h = mask.shape[1] if mask.ndim == 2 else 0
+    req_w_space = math.floor(mask_w/2)
+    req_h_space = math.floor(mask_h/2)
+
 
     src =np.copy(image)
     # print("before padding src shape:", src.shape)
 
-    src, pad_values = handlePadding(src, pad_value, pad_pixels)
+    src, pad_values = handlePadding(src)
     # print("after padding src shape:", src.shape)
 
     src_w = src.shape[0]
     src_h = src.shape[1]
-    # displaySmall(image,"After padding")
+    displaySmall(image,"After padding")
 
     
     new_img = np.zeros(src.shape, dtype=src.dtype)
     # print("after creating new image shape:", new_img.shape)
-    for img_x in range(pad_pixels, src_w-pad_pixels):
+    for img_x in range(req_w_space, src_w - req_w_space):
         # print("handling row x=:", img_x, "in image")
-        for img_y in range(pad_pixels, src_h-pad_pixels):
+        for img_y in range(req_h_space, src_h - req_h_space):
             v = correlation(src, mask, img_x, img_y)
-            # print("applying correlation for x:", img_x," y:",img_y," v:",v)
+            print("applying correlation for x:", img_x," y:",img_y," v:",v)
             new_img[img_x][img_y] = v 
     
-    # displaySmall(new_img,"After Filtering")
+    displaySmall(new_img,"After Filtering")
     
-    new_img = unpad(new_img, pad_values)
+    new_img = handleUnpadding(new_img, pad_values)
+    
+
 
     return new_img
 
@@ -226,14 +239,13 @@ def rotate(image, theta):
     def pointInImg(x,y):
         return x < img_w and x >=0 and y < img_h and y >= 0
 
-    new_img = np.zeros((img_w, img_h, 3), dtype=np.uint8)
+    new_img = np.zeros(image.shape, dtype=np.uint8)
 
-    cosTheta = math.cos(-1 * theta)
-    sinTheta = math.sin(-1 * theta)
-    
     img_w = image.shape[0]
     img_h = image.shape[1]
 
+    cosTheta = math.cos(-1 * theta)
+    sinTheta = math.sin(-1 * theta)
     center_x:int = math.floor(img_w / 2 + 0.5) - 1
     center_y:int = math.floor(img_h / 2 + 0.5) - 1
     
@@ -343,7 +355,7 @@ def edge_detection(image):
     edges = nonMaximaSupression(gradiant)
     displayFractionPoints(edges,"Edges")
     print("edges max:", np.max(edges),"min:", np.min(edges))
-    betterEdges = hysteresisThreshold(edges, 0.5,1)
+    betterEdges = hysteresisThreshold(edges, 10,20)
     displayFractionPoints(betterEdges,"Hysterized Edges")
     
     return (betterEdges*255).astype(np.uint8)
@@ -351,31 +363,22 @@ def edge_detection(image):
 def main():
     imgNames = ['eye.png','clipped-trees.png','low-contrast-forest.png','low-contrast-rose.png','pretty-tree.png','sandwhich.png']
     img = load_img('images(greyscale)/' + imgNames[3])
-    # ratio = img.shape[0]/img.shape[1]
-    # height=500
-    # img = cv2.resize(img, (height, int(height*ratio)))
+    ratio = img.shape[0]/img.shape[1]
+    height=500
+    img = cv2.resize(img, (height, int(height*ratio)))
     display_img(img)
 
-    # checkered_array = np.zeros((4, 4, 3), dtype=np.uint8)
-    # checkered_array[1::2, ::2] = [255, 255, 255]
-    # checkered_array[::2, 1::2] =  [255, 255, 255]
-    # gaussian = generate_gaussian(1,5,5)
+    checkered_array = np.zeros((12, 12, 3), dtype=np.uint8)
+    checkered_array[1::2, ::2] = [255, 255, 255]
+    checkered_array[::2, 1::2] =  [255, 255, 255]
+    gaussian = generate_gaussian(1,3,1)
 
-    # testDot = np.zeros((7,7,3),dtype=np.uint8)
-    # testDot[2:5, 2:5] = [255,255,255]
+    testDot = np.zeros((7,7,3),dtype=np.uint8)
+    testDot[2:5, 2:5] = [255,255,255]
 
-    # bigTestDot= scaled = cv2.resize(testDot, (500, 500), interpolation=cv2.INTER_NEAREST)
-    
-    # img = apply_filter(img, gaussian,12,0)
-
-    # img = median_filtering(img,21,21)
-    # img = hist_eq(img)
-    # display_img(img)
-    # displaySmall(img)
-    # img = rotate(img, math.pi/6)
-    # displaySmall(img)
     img = edge_detection(img)
     display_img(img)
 
 # entry point
-main()
+if __name__ == "__main__":
+    main()
