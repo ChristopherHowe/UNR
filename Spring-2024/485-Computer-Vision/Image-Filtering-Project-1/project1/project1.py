@@ -21,27 +21,10 @@ def displaySmall(image, window_name: str = ""):
     k = cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def displayFractionPoints(image: np.ndarray, window_name: str = ""):
-    new_img = np.copy(image)
-    max_intensity = np.max(new_img)
-    new_img = new_img / max_intensity * 255
-    new_img = np.clip(new_img, 0, 255).astype(np.uint8)
-    # print(new_img)
-    displaySmall(new_img, window_name)
-
-
 def gaussianFunc2D(x,y,sigma):
     base = 1 / (2 *math.pi*sigma*sigma)
     exponent = -1*((x*x+y*y)/(2*sigma*sigma))
     result = base * math.exp(exponent)
-    # print("2D gaussian for x="+str(x)+" y="+str(y)+" sigma="+str(sigma)+" result: "+str(result))
-    return result
-
-def gaussianFunc1D(x,sigma):
-    base = 1 / (math.sqrt(2 *math.pi)*sigma)
-    exponent = -1*((x*x)/(2*sigma*sigma))
-    result = base * math.exp(exponent)
-    # print("1D gaussian for x="+str(x)+" sigma="+str(sigma)+" result: "+str(result))
     return result
 
 def generate_gaussian(sigma, filter_w, filter_h):
@@ -54,15 +37,8 @@ def generate_gaussian(sigma, filter_w, filter_h):
             yVal=y-(filter_h/2)+0.5
             v = gaussianFunc2D(xVal,yVal,sigma)
             mask[x][y] = v
-    # print("after making mask:\n", mask)
     return mask
 
-# TODO: add support for filters of even w or even h
-# TODO: make sure the func does not change the og image
-# TODO: make sure this works for intensities
-# TODO: make sure this works for no padding(cut the image down)
-
-# apply filter should not require masks to be displayable
 def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value: int):        
     def correlation(image: np.ndarray, mask: np.ndarray, img_x: int, img_y: int):
         val:int = 0
@@ -112,9 +88,6 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
             mask = mask.reshape(1,-1)
         if mask.ndim > 2:
             raise ValueError("Does not support masks with a higher dimension than 2")
-        for i in range(mask.ndim):
-            if mask.shape[i] % 2 == 0:
-                raise ValueError("Correlation function does not support even mask sizes")
         return mask
 
 
@@ -128,23 +101,17 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
 
 
     src =np.copy(image)
-    # print("before padding src shape:", src.shape)
 
     src, pad_values = handlePadding(src)
-    # print("after padding src shape:", src.shape)
 
     src_w = src.shape[0]
     src_h = src.shape[1]
-    displaySmall(image,"After padding")
 
     
     new_img = np.zeros(src.shape, dtype=src.dtype)
-    # print("after creating new image shape:", new_img.shape)
     for img_x in range(req_w_space, src_w - req_w_space):
-        # print("handling row x=:", img_x, "in image")
         for img_y in range(req_h_space, src_h - req_h_space):
             v = correlation(src, mask, img_x, img_y)
-            print("applying correlation for x:", img_x," y:",img_y," v:",v)
             new_img[img_x][img_y] = v 
     
     displaySmall(new_img,"After Filtering")
@@ -184,7 +151,6 @@ def median_filtering(image, filter_w, filter_h):
     for img_x in range(pad_size_x, img.shape[0]-pad_size_x):
         for img_y in range(pad_size_y, img.shape[1]-pad_size_y):
             v = getNeighborMedian(img, filter_w, filter_h, img_x, img_y)
-            print("applying correlation for x:",img_x," y:",img_y," median:",v)
             new_img[img_x][img_y] = v 
     
     displaySmall(new_img,"After Filtering")
@@ -198,9 +164,7 @@ def hist_eq(image):
     for img_x in range(img_w):
         for img_y in range(img_h):
             intensity = image[img_x][img_y][0]
-            print("adding val: ",intensity," for x:",img_x," y: ", img_y )
             probArr[intensity] += 1
-    print("Pre Transform historgram:\n", probArr)
     plt.bar(range(len(probArr)), probArr, edgecolor='black', alpha=0.7)
     plt.show()
 
@@ -215,7 +179,6 @@ def hist_eq(image):
         for img_y in range(img_h):
             px=image[img_x][img_y]
             v = equalizedMapping[px[0]]
-            print("Previous Value:",px[0]," New Value:", v)
             new_img[img_x][img_y] = [v,v,v]
     # Checking histogram
     probArr = np.zeros((256))
@@ -258,7 +221,6 @@ def rotate(image, theta):
 
     return new_img
 
-# TODO: fix smoothing so that not reliant on even mask size
 def edge_detection(image):
     img_w = image.shape[0]
     img_h = image.shape[1]
@@ -266,7 +228,6 @@ def edge_detection(image):
     def getXYDerivGaussian(gaussianSize):
         sigma = gaussianSize / 5
         gaussian = generate_gaussian(sigma,gaussianSize,gaussianSize)
-        print("Generating Gaussian Derivatives")
         horizontalKernal = np.array([[-1,0,1]])
         verticalKernel = np.array([[-1],[0],[1]])
         x_deriv_guassian = apply_filter(gaussian,horizontalKernal,1,1) 
@@ -279,15 +240,9 @@ def edge_detection(image):
         new_img = img.astype(np.int16)
         new_img = np.mean(new_img, axis=2) # Greyscale
 
-        print("Determining Mx")
         Mx = apply_filter(new_img, x_deriv_G, math.floor(gaussianSize/2),1)
-        displayFractionPoints(Mx, "Mx")
-        print("Determining My")
         My = apply_filter(new_img, y_deriv_G, math.floor(gaussianSize/2),1)
-        displayFractionPoints(My, "My")
-
         
-        print("Creating the Gradiant")
         gradiant = np.zeros((img_w, img_h,2), dtype = new_img.dtype)
         for img_x in range(img_w):
             for img_y in range(img_h):
@@ -340,29 +295,20 @@ def edge_detection(image):
                 if low_t_img[img_x][img_y] != 0:
                     result[img_x][img_y] = neighborNotZero(img_x,img_y)
         return result
-
-    # Localization
     
     new_img = np.copy(image)
-    print("Applying general smoothing")
     new_img = apply_filter(new_img,generate_gaussian(1,3,3),2,1)
     gradiant = smoothAndMakeGradiant(new_img,3)
     magnitudeMap = gradiant[:,:,0:1]
     angleMap = gradiant[:,:,1:]
-    print(angleMap[:,0:10])
-    print("Max angle map: ", np.max(angleMap), "min:", np.min(angleMap))
-    displayFractionPoints(magnitudeMap,"Magnitude map")
     edges = nonMaximaSupression(gradiant)
-    displayFractionPoints(edges,"Edges")
-    print("edges max:", np.max(edges),"min:", np.min(edges))
     betterEdges = hysteresisThreshold(edges, 10,20)
-    displayFractionPoints(betterEdges,"Hysterized Edges")
     
     return (betterEdges*255).astype(np.uint8)
 
 def main():
     imgNames = ['eye.png','clipped-trees.png','low-contrast-forest.png','low-contrast-rose.png','pretty-tree.png','sandwhich.png']
-    img = load_img('images(greyscale)/' + imgNames[3])
+    img = load_img('images(greyscale)/' + imgNames[0])
     ratio = img.shape[0]/img.shape[1]
     height=500
     img = cv2.resize(img, (height, int(height*ratio)))
@@ -371,12 +317,13 @@ def main():
     checkered_array = np.zeros((12, 12, 3), dtype=np.uint8)
     checkered_array[1::2, ::2] = [255, 255, 255]
     checkered_array[::2, 1::2] =  [255, 255, 255]
-    gaussian = generate_gaussian(1,3,1)
+    gaussian = generate_gaussian(1,4,4)
 
     testDot = np.zeros((7,7,3),dtype=np.uint8)
     testDot[2:5, 2:5] = [255,255,255]
 
-    img = edge_detection(img)
+    # img = edge_detection(img)
+    img = apply_filter(img, gaussian,0,0)
     display_img(img)
 
 # entry point
