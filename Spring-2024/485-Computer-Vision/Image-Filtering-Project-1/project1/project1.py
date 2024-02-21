@@ -21,6 +21,14 @@ def displaySmall(image, window_name: str = ""):
     k = cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def displayFractionPoints(image: np.ndarray, window_name: str = ""):
+    new_img = np.copy(image)
+    max_intensity = np.max(new_img)
+    new_img = new_img / max_intensity * 255
+    new_img = np.clip(new_img, 0, 255).astype(np.uint8)
+    # print(new_img)
+    displaySmall(new_img, window_name)
+
 
 def gaussianFunc2D(x,y,sigma):
     base = 1 / (2 *math.pi*sigma*sigma)
@@ -50,27 +58,44 @@ def generate_gaussian(sigma, filter_w, filter_h):
     return mask
 
 # TODO: add support for filters of even w or even h
+# TODO: make sure the func does not change the og image
+# TODO: make sure this works for intensities
 # apply filter should not require masks to be displayable
 def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value: int):        
     def correlation(image: np.ndarray, mask: np.ndarray, img_x: int, img_y: int):
-        val = 0
+        val:int = 0
         for mask_x in range(mask_w):
             for mask_y in range(mask_h):
                 x_diff = int(mask_x-(mask_w/2)+0.5)
                 y_diff = int(mask_y-(mask_h/2)+0.5)
                 pixel =  image[img_x + x_diff][img_y + y_diff]
-                step = pixel[0] * mask[mask_x][mask_y]
+                src_val = pixel if np.isscalar(pixel) else pixel[0]
+                step = src_val * mask[mask_x][mask_y]
                 # print("handling correlation for mask x: ",mask_x,"mask y:",mask_y," img x:",img_x," img y:",img_y, "step:", step)
                 val += step
         return val
     
     def handlePadding(image, pad_value, pad_pixels):
-        pad_values=((pad_pixels,pad_pixels),(pad_pixels,pad_pixels),(0,0))
+        pad_values=()
+        if image.ndim == 3:
+            pad_values=((pad_pixels,pad_pixels),(pad_pixels,pad_pixels),(0,0))
+        else:
+            pad_values=((pad_pixels,pad_pixels),(pad_pixels,pad_pixels))
+
         if pad_value == 0:
             image = np.pad(image, pad_values, mode='constant', constant_values=0)
         else:
             image = np.pad(image, pad_values, mode='edge')
-        return image
+        return image, pad_values
+    
+    def unpad(x, pad_width):
+        # this unpad function comes from this stack overflow question https://stackoverflow.com/a/57956349
+        slices = []
+        for c in pad_width:
+            e = None if c[1] == 0 else -c[1]
+            slices.append(slice(c[0], e))
+        return x[tuple(slices)]
+
     
     def handleMaskCheck(mask: np.ndarray):
         if mask.ndim == 1: # make 1D arrays into 2D with width 1
@@ -81,7 +106,7 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
             if mask.shape[i] % 2 == 0:
                 raise ValueError("Correlation function does not support even mask sizes")
             if math.floor(mask.shape[i]/2) > pad_pixels:
-                raise ValueError("number of pixels to pad is not substantial enough to handle the mask size")
+                raise ValueError("number of pixels to pad (" + str(pad_pixels) + ") is not substantial enough to handle the mask size(", str(mask.shape[i]) + ")")
         return mask
 
 
@@ -91,19 +116,29 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
     mask_w = mask.shape[0]
     mask_h = mask.shape[1] if mask.ndim == 2 else 0
 
-    print(mask)
-    img = handlePadding(image, pad_value, pad_pixels)
+    src =np.copy(image)
+    print("before padding src shape:", src.shape)
+
+    src, pad_values = handlePadding(src, pad_value, pad_pixels)
+    print("after padding src shape:", src.shape)
+
+    src_w = src.shape[0]
+    src_h = src.shape[1]
     # displaySmall(image,"After padding")
 
-    new_img = np.zeros((img.shape[0],img.shape[1],3), dtype=img.dtype)
-
-    for img_x in range(pad_pixels, img.shape[0]-pad_pixels):
-        for img_y in range(pad_pixels, img.shape[1]-pad_pixels):
-            v = correlation(img,mask,img_x,img_y)
-            print("applying correlation for x:",img_x," y:",img_y," v:",v)
+    
+    new_img = np.zeros(src.shape, dtype=src.dtype)
+    print("after creating new image shape:", new_img.shape)
+    for img_x in range(pad_pixels, src_w-pad_pixels):
+        print("handling row x=:", img_x, "in image")
+        for img_y in range(pad_pixels, src_h-pad_pixels):
+            v = correlation(src, mask, img_x, img_y)
+            # print("applying correlation for x:", img_x," y:",img_y," v:",v)
             new_img[img_x][img_y] = v 
     
     # displaySmall(new_img,"After Filtering")
+    
+    new_img = unpad(new_img, pad_values)
 
     return new_img
 
@@ -216,35 +251,56 @@ def edge_detection(image):
     img_w = image.shape[0]
     img_h = image.shape[1]
 
-    def smoothImg(image):
-        gaussian_size = int(min(img_w, img_h) / 30)
-        gaussian_size = max(gaussian_size, 5)
-        gaussian_size = gaussian_size + 1 if gaussian_size % 2 == 0 else gaussian_size # ensure odd since apply filter doesn't support even yet 
-        gaussian = generate_gaussian(math.floor(gaussian_size / 5), gaussian_size,gaussian_size)
-        padding_size = math.floor(gaussian_size/2)
-        return apply_filter(image, gaussian, padding_size, 1)
-    
-    def applyFirstDeriv(image): 
+    def smoothAndDifferentiate(img:np.ndarray, gaussianSize:int):
+        sigma = gaussianSize / 5
+        gaussian = generate_gaussian(sigma,gaussianSize,gaussianSize)
+
+        print(np.max(gaussian))
+
+        # displayFractionPoints(gaussian,"Gaussian")
         horizontalKernal = np.array([[-1,0,1]])
         verticalKernel = np.array([[-1],[0],[1]])
-        # displaySmall(image,"Before Horizontal First Derivative")
-        image = apply_filter(image, horizontalKernal,1,0)
-        # displaySmall(image,"After  Horizontal First Derivative")
-        image = apply_filter(image, verticalKernel,1,0)
-        # displaySmall(image,"After  Vertical First Derivative")
-        return image
+        x_deriv_guassian = apply_filter(gaussian,horizontalKernal,1,1) 
+        y_deriv_guassian = apply_filter(gaussian,verticalKernel,1,1)
+        print("shape x deriv:", x_deriv_guassian.shape)
+        # displayFractionPoints(x_deriv_guassian, "X Derivative of Gaussian")
+        # displayFractionPoints(y_deriv_guassian, "Y Derivative of Gaussian")
 
+        new_img = img.astype(np.int16)
+        new_img = np.mean(new_img, axis=2) # Greyscale
 
-    
-    # Enhancement
+        print(new_img[0,1:10])
+        Mx = apply_filter(new_img, x_deriv_guassian,math.floor(gaussianSize/2),1)
+        print(Mx[0,1:10])
+        displayFractionPoints(Mx,"Mx")
+        My = apply_filter(new_img, y_deriv_guassian,math.floor(gaussianSize/2),1)
+        print(My[0,1:10])
+        displayFractionPoints(My,"My")
+        
+        
+        img_w = new_img.shape[0]
+        img_h = new_img.shape[1]
+
+        magnitudeMap = np.zeros(new_img.shape, dtype = new_img.dtype)
+        for img_x in range(img_w):
+            for img_y in range(img_h):
+                magnitude = math.sqrt(math.pow(Mx[img_x][img_y],2) + math.pow(My[img_x][img_y],2))
+                magnitudeMap[img_x][img_y] = magnitude
+        
+        print(magnitudeMap[0,1:10])
+        displayFractionPoints(magnitudeMap)
+        return magnitudeMap
+
     # Thresholding/detection
     # Localization
 
     
     new_img = np.copy(image)
+    new_img = smoothAndDifferentiate(new_img,15)
+
     # return smoothImg(new_img)
-    new_img = smoothImg(new_img)
-    new_img = applyFirstDeriv(new_img)
+    # new_img = smoothImg(new_img)
+    # new_img = applyFirstDeriv(new_img)
     return new_img
 
 def main():
@@ -272,7 +328,7 @@ def main():
     # img = rotate(img, math.pi/6)
     # displaySmall(img)
     img = edge_detection(img)
-    display_img(img)
+    # display_img(img)
     # displaySmall(img,"after edge")
 
 # entry point
