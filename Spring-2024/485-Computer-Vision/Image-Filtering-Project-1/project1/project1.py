@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 import math
 import statistics
-import matplotlib.pyplot as plt
-
 
 # takes a file name and returns an image of type numpy.ndarray
 def load_img(file_name):
@@ -165,8 +163,6 @@ def hist_eq(image):
         for img_y in range(img_h):
             intensity = image[img_x][img_y][0]
             probArr[intensity] += 1
-    plt.bar(range(len(probArr)), probArr, edgecolor='black', alpha=0.7)
-    plt.show()
 
     totalPx = image.shape[0] * image.shape[1]
     equalizedMapping = np.zeros((256))
@@ -186,8 +182,6 @@ def hist_eq(image):
         for img_y in range(img_h):
             intensity = new_img[img_x][img_y][0]
             probArr[intensity] += 1
-    plt.bar(range(len(probArr)), probArr, edgecolor='black', alpha=0.7)
-    plt.show()
     return new_img
 
 # rotates around the center of the image
