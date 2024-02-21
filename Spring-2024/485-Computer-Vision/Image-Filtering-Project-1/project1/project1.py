@@ -8,14 +8,7 @@ def load_img(file_name):
     return cv2.imread(file_name)
 
 def display_img(image):
-    cv2.imshow("eye", image)
-    k = cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-
-def display_small(image, window_name: str = ""):
-    scaled = cv2.resize(image, (500, 500), interpolation=cv2.INTER_NEAREST)
-    cv2.imshow(window_name, scaled)
+    cv2.imshow("image filtering project 1", image)
     k = cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -107,8 +100,6 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
             v = correlation(src, mask, img_x, img_y)
             new_img[img_x][img_y] = v
 
-    display_small(new_img, "After Filtering")
-
     new_img = handle_unpadding(new_img, pad_values)
 
     return new_img
@@ -132,8 +123,6 @@ def median_filtering(image, filter_w, filter_h):
         img = np.pad(image, pad_values, mode='edge')
         return img
 
-    display_small(image, "Before Filtering")
-
     pad_size_x = int(filter_w / 2)
     pad_size_y = int(filter_h / 2)
     img = handle_padding(image, filter_h, filter_w)
@@ -143,8 +132,6 @@ def median_filtering(image, filter_w, filter_h):
         for img_y in range(pad_size_y, img.shape[1] - pad_size_y):
             v = get_neighbor_median(img, filter_w, filter_h, img_x, img_y)
             new_img[img_x][img_y] = v
-
-    display_small(new_img, "After Filtering")
 
     return new_img
 
