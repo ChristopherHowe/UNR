@@ -117,10 +117,10 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
     mask_h = mask.shape[1] if mask.ndim == 2 else 0
 
     src =np.copy(image)
-    print("before padding src shape:", src.shape)
+    # print("before padding src shape:", src.shape)
 
     src, pad_values = handlePadding(src, pad_value, pad_pixels)
-    print("after padding src shape:", src.shape)
+    # print("after padding src shape:", src.shape)
 
     src_w = src.shape[0]
     src_h = src.shape[1]
@@ -128,9 +128,9 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
 
     
     new_img = np.zeros(src.shape, dtype=src.dtype)
-    print("after creating new image shape:", new_img.shape)
+    # print("after creating new image shape:", new_img.shape)
     for img_x in range(pad_pixels, src_w-pad_pixels):
-        print("handling row x=:", img_x, "in image")
+        # print("handling row x=:", img_x, "in image")
         for img_y in range(pad_pixels, src_h-pad_pixels):
             v = correlation(src, mask, img_x, img_y)
             # print("applying correlation for x:", img_x," y:",img_y," v:",v)
@@ -251,52 +251,65 @@ def edge_detection(image):
     img_w = image.shape[0]
     img_h = image.shape[1]
 
-    def smoothAndDifferentiate(img:np.ndarray, gaussianSize:int):
+    def getXYDerivGaussian(gaussianSize):
         sigma = gaussianSize / 5
         gaussian = generate_gaussian(sigma,gaussianSize,gaussianSize)
-
-        print(np.max(gaussian))
-
-        # displayFractionPoints(gaussian,"Gaussian")
+        print("Generating Gaussian Derivatives")
         horizontalKernal = np.array([[-1,0,1]])
         verticalKernel = np.array([[-1],[0],[1]])
         x_deriv_guassian = apply_filter(gaussian,horizontalKernal,1,1) 
         y_deriv_guassian = apply_filter(gaussian,verticalKernel,1,1)
-        print("shape x deriv:", x_deriv_guassian.shape)
-        # displayFractionPoints(x_deriv_guassian, "X Derivative of Gaussian")
-        # displayFractionPoints(y_deriv_guassian, "Y Derivative of Gaussian")
+        return x_deriv_guassian, y_deriv_guassian        
+
+    def smoothAndMakeGradiant(img:np.ndarray, gaussianSize:int):
+        x_deriv_G, y_deriv_G = getXYDerivGaussian(gaussianSize)
 
         new_img = img.astype(np.int16)
         new_img = np.mean(new_img, axis=2) # Greyscale
 
-        print(new_img[0,1:10])
-        Mx = apply_filter(new_img, x_deriv_guassian,math.floor(gaussianSize/2),1)
-        print(Mx[0,1:10])
-        displayFractionPoints(Mx,"Mx")
-        My = apply_filter(new_img, y_deriv_guassian,math.floor(gaussianSize/2),1)
-        print(My[0,1:10])
-        displayFractionPoints(My,"My")
+        print("Determining Mx")
+        Mx = apply_filter(new_img, x_deriv_G,math.floor(gaussianSize/2),1)
+        print("Determining My")
+        My = apply_filter(new_img, y_deriv_G,math.floor(gaussianSize/2),1)
         
-        
-        img_w = new_img.shape[0]
-        img_h = new_img.shape[1]
-
-        magnitudeMap = np.zeros(new_img.shape, dtype = new_img.dtype)
+        print("Creating the Gradiant")
+        gradiant = np.zeros((img_w, img_h,2), dtype = new_img.dtype)
         for img_x in range(img_w):
             for img_y in range(img_h):
                 magnitude = math.sqrt(math.pow(Mx[img_x][img_y],2) + math.pow(My[img_x][img_y],2))
-                magnitudeMap[img_x][img_y] = magnitude
-        
-        print(magnitudeMap[0,1:10])
-        displayFractionPoints(magnitudeMap)
-        return magnitudeMap
+                angle = math.atan2(My[img_x][img_x], My[img_x][img_y])
+                gradiant[img_x][img_y]= [magnitude, angle]
+        return gradiant
 
-    # Thresholding/detection
+    def nonMaximaSupression(gradiant: np.ndarray):
+        edges = np.copy(gradiant[:,:,:1])
+        for img_x in range(img_w):
+            for img_y in range(img_h):
+                angle = abs(gradiant[img_x][img_y][1])
+                if angle < math.pi/6 or angle > 5 * math.pi / 6: # 0<a<pi/6 or 5pi/6<a<pi
+                elif angle < math.pi/3: #pi/6<a<pi/3
+                elif angle < 2 * math.pi / 3: # pi/3<a<2pi/3
+                else: # 2pi/3<a<5pi/6
+
+
+    def threshold(img: np.ndarray, threshold: int):
+        new_img = np.where(img < threshold,  0, img)
+        return new_img
+    
     # Localization
-
     
     new_img = np.copy(image)
-    new_img = smoothAndDifferentiate(new_img,15)
+    gradiant = smoothAndMakeGradiant(new_img,5)
+    magnitudeMap = gradiant[:,:,0:1]
+    angleMap = gradiant[:,:,1:]
+    print(angleMap[:,0:10])
+    print("Max angle map: ", np.max(angleMap), "min:", np.min(angleMap))
+    displayFractionPoints(magnitudeMap,"Magnitude map")
+    displayFractionPoints(angleMap,"Angle map")
+
+    # print("Making thresholded map")
+    # new_img = threshold(new_img,10)
+    # displayFractionPoints(new_img,"Thresholded")
 
     # return smoothImg(new_img)
     # new_img = smoothImg(new_img)
@@ -306,8 +319,8 @@ def edge_detection(image):
 def main():
     imgNames = ['eye.png','clipped-trees.png','low-contrast-forest.png','low-contrast-rose.png','pretty-tree.png','sandwhich.png']
     img = load_img('images(greyscale)/' + imgNames[0])
-    img = cv2.resize(img, (250, 250), interpolation=cv2.INTER_NEAREST)
-    # display_img(img)
+    # img = cv2.resize(img, (250, 250), interpolation=cv2.INTER_NEAREST)
+    display_img(img)
 
     # checkered_array = np.zeros((4, 4, 3), dtype=np.uint8)
     # checkered_array[1::2, ::2] = [255, 255, 255]
