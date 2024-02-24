@@ -20,7 +20,6 @@
 \RequirePackage{multicol}
 \RequirePackage{booktabs}
 \RequirePackage{url}
-\RequirePackage{listings}
 
 
 \sisetup{per-mode=symbol}
@@ -86,7 +85,6 @@
 % assignment aren't sequential. See the last 3 problems of this template for an
 % example.
 %
-
 \newenvironment{homeworkProblem}[1][-1]{
     \ifnum#1>0
         \setcounter{homeworkProblemCounter}{#1}
@@ -202,19 +200,3 @@
         \label{fig:#1}
     \end{figure}
 }
-
-
-% % How to setup python snippets
-% \usepackage{tcolorbox}
-% \usepackage{xcolor}
-
-% \tcbuselibrary{minted,breakable,xparse,skins}
-
-% \definecolor{mygray}{rgb}{0.8,0.8,0.8}
-% \lstset{%
-% basicstyle=\ttfamily,
-% breaklines = true,
-% backgroundcolor=\color{mygray},
-% }
-
-% \NewDocumentCommand{\code}{o}{\Colorbox{mygray}{\lstinline|#1|}}
