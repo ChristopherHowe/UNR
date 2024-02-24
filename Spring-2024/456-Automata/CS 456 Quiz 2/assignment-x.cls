@@ -86,6 +86,7 @@
 % assignment aren't sequential. See the last 3 problems of this template for an
 % example.
 %
+
 \newenvironment{homeworkProblem}[1][-1]{
     \ifnum#1>0
         \setcounter{homeworkProblemCounter}{#1}
