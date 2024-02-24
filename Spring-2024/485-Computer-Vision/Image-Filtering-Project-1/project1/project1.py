@@ -1,9 +1,7 @@
 import cv2
 import numpy as np
 import math
-import statistics
 
-# takes a file name and returns an image of type numpy.ndarray
 def load_img(file_name):
     return cv2.imread(file_name)
 
@@ -106,16 +104,14 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
 
 def median_filtering(image, filter_w, filter_h):
     def get_neighbor_median(image: np.ndarray, filter_w: int, filter_h: int, img_x: int, img_y: int):
-        if filter_w % 2 == 1 and filter_h % 2 == 1:  # odd mask size
-            neighbors = []
-            for mask_x in range(filter_w):
-                for mask_y in range(filter_h):
-                    x_diff = int(mask_x - (filter_w / 2) + 0.5)
-                    y_diff = int(mask_y - (filter_h / 2) + 0.5)
-                    neighbors.append(image[img_x + x_diff][img_y + y_diff][0])
-            return statistics.median(neighbors)
-        elif filter_w % 2 == 0 and filter_h % 2 == 0:  # even mask size
-            raise ValueError("Correlation function does not support even mask sizes")
+        neighbors = []
+        for mask_x in range(filter_w):
+            for mask_y in range(filter_h):
+                x_diff = int(mask_x - (filter_w / 2) + 0.5)
+                y_diff = int(mask_y - (filter_h / 2) + 0.5)
+                neighbors.append(image[img_x + x_diff][img_y + y_diff][0])
+        return np.median(neighbors)
+            
 
     def handle_padding(image, pad_size_x, pad_size_y):
         img = image
@@ -125,7 +121,7 @@ def median_filtering(image, filter_w, filter_h):
 
     pad_size_x = int(filter_w / 2)
     pad_size_y = int(filter_h / 2)
-    img = handle_padding(image, filter_h, filter_w)
+    img = handle_padding(image, pad_size_x, pad_size_y)
     new_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
 
     for img_x in range(pad_size_x, img.shape[0] - pad_size_x):
@@ -208,7 +204,7 @@ def edge_detection(image):
         y_deriv_gaussian = apply_filter(gaussian, vertical_kernel, 1, 1)
         return x_deriv_gaussian, y_deriv_gaussian
 
-    def smooth_and_make_gradient(img: np.ndarray, gaussian_size: int):
+    def make_gradiant(img: np.ndarray, gaussian_size: int):
         x_deriv_g, y_deriv_g = get_xy_deriv_gaussian(gaussian_size)
 
         new_img = img.astype(np.int16)
@@ -221,7 +217,6 @@ def edge_detection(image):
         for img_x in range(img_w):
             for img_y in range(img_h):
                 magnitude = math.sqrt(math.pow(Mx[img_x][img_y], 2) + math.pow(My[img_x][img_y], 2))
-                # magnitude = Mx[img_x][img_y] + My[img_x][img_y]
                 angle = math.atan2(Mx[img_x][img_y], My[img_x][img_y])
                 gradient[img_x][img_y] = [magnitude, angle]
         return gradient
@@ -272,17 +267,14 @@ def edge_detection(image):
 
     new_img = np.copy(image)
     new_img = apply_filter(new_img, generate_gaussian(1, 3, 3), 2, 1)
-    gradient = smooth_and_make_gradient(new_img, 3)
-    magnitude_map = gradient[:, :, 0:1]
-    angle_map = gradient[:, :, 1:]
+    gradient = make_gradiant(new_img, 3)
     edges = non_maxima_suppression(gradient)
     better_edges = hysteresis_threshold(edges, 10, 20)
 
     return (better_edges * 255).astype(np.uint8)
 
 def main():
-    img_names = ['eye.png', 'clipped-trees.png', 'low-contrast-forest.png', 'low-contrast-rose.png',
-                 'pretty-tree.png', 'sandwich.png']
+    img_names = ['eye.png', 'clipped-trees.png', 'low-contrast-forest.png', 'low-contrast-rose.png','pretty-tree.png', 'sandwich.png']
     img = load_img('images(greyscale)/' + img_names[0])
     ratio = img.shape[0] / img.shape[1]
     height = 500
@@ -297,9 +289,10 @@ def main():
     test_dot = np.zeros((7, 7, 3), dtype=np.uint8)
     test_dot[2:5, 2:5] = [255, 255, 255]
 
-    # img = edge_detection(img)
-    # img = apply_filter(img, gaussian, 0, 0)
+    img = edge_detection(img)
+    img = apply_filter(img, gaussian, 0, 0)
     img  = rotate(img, math.pi/4)
+    img = median_filtering(img,16,16)
     display_img(img)
 
 # entry point
