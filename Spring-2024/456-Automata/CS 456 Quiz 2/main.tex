@@ -1,0 +1,86 @@
+\documentclass{assignment-x}
+
+
+\hmwkClass{CS 456}
+\hmwkTitle{Quiz 2}
+\hmwkDueDate{February 22, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Problem Description}
+Convert the following nfa to an equivalent dfa (draw a state diagram for your answer). Use the textbook conversion and class lecture technique. Show and explain/justify your answer and all the steps used to derive the dfa.
+
+\img{NFA}{Initial NFA to convert to DFA}[0.6\linewidth]
+
+\begin{align*}
+&M_{nfa} = (\{q_0,q_1,q_2\},\{a,b\},\delta,q_0,\{q_2\}) \\ \\
+&\delta:
+\left\{
+\begin{aligned}
+&\quad \delta(q_0,a) &&\rightarrow &&&\{q_0, q_1\} \\
+&\quad \delta(q_1,b) &&\rightarrow &&&\{q_1\} \\
+&\quad \delta(q_1,\lambda) &&\rightarrow &&&\{q_2\} \\
+&\quad \delta(q_2,a) &&\rightarrow &&&\{q_0, q_2\}
+\end{aligned}
+\right\}
+\end{align*}
+
+\pagebreak
+
+\section{Solution}
+The shortcut method discussed during lecture will be used convert this NFA to an equivilant DFA. This procedure has 4 main steps. First, write the transition function for each state in the NFA for each symbol in $\Sigma$. The possible resulting states should be represented by a set which becomes a new vertex in the final DFA if it does not already exist. Second, repeat this process for each new vertex generated. To calculate the resulting state sets for the transition function from each multi state vertex, preform a union operation on the results of the atomic state transitions. Repeat this step for any new vertices generated in this step. Third, take note of any unreachable states given the initial starting position. These can be removed from $Q$. Fourth, determine the final states of the DFA. These include any new states that include final states from the initial NFA. Finally, the DFA can be defined and its diagram drawn.
+
+\subsection{Work}
+
+\subsubsection{Step 1: Determine the transitions from the states in the NFA}
+\begin{align*}
+&\delta^*(\{q_0\},a) \rightarrow \{q_0,q_1,q_2\} &&\delta^*(\{q_0\},b) \rightarrow \phi \\
+&\delta^*(\{q_1\},a) \rightarrow \{q_0,q_2\} &&\delta^*(\{q_1\},b) \rightarrow \{q_1,q_2\} \\
+&\delta^*(\{q_2\},a) \rightarrow \{q_0,q_2\} &&\delta^*(\{q_2\},b) \rightarrow \phi 
+\end{align*}
+
+\subsubsection{Step 2: Determine the transitions from any new vertices created in the last step}
+\begin{align*}
+&\delta^*(\{q_0,q_1,q_2\},a) \rightarrow \{q_0,q_1,q_2\} &&\delta^*(\{q_0,q_1,q_2\},b) \rightarrow \{q_1,q_2\} \\
+&\delta^*(\{q_0,q_2\},a) \rightarrow \{q_0,q_1,q_2\} &&\delta^*(\{q_0,q_2\},b) \rightarrow \phi \\
+&\delta^*(\{q_1,q_2\},a) \rightarrow \{q_0,q_2\} &&\delta^*(\{q_1,q_2\},b) \rightarrow \{q_1,q_2\} \\
+&\delta^*(\phi,a) \rightarrow \phi &&\delta^*(\phi,b) \rightarrow \phi 
+\end{align*}
+
+\subsubsection{Step 3: Remove any unreachable states}
+The goal of this step is to remove any unreachable states from $Q$, the set of states in the DFA. The transition function does not detail any way to get to $\{q_1\}, \{q_2\}$, so these states will not be included in $Q$. $\{q_0\}$ will not be removed since it is the initial state, although the transition function does not specify a path to it. After removing these vertices, $Q$ is equal to $\{\{q_0\},\{q_0,q_1,q_2\},\{q_0,q_2\},\{q_1,q_2\},\phi\}$.
+
+\subsubsection {Step 4: Determine the final states}
+The final states of the newly constructed DFA include any states in $Q$ That contain one of the final states defined in the NFA. In the NFA, the final state was $q_2$. Therefore, any states in $Q$ that include $q_2$ are final states. The final states of the DFA are $\{\{q_0,q_1,q_2\},\{q_0,q_2\},\{q_1,q_2\}\}$
+
+\pagebreak
+
+\section{Answer}
+
+\begin{align*}
+&M_{dfa} = (\{\{q_0\},\{q_0,q_1,q_2\},\{q_0,q_2\},\{q_1,q_2\},\phi\},\{a,b\},\delta,q_0,\{\{q_0,q_1,q_2\},\{q_0,q_2\},\{q_1,q_2\}\}) \\ \\
+&\delta: 
+\left\{
+\begin{aligned}
+&\delta^*(\{q_0\},a) &&\rightarrow &&&\{q_0,q_1,q_2\}  \\
+&\delta^*(\{q_0\},b) &&\rightarrow &&&\phi \\
+&\delta^*(\{q_0,q_1,q_2\},a) &&\rightarrow &&&\{q_0,q_1,q_2\} \\
+&\delta^*(\{q_0,q_1,q_2\},b) &&\rightarrow &&&\{q_1,q_2\} \\
+&\delta^*(\{q_0,q_2\},a) &&\rightarrow &&&\{q_0,q_1,q_2\} \\
+&\delta^*(\{q_0,q_2\},b) &&\rightarrow &&&\phi \\
+&\delta^*(\{q_1,q_2\},a) &&\rightarrow &&&\{q_0,q_2\} \\
+&\delta^*(\{q_1,q_2\},b) &&\rightarrow &&&\{q_1,q_2\} \\
+&\delta^*(\phi,a) &&\rightarrow &&&\phi \\
+&\delta^*(\phi,b) &&\rightarrow &&&\phi 
+\end{aligned}
+\right\}
+\end{align*}
+
+\img{DFA}{Final DFA Representing the derived definition}[0.6\linewidth]
+
+\end{document}
