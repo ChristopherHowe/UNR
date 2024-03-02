@@ -5,7 +5,6 @@ Date: 3/1/24
 ***************************************************/
 
 // Preprocessor directives
-
 #include <stdio.h>
 #include <stdlib.h> // used for atoi
 #include <sys/time.h>
@@ -24,8 +23,21 @@ typedef struct _thread_data_t {
 
 // Function Prototypes
 int readFile(char filename[], int fileInts[]);
-int getTime();
+void fillThreadDataArray(
+    struct _thread_data_t threadDataObjs[],
+    pthread_mutex_t* mutexPtr,
+    int numThreads,
+    int fileInts[],
+    int numInts,
+    long long int *totalSum
+);
+int getArrVal(int ind, struct _thread_data_t *data);
+void incrementTotalSum(long long int threadSum, struct _thread_data_t *data);
 void* arraySum(void*);
+int startThreads(pthread_t threads[], struct _thread_data_t threadDataObjs[], int numThreads);
+int waitForThreads(pthread_t threads[], int numThreads);
+float getTVDiff(struct timeval tv1, struct timeval tv2);
+void outputResult(long long int sum, float durationMs);
 
 // Main Loop
 int main(int argc, char* argv[]){    
@@ -39,16 +51,14 @@ int main(int argc, char* argv[]){
     
     // NOTE: If this is statically allocated like `long long int fileInts[SIZE];` then seg faults may occur.
     // In order to circumvent this, allocating dynamically.
-
     int *fileInts = (int *)malloc(MAX_NUM_INTS_TO_SUM * sizeof(long long int));
     int numInts = readFile(argv[2], fileInts);
     if (numInts == -1){
         return 1;
     }
-    // Starting timer now since the overhead of setting up threads is part of the difference between it and a non threaded approach.
-    // Looped approach starts timer after reading file input too.
-    // TODO: Make sure matches instructions
-    long long int microsecStart = getTime();    
+    // Setting a timer point to measure when the file reading finishes and thread overhead begins.
+    struct timeval overHeadStart, threadStart, end;
+    gettimeofday(&overHeadStart, NULL); 
 
     if (numThreads > numInts){ // Check that the user didn't request more threads than the number of ints.
         printf("Too many threads requested\n");
@@ -61,54 +71,36 @@ int main(int argc, char* argv[]){
         mutex = (pthread_mutex_t*) malloc (sizeof(pthread_mutex_t)); // request some space that the mutex pointer points to
         if (pthread_mutex_init(mutex, NULL) != 0){ // handle actually initializing the mutex
             printf("Failed to initialize the mutex\n");
-            exit(1);
+            return 1;
         }
         printf("Created the mutex\n");
     } else {
         mutex = NULL;
     }
 
-    // initialize the total_sum.
+    // Initialize the total_sum that will be accessible by all the thread data objects.
     long long int totalSum = 0;
 
     // Create array of thread data.
     struct _thread_data_t threadDataObjs[numThreads];
-    for (int i = 0; i < numThreads; i++){
-        printf("Creating thread data for thread %d\n", i);
-        thread_data_t newThreadData;
-            newThreadData.data = fileInts;
-            newThreadData.startInd = i * 25;
-            newThreadData.endInd = (i+1) * 25 - 1;
-            newThreadData.totalSum = &totalSum;
-            newThreadData.lock = mutex;
-        threadDataObjs[i] = newThreadData;
-    }
-    
-    // create the array of thread objects.
+    fillThreadDataArray(threadDataObjs, mutex, numThreads, fileInts, numInts, &totalSum);
+    // Start a timer to measure how long the threads actually take to execute
+    gettimeofday(&threadStart, NULL);
+    // Start all the threads
     pthread_t threads[numThreads];
-    for (int i = 0; i < numThreads; i++){
-        printf("Creating thread %d\n", i);
-        if (pthread_create(&threads[i], NULL, arraySum, (void*)&threadDataObjs[i]) != 0){
-            printf("An error occured while trying to create a new thread\n");
-            return 1;
-        }
+    if (startThreads(threads,threadDataObjs, numThreads) != 0){
+        printf("Failed to start threads\n");
+        return 1;
     }
-
-    void* threadResult;
-    for (int i =0; i < numThreads; i++){
-        printf("Joining thread %d\n", i);
-        if ( pthread_join(threads[i], &threadResult) != 0){
-            printf("An error occured in the main thread while waiting for a child thread.\n");
-            return 1;
-        }
+    // Wait for all the threads to finish
+    if (waitForThreads(threads, numThreads) != 0){
+        printf("Failed to wait for threads\n");
+        return 1;
     }
+    // set a timer endpoint.
+    gettimeofday(&end, NULL);
 
-    // stop the timer
-    long long int microsecFinish = getTime();
-    printf("Total value of array: %lld\n",totalSum);
-    float durationMillis = ((float)(microsecFinish - microsecStart)) / 1000; // NOTE: only have 3 digits of precision since microseconds 
-    printf("Time taken (ms): %.3f\n", durationMillis);
-    
+    outputResult(totalSum, getTVDiff(overHeadStart, end));
     return 0;
 }
 
@@ -130,16 +122,54 @@ int readFile(char filename[], int fileInts[]){
     return count; 
 }
 
+void fillThreadDataArray(
+    struct _thread_data_t threadDataObjs[],
+    pthread_mutex_t* mutexPtr,
+    int numThreads,
+    int fileInts[],
+    int numInts,
+    long long int *totalSum
+){
+    int remainderInts = numInts%numThreads;
+    for (int i = 0; i < numThreads; i++){
+        // printf("Creating thread data for thread %d\n", i);
+        thread_data_t newThreadData;
+            newThreadData.data = fileInts;
+            newThreadData.startInd = i * numInts/numThreads;
+            newThreadData.endInd = (i+1) * numInts/numThreads - 1;
+            newThreadData.totalSum = totalSum;
+            newThreadData.lock = mutexPtr;
+        threadDataObjs[i] = newThreadData;
+    }
+    threadDataObjs[numThreads - 1].endInd += remainderInts;
+}
 
-int getTime(){
-    struct timeval tv;
-    gettimeofday(&tv, NULL); 
-    return tv.tv_usec;
+int startThreads(pthread_t threads[], struct _thread_data_t threadDataObjs[], int numThreads){
+    for (int i = 0; i < numThreads; i++){
+        // printf("Creating thread %d\n", i);
+        if (pthread_create(&threads[i], NULL, arraySum, (void*)&threadDataObjs[i]) != 0){
+            printf("An error occured while trying to create a new thread\n");
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int waitForThreads(pthread_t threads[], int numThreads){
+    void* threadResult;
+    for (int i =0; i < numThreads; i++){
+        // printf("Joining thread %d\n", i);
+        if ( pthread_join(threads[i], &threadResult) != 0){
+            printf("An error occured in the main thread while waiting for a child thread.\n");
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int getArrVal(int ind, struct _thread_data_t *data){
+    // NOTE: calling pthread_mutex_lock with null mutex is undefined behavior.
     pthread_mutex_t *l = data->lock;
-    // calling pthread_mutex_lock with null mutex is undefined behavior.
     if (l == NULL){
         return data->data[ind];
     } else {
@@ -150,14 +180,45 @@ int getArrVal(int ind, struct _thread_data_t *data){
     }
 }
 
+void incrementTotalSum(long long int threadSum, struct _thread_data_t *data){
+    // printf("Calling incrementTotalSum for threadedSum:%lld for thread starting at %d, with total being %lld before\n", threadSum, data->startInd, *(data->totalSum));
+    pthread_mutex_t *l = data->lock;
+    if (l == NULL){
+        *(data->totalSum) += threadSum;
+    } else {
+        pthread_mutex_lock(l);
+        *(data->totalSum) += threadSum;
+        pthread_mutex_unlock(l);
+    }
+    // printf("Finished incrementTotalSum for threadedSum:%lld for thread starting at %d, with total now %lld\n", threadSum, data->startInd, *(data->totalSum));
+}
+
 void* arraySum(void* data){
     struct _thread_data_t* threadData = (struct _thread_data_t*) data;
-    printf("Calling array sum with start ind %d\n", threadData->startInd);
+    // printf("Calling array sum with start ind %d\n", threadData->startInd);
     long long int thread_sum = 0;
     for (int i = threadData->startInd; i <= threadData->endInd; i++){
-        printf("threaded sum was %lld before adding ind %d\n", thread_sum, i);
+        if (i%50 == 0){
+            // printf("for thread starting at %d handling index %d\n", threadData->startInd, i);
+        }
         thread_sum += getArrVal(i,threadData);
     }
-    printf("Finished array sum with start ind %d\n", threadData->startInd);
+    incrementTotalSum(thread_sum, threadData);
+    // printf("Finished array sum with start ind %d\n", threadData->startInd);
     return NULL;
+}
+
+// Takes the difference between two timeval structs
+// assumes that tv2 is after tv1
+// NOTE: Should be the same in both versions.
+float getTVDiff(struct timeval tv1, struct timeval tv2){
+    long secondPassed = tv2.tv_sec - tv1.tv_sec;
+    long microsecondsPassed = tv2.tv_usec - tv1.tv_usec;
+    return ((float)(secondPassed * 1000000 + microsecondsPassed)) / 1000;
+}
+
+// NOTE: Should be the same in both versions.
+void outputResult(long long int sum, float durationMs){
+    printf("Total value of array: %lld\n", sum);
+    printf("Time taken (ms): %.3f\n", durationMs);
 }

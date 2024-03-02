@@ -14,7 +14,7 @@ Date: 3/1/24
 
 // Function Prototypes
 int readFile(char filename[], long long int fileInts[]);
-int getTime();
+float getTVDiff(struct timeval tv1, struct timeval tv2);
 long long int sumArray(long long int  fileInts[], int numInts);
 
 // Main Loop
@@ -33,15 +33,16 @@ int main(int argc, char* argv[]){
     if (numInts == -1){
         return 1;
     }
-    long long int microsecStart = getTime();    
+
+    struct timeval start, end;
+    gettimeofday(&start, NULL); 
     long long int sum = sumArray(fileInts, numInts);
-    long long int microsecFinish = getTime();
+    gettimeofday(&end, NULL);    
+
+    free(fileInts); // Don't forget to free the int array when its done.
     
-    free(fileInts);// Don't forget to free the int array when its done.
-    
-    printf("Total value of array: %d\n",sum);
-    float durationMillis = ((float)(microsecFinish - microsecStart)) / 1000; // NOTE: only have 3 digits of precision since microseconds 
-    printf("Time taken (ms): %.3f\n", durationMillis);
+    printf("Total value of array: %lld\n",sum);
+    printf("Time taken (ms): %.3f\n", getTVDiff(start, end));
     return 0;
 }
 
@@ -64,10 +65,13 @@ int readFile(char filename[], long long int fileInts[]){
     return count; 
 }
 
-int getTime(){
-    struct timeval tv;
-    gettimeofday(&tv, NULL); 
-    return tv.tv_usec;
+// Takes the difference between two timeval structs
+// assumes that tv2 is after tv1
+// NOTE: Should be the same in the threaded version.
+float getTVDiff(struct timeval tv1, struct timeval tv2){
+    long secondPassed = tv2.tv_sec - tv1.tv_sec;
+    long microsecondsPassed = tv2.tv_usec - tv1.tv_usec;
+    return ((float)(secondPassed * 1000000 + microsecondsPassed)) / 1000;
 }
 
 int getMaxIntSize(){
