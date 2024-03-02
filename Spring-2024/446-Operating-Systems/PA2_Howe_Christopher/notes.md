@@ -11,8 +11,7 @@ stdlib
 string
 pthread
 ctype
-sys
-time.h
+sys/time.h
 
 ## Specifications
 * Program should be able to accept up to 100,000,000 values
