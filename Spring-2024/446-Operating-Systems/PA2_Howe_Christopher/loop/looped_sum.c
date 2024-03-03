@@ -5,17 +5,20 @@ Date: 3/1/24
 ***************************************************/
 
 // Preprocessor directives
-
 #include <stdio.h>
-#include <stdlib.h> // used for malloc
+#include <stdlib.h>
 #include <sys/time.h>
 
 #define MAX_NUM_INTS_TO_SUM 100000000
 
 // Function Prototypes
-int readFile(char filename[], long long int fileInts[]);
+// Required
+int readFile(char filename[], int fileInts[]);
+long long int sumArray(long long int fileInts[], int numInts);
+// Additional
 float getTVDiff(struct timeval tv1, struct timeval tv2);
-long long int sumArray(long long int  fileInts[], int numInts);
+void IntArrToLongLongArr(int in[], long long int out[], int numVals);
+void outputResult(long long int sum, float totalDurationMs);
 
 // Main Loop
 int main(int argc, char* argv[]){    
@@ -27,34 +30,38 @@ int main(int argc, char* argv[]){
     }
     // NOTE: If this is statically allocated like `long long int fileInts[SIZE];` then seg faults may occur.
     // In order to circumvent this, allocating dynamically.
-    long long int *fileInts = (long long int *)malloc(MAX_NUM_INTS_TO_SUM * sizeof(long long int));
-    
+    int *fileInts = (int *)malloc(MAX_NUM_INTS_TO_SUM * sizeof(int));
     int numInts = readFile(argv[1], fileInts);
     if (numInts == -1){
         return 1;
     }
+    
+    long long int *inputVals = (long long int *)malloc(MAX_NUM_INTS_TO_SUM * sizeof(long long int));
+    IntArrToLongLongArr(fileInts, inputVals, numInts);
+    free(fileInts); // No longer require the fileInts array.
+
 
     struct timeval start, end;
     gettimeofday(&start, NULL); 
-    long long int sum = sumArray(fileInts, numInts);
+    long long int sum = sumArray(fileInts, inputVals);
     gettimeofday(&end, NULL);    
 
-    free(fileInts); // Don't forget to free the int array when its done.
-    
+    free(inputVals);
+
     printf("Total value of array: %lld\n",sum);
     printf("Time taken (ms): %.3f\n", getTVDiff(start, end));
     return 0;
 }
 
 
-int readFile(char filename[], long long int fileInts[]){
+int readFile(char filename[], int fileInts[]){
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         printf("File not found...\n");
         return -1;
     }
     long count = 0;
-    while (fscanf(file, "%lld", &fileInts[count]) == 1) {
+    while (fscanf(file, "%d", &fileInts[count]) == 1) {
         count++;
         if (count > MAX_NUM_INTS_TO_SUM) {
             printf("Too many integers in the file. The Looped sum file only supports %d\n", MAX_NUM_INTS_TO_SUM);
@@ -74,18 +81,6 @@ float getTVDiff(struct timeval tv1, struct timeval tv2){
     return ((float)(secondPassed * 1000000 + microsecondsPassed)) / 1000;
 }
 
-int getMaxIntSize(){
-    if (sizeof(int) == 2) {
-        return 32767;
-    }
-    else if (sizeof(int) == 4) {
-        return 2147483647;
-    }
-    else {
-        printf("The sizeof type int was unexpected\n");
-        return -1;
-    }
-}
 long long int sumArray(long long int fileInts[], int numInts){
     long long int sum = 0;
     for (int i=0; i < numInts; i++){
@@ -94,3 +89,15 @@ long long int sumArray(long long int fileInts[], int numInts){
     return sum;
 }
 
+// NOTE: It appears that since the readFile Function expects a int[] and sumArray expects a long long int[], the
+// array must be converted. The instructions dictate that the defined parameter types must be used.
+void IntArrToLongLongArr(int in[], long long int out[], int numVals){
+    for(int i=0; i<numVals; i++){
+        out[i] = (long long int)in[i];
+    }
+}
+
+void outputResult(long long int sum, float totalDurationMs){
+    printf("Total value of array: %lld\n", sum);
+    printf("Time taken (ms): %.3f\n", totalDurationMs);
+}

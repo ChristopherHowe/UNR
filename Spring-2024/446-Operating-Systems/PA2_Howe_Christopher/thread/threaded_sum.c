@@ -6,7 +6,7 @@ Date: 3/1/24
 
 // Preprocessor directives
 #include <stdio.h>
-#include <stdlib.h> // used for atoi
+#include <stdlib.h>
 #include <sys/time.h>
 #include <pthread.h>
 
@@ -24,17 +24,17 @@ typedef struct _thread_data_t {
 // Function Prototypes
 int readFile(char filename[], int fileInts[]);
 void fillThreadDataArray(
-    struct _thread_data_t threadDataObjs[],
+    thread_data_t threadDataObjs[],
     pthread_mutex_t* mutexPtr,
     int numThreads,
     int fileInts[],
     int numInts,
     long long int *totalSum
 );
-int getArrVal(int ind, struct _thread_data_t *data);
-void incrementTotalSum(long long int threadSum, struct _thread_data_t *data);
-void* arraySum(void*);
-int startThreads(pthread_t threads[], struct _thread_data_t threadDataObjs[], int numThreads);
+int getArrVal(int ind, thread_data_t *data);
+void incrementTotalSum(long long int threadSum, thread_data_t *data);
+void* arraySum(void* data);
+int startThreads(pthread_t threads[], thread_data_t threadDataObjs[], int numThreads);
 int waitForThreads(pthread_t threads[], int numThreads);
 float getTVDiff(struct timeval tv1, struct timeval tv2);
 void outputResult(long long int sum, float totalDurationMs, float runningDurationMs);
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
     // Create array of thread data.
     printf("Creating thread data\n");
 
-    struct _thread_data_t threadDataObjs[numThreads];
+    thread_data_t threadDataObjs[numThreads];
     fillThreadDataArray(threadDataObjs, mutex, numThreads, fileInts, numInts, &totalSum);
     // Start a timer to measure how long the threads actually take to execute
     gettimeofday(&threadStart, NULL);
@@ -127,7 +127,7 @@ int readFile(char filename[], int fileInts[]){
 }
 
 void fillThreadDataArray(
-    struct _thread_data_t threadDataObjs[],
+    thread_data_t threadDataObjs[],
     pthread_mutex_t* mutexPtr,
     int numThreads,
     int fileInts[],
@@ -148,7 +148,7 @@ void fillThreadDataArray(
     threadDataObjs[numThreads - 1].endInd += remainderInts;
 }
 
-int startThreads(pthread_t threads[], struct _thread_data_t threadDataObjs[], int numThreads){
+int startThreads(pthread_t threads[], thread_data_t threadDataObjs[], int numThreads){
     for (int i = 0; i < numThreads; i++){
         // printf("Creating thread %d\n", i);
         if (pthread_create(&threads[i], NULL, arraySum, (void*)&threadDataObjs[i]) != 0){
@@ -175,7 +175,7 @@ int waitForThreads(pthread_t threads[], int numThreads){
     return 0;
 }
 
-int getArrVal(int ind, struct _thread_data_t *data){
+int getArrVal(int ind, thread_data_t *data){
     // NOTE: calling pthread_mutex_lock with null mutex is undefined behavior.
     pthread_mutex_t *l = data->lock;
     if (l == NULL){
@@ -189,7 +189,7 @@ int getArrVal(int ind, struct _thread_data_t *data){
     }
 }
 
-void incrementTotalSum(long long int threadSum, struct _thread_data_t *data){
+void incrementTotalSum(long long int threadSum, thread_data_t *data){
     // printf("Calling incrementTotalSum for threadedSum:%lld for thread starting at %d, with total being %lld before\n", threadSum, data->startInd, *(data->totalSum));
     pthread_mutex_t *l = data->lock;
     if (l == NULL){
@@ -203,7 +203,7 @@ void incrementTotalSum(long long int threadSum, struct _thread_data_t *data){
 }
 
 void* arraySum(void* data){
-    struct _thread_data_t* threadData = (struct _thread_data_t*) data;
+    thread_data_t* threadData = (thread_data_t*) data;
     // printf("Calling array sum with start ind %d\n", threadData->startInd);
     long long int thread_sum = 0;
     for (int i = threadData->startInd; i <= threadData->endInd; i++){
