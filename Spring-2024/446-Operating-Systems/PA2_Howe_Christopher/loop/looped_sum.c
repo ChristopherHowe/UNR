@@ -22,7 +22,6 @@ void outputResult(long long int sum, float totalDurationMs);
 
 // Main Loop
 int main(int argc, char* argv[]){    
-    printf("Starting Main\n");
     if (argc != 2){
         printf("Please provide the filename to be summed as a command line argument.\n");
         printf("Example: ./looped_sum data.txt.\n");

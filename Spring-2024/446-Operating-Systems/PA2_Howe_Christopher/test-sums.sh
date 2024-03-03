@@ -7,7 +7,7 @@ info(){
     echo -e "${teal_color}$@${white_color}"
 }
 
-test_file="ten.txt"
+test_file="oneThousand.txt"
 num_threads=4
 use_locking=0
 

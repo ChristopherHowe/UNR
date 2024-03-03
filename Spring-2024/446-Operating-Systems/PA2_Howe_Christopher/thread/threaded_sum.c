@@ -195,7 +195,6 @@ int getArrVal(int ind, thread_data_t *data){
 void incrementTotalSum(long long int threadSum, thread_data_t *data){
     pthread_mutex_t *l = data->lock;
     if (l == NULL){
-        printf("incrementing unsafely\n");
         *(data->totalSum) += threadSum;
     } else {
         pthread_mutex_lock(l);

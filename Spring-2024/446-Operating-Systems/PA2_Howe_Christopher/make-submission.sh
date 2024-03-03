@@ -9,6 +9,7 @@ mkdir loop
 mkdir thread
 cp ../loop/looped_sum.c ../loop/makefile ./loop
 cp ../thread/threaded_sum.c ../thread/makefile ./thread
+cp ../Free-Response-Doc/.latex-out/main.pdf ./$pa_name.pdf
 cd ..
 
 # Create the tarball
