@@ -12,58 +12,62 @@
 \pagebreak
 
 \section{Question 1}
-\subsection{instructions}
-Run looped sum and threaded sum a few times with whatever data file you like.
+\subsection{Instructions}
+Run the looped sum and threaded sum several times with a data file of your choice.
+
 \subsection{What output is the same when a program with the same data is run many times? Explain.}
-The total value of the array is the same every time the program is ran. This is because it should never change because the values inside the file do not change between runs.
+The total value of the array remains constant every time the program is executed. This is expected since the values within the file do not change between runs.
+
 \subsection{What output changes when a program is run with the same data many times? Explain.}
-The output specifying the amount of time required for the program to run changes every time the program runs. The nature in which processes and threads alternate time on the CPU is not deterministic. Therefore, the amount of time required for a particular program to execute is never consistent.
+The output indicating the time required for the program to run changes with each execution. The non-deterministic nature of how processes and threads alternate their time on the CPU results in varying execution times.
 
 \section{Question 2}
-\subsection{instructions}
-Run looped\_sum with the tenValues.txt file many times.
+\subsection{Instructions}
+Run looped\_sum with the tenValues.txt file multiple times.
+
 \subsection{Do you get the same sum when you run threaded\_sum with ten\_values.txt and no lock?}
-Every time I ran the threaded\_sum executable with no lock and 10 values I always got the correct sum. I believe this is due to my implementation of writing to totalSum. However, concurrent writes to a critical region, especially those that first rely on a read as in this problem, typically cause collisions.  Consider a scenario where one thread reads the current totalSum value. Before it can increment the value, another thread also reads the value, leading to a race condition to determine which thread writes the new value first. Therefore, it would make sense that the sum would not always be the same between different executions of the threaded\_sum program with no lock.
+The threaded\_sum executable without a lock consistently produces the correct sum. However, in scenarios with concurrent writes to a critical region, especially those involving reads, collisions and race conditions can occur. For instance, one thread reading the current totalSum value while another thread attempts to increment it can lead to unpredictable outcomes.
 
 \subsection{Do you get the same sum when you run threaded\_sum with ten\_values.txt and a lock?}
-Yes. Every time I ran the threaded\_sum executable with locking and 10 values I got the correct/the same sum. This does align with the expected behavior of the program. requiring a lock to access the totalSum is a good practice to prevent race conditions and collisions between threads.
+Yes, running the threaded\_sum executable with a lock and 10 values consistently produces the correct sum. This aligns with the expected behavior, as using a lock to access totalSum is a good practice to prevent race conditions and collisions between threads.
 
 \subsection{How does the run time of looped\_sum and threaded\_sum (locked AND not locked) compare}
-For this input size, the looped\_sum preforms much better than the threaded\_sum. This is because the threaded approach introduces a lot of overhead that is not useful in order to only calculate the sum of 10 values. The looped approach has an average time of less than a microsecond and the threaded approach has an average time of 256 microseconds. The locked and not locked threading approaches preformed nearly the same.
-Please refer to the attached table to see the results from the entire project.
+For this input size, looped\_sum outperforms threaded\_sum significantly. The threaded approach introduces overhead, which is unnecessary for calculating the sum of only 10 values. The average runtime for the looped approach is less than a microsecond, while the threaded approach takes an average of 256 microseconds. The locked and non-locked threading approaches perform similarly. Refer to the attached table for detailed results.
 
 \subsection{Is the total time to calculate the sum for the three cases different? Were they what you expected? Why or why not?}
-No the total time to calculate the sum for the three cases were different. I did not expect the threaded approach to preform so much smaller but it does make sense when you consider that the program must switch context for each thread ran.
+The total time to calculate the sum for the three cases differs. I did not expect the threaded approach to perform significantly worse, but it makes sense when considering the context switching required for each thread.
 
 \section{Question 3}
-\subsection{instructions}
-Run looped\_sum with the oneThousandValues.txt file many times. If run times do not vary consistently, try running with oneHundredMillion.txt instead
+\subsection{Instructions}
+Run looped\_sum with the oneThousandValues.txt file multiple times. If runtimes do not vary consistently, try running with oneHundredMillion.txt instead.
+
 \subsection{Do you get the same sum when threaded\_sum runs with oneThousandValues.txt and no lock?}
-Every time I ran the threaded\_sum executable with no lock and 1000 values I always got the correct sum. I believe this is due to my implementation of writing to totalSum. However, concurrent writes to a critical region, especially those that first rely on a read as in this problem, typically cause collisions.  Consider a scenario where one thread reads the current totalSum value. Before it can increment the value, another thread also reads the value, leading to a race condition to determine which thread writes the new value first. Therefore, it would make sense that the sum would not always be the same between different executions of the threaded\_sum program with no lock.
+The threaded\_sum executable without a lock consistently produces the correct sum with 1000 values. However, there is a potential for inconsistency due to concurrent writes to a critical region, as described earlier.
 
 \subsection{Do you get the same sum when threaded\_sum runs with oneThousandValues.txt and a lock?}
-Yes. Every time I ran the threaded\_sum executable with locking and 10 values I got the correct/the same sum. This does align with the expected behavior of the program. requiring a lock to access the totalSum is a good practice to prevent race conditions and collisions between threads.
+Yes, running the threaded\_sum executable with a lock and 1000 values consistently produces the correct sum, aligning with expected behavior.
 
 \subsection{How does the run time (in ms) of looped\_sum and threaded\_sum (locked AND not locked) compare?}
-I ran this test 10000 times. At a thousand values, the preformance advantage of the looped sum was still quite apparent. The looped sum took 0.002 ms on average while the threaded aproach took 0.479 ms and 0.464ms. The threading is still not more preformant at this level.
+After running this test 10000 times, the performance advantage of the looped sum remains apparent at a thousand values. The looped sum averages 0.002 ms, while the threaded approach takes 0.479 ms and 0.464 ms. Threading does not offer improved performance at this level.
+
 \subsection{Is the total time to calculate the sum for the three programs different? Were they what you expected? Why or why not?}
-Yes there is an obvious difference in the runtimes of these programs. There is still little difference in the preformance of the locking and not locking threaded approaches. This makes sense however since the number of operations that require locking and unlocking is equal to the number of threads and when running the program with 0-16 threads, this makes little difference in comparision to the 1000+ operations to add the values.
+Yes, there is a noticeable difference in the runtimes of these programs. However, the performance of the locking and non-locking threaded approaches remains similar. This is expected, given that the number of locking and unlocking operations is proportional to the number of threads, making little difference in comparison to the 1000+ operations required to add the values.
 
 \section{Question 4}
 \subsection{Does the use of a lock in a threaded program have any impact on performance? How does the number of threads and the amount of data affect the performance of the threaded program with and without locks?}
-The use of a lock in a threaded program most definitely has an impact on preformance. While these programs were developed, the writer experiemented with using locking and unlocking for every read from the array. When an input file with 100,000,000 values was used, this corresponded to a increase from 121 ms to 6000 ms with the same input size and thread count when locking was used. 
+The use of a lock in a threaded program significantly impacts performance. When experimenting with locking and unlocking for every read from the array, there was a considerable increase in runtime—from 121 ms to 6000 ms—when using an input file with 100,000,000 values and the same thread count.
 
-The number of threads also had a noticable impact on the preformance of the program. It appeared that there was a sweet spot of threads that lead to the optimal preformance. For the test machine, that was 12 threads. This would make sense since the computer has 6 CPUs and 12 virtual cores.
+The number of threads also affects program performance. There appears to be an optimal number of threads for optimal performance, and for the test machine, that number is 12. This aligns with the machine having 6 CPUs and 12 virtual cores.
 
-Finally, the amount of data also affected the performance of the threaded program. larger file sizes increased the required time for the threaded program to execute. However, this increase was not linear. Jumps from 1000 to 100000 values only corresponded to a 0.1ms (25\%) increase in runtime. This was not the case for the looping approach.
+Additionally, the amount of data influences the performance of the threaded program. Larger file sizes increase the required time for the threaded program to execute, although this increase is not linear. Jumps from 1000 to 100000 values only correspond to a 0.1 ms (25\%) increase in runtime. This is not the case for the looped approach.
 
 \section{Question 5}
 \subsection{Is the lock necessary to compute consistent values every time the program is run? Why or why not? Why do you think that occurs? You should run the program with and without a lock and with a few different data files to get the full picture.}
-The lock is necessary to compute consistent values every time the program is run. Sometimes unsafe concurrent programs can yield the correct result. However, they fail to preform so every time. That is why locks have to be implemented to make sure that concurrent programs preform as expected every time. In this program, the lock should be included to protect the totalSum variable. While not every implementation will lead to a race condition, some may.
+The lock is necessary to compute consistent values every time the program is run. While some unsafe concurrent programs may yield correct results occasionally, they are not reliable. Locks are implemented to ensure that concurrent programs consistently perform as expected. In this program, the lock should be included to protect the totalSum variable. While not every implementation will lead to a race condition, some may.
 
 \section{Question 6}
 \subsection{What considerations decided what was the Critical Section? Explain.}
-The critical section for this program is the totalSum variable. The Critical section of any program is any resource that multiple threads/processes have access to at the same time. While all threads did have access to the data section where the int arrays were stored, they did not access the same portion of that array. Therefore, the integer array was not a critical region. If it was desired, the program could be written to have seperate arrays for each thread. The totalSum variable is a critical region since it is possible for multiple threads to read and write to it at once.
+The critical section for this program is the totalSum variable. The critical section of any program is any resource that multiple threads/processes have access to simultaneously. Although all threads have access to the data section where the int arrays are stored, they do not access the same portion of that array. Therefore, the integer array is not a critical region. If desired, the program could be written to have separate arrays for each thread. The totalSum variable is a critical region since multiple threads can read and write to it simultaneously.
 
 \pagebreak
 
