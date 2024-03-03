@@ -9,7 +9,7 @@ Date: 3/1/24
 #include <stdlib.h>
 #include <sys/time.h>
 
-#define MAX_NUM_INTS_TO_SUM 100000000
+#define MAX_NUM_INTS_TO_SUM 100000000 // From Specification
 
 // Function Prototypes
 // Required
@@ -53,8 +53,10 @@ int main(int argc, char* argv[]){
     return 0;
 }
 
-
+// Reads a file of integers to be used as input
+// NOTE: Should be the same in both versions.
 int readFile(char filename[], int fileInts[]){
+    printf("Reading data...");
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         printf("File not found...\n");
@@ -64,7 +66,7 @@ int readFile(char filename[], int fileInts[]){
     while (fscanf(file, "%d", &fileInts[count]) == 1) {
         count++;
         if (count > MAX_NUM_INTS_TO_SUM) {
-            printf("Too many integers in the file. The Looped sum file only supports %d\n", MAX_NUM_INTS_TO_SUM);
+            printf("Too many integers in the file. This program only supports up to %d values\n", MAX_NUM_INTS_TO_SUM);
             break;
         }
     }
@@ -74,7 +76,7 @@ int readFile(char filename[], int fileInts[]){
 
 // Takes the difference between two timeval structs
 // assumes that tv2 is after tv1
-// NOTE: Should be the same in the threaded version.
+// NOTE: Should be the same in the both versions.
 float getTVDiff(struct timeval tv1, struct timeval tv2){
     long secondPassed = tv2.tv_sec - tv1.tv_sec;
     long microsecondsPassed = tv2.tv_usec - tv1.tv_usec;
