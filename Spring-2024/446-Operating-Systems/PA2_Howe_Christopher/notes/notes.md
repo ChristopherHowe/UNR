@@ -16,6 +16,15 @@ sys/time.h
 ## Specifications
 * Program should be able to accept up to 100,000,000 values
 
+## Rules
+* No global variables allowed
+* every function used must have a prototype
+* Check that there are no unused functions
+* only can use the accepted libraries
+* must be able to accept a file with 100,000,000 values
+* Do the processes have to call pthread_exit???
+* All functions MUST match the specification.
+
 
 ## Notes on how threading works
 The first thread is the main thread
