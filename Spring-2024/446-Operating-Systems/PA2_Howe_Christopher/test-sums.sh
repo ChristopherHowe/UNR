@@ -7,7 +7,7 @@ info(){
     echo -e "${teal_color}$@${white_color}"
 }
 
-test_file=random_numbers.txt
+test_file="10000000-random-numbers.txt"
 num_threads=4
 use_locking=0
 
@@ -69,10 +69,10 @@ if [ $run_loop -eq 1 ]; then
         output=$(./looped_sum "../$test_file" | tee /dev/tty)
         time_val=$(echo "$output" | grep -oP 'Time taken \(ms\): \K[0-9]+\.[0-9]+')
         time_array+=("$time_val")
-        total_time=$(echo "$total_time + $time_val" | bc)
+        total_time=$(echo "scale=3; $total_time + $time_val" | bc)
     done
     echo ${time_array[@]}
-    echo Average time: $(echo "$total_time / $run_many_count" | bc)  
+    echo Average time: $(echo "scale=3; $total_time / $run_many_count" | bc)  
     info finished looped sum
 fi
 
@@ -90,10 +90,10 @@ if [ $run_thread -eq 1 ]; then
         output=$(./threaded_sum "$num_threads" "../$test_file" "$use_locking" | tee /dev/tty)
         time_val=$(echo "$output" | grep -oP 'Time taken \(ms\): \K[0-9]+\.[0-9]+')
         time_array+=("$time_val")
-        total_time=$(echo "$total_time + $time_val" | bc)
+        total_time=$(echo "scale=3; $total_time + $time_val" | bc)
     done
     
     echo ${time_array[@]}
-    echo Average time: $(echo "$total_time / $run_many_count" | bc)  
+    echo Average time: $(echo "scale=3; $total_time / $run_many_count" | bc)  
     info finished threaded sum
 fi
