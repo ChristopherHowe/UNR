@@ -18,7 +18,7 @@ run_many_count=1
 
 script_dir=$PWD
 
-while getopts ":lt:f:" opt; do
+while getopts ":lt:f:r:" opt; do
   case $opt in
     t)
       test_type=$OPTARG
@@ -30,6 +30,9 @@ while getopts ":lt:f:" opt; do
       ;;
     l)
       use_locking=1
+      ;;
+    r)
+      num_threads=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2

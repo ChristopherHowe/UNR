@@ -37,8 +37,7 @@ void* arraySum(void*);
 int startThreads(pthread_t threads[], struct _thread_data_t threadDataObjs[], int numThreads);
 int waitForThreads(pthread_t threads[], int numThreads);
 float getTVDiff(struct timeval tv1, struct timeval tv2);
-void outputResult(long long int sum, float durationMs);
-
+void outputResult(long long int sum, float totalDurationMs, float runningDurationMs);
 // Main Loop
 int main(int argc, char* argv[]){    
     if (argc != 4){
@@ -60,6 +59,7 @@ int main(int argc, char* argv[]){
     struct timeval overHeadStart, threadStart, end;
     gettimeofday(&overHeadStart, NULL); 
 
+    printf("Checking numthreads\n");
     if (numThreads > numInts){ // Check that the user didn't request more threads than the number of ints.
         printf("Too many threads requested\n");
         return -1;
@@ -73,7 +73,6 @@ int main(int argc, char* argv[]){
             printf("Failed to initialize the mutex\n");
             return 1;
         }
-        printf("Created the mutex\n");
     } else {
         mutex = NULL;
     }
@@ -82,17 +81,22 @@ int main(int argc, char* argv[]){
     long long int totalSum = 0;
 
     // Create array of thread data.
+    printf("Creating thread data\n");
+
     struct _thread_data_t threadDataObjs[numThreads];
     fillThreadDataArray(threadDataObjs, mutex, numThreads, fileInts, numInts, &totalSum);
     // Start a timer to measure how long the threads actually take to execute
     gettimeofday(&threadStart, NULL);
     // Start all the threads
+    
+    printf("Starting threads\n");
     pthread_t threads[numThreads];
     if (startThreads(threads,threadDataObjs, numThreads) != 0){
         printf("Failed to start threads\n");
         return 1;
     }
     // Wait for all the threads to finish
+    printf("Waiting for threads\n");
     if (waitForThreads(threads, numThreads) != 0){
         printf("Failed to wait for threads\n");
         return 1;
@@ -100,7 +104,7 @@ int main(int argc, char* argv[]){
     // set a timer endpoint.
     gettimeofday(&end, NULL);
 
-    outputResult(totalSum, getTVDiff(overHeadStart, end));
+    outputResult(totalSum, getTVDiff(overHeadStart, end), getTVDiff(threadStart,end));
     return 0;
 }
 
@@ -163,6 +167,10 @@ int waitForThreads(pthread_t threads[], int numThreads){
             printf("An error occured in the main thread while waiting for a child thread.\n");
             return 1;
         }
+        if (*(int*)threadResult != 0){
+            printf("A thread exited with a non zero exit code.\n");
+            return 1;
+        }
     }
     return 0;
 }
@@ -173,6 +181,7 @@ int getArrVal(int ind, struct _thread_data_t *data){
     if (l == NULL){
         return data->data[ind];
     } else {
+        // TODO: Check that instructions specify that reading requires locking.
         pthread_mutex_lock(l);
         int val = data->data[ind];
         pthread_mutex_unlock(l);
@@ -198,14 +207,16 @@ void* arraySum(void* data){
     // printf("Calling array sum with start ind %d\n", threadData->startInd);
     long long int thread_sum = 0;
     for (int i = threadData->startInd; i <= threadData->endInd; i++){
-        if (i%50 == 0){
-            // printf("for thread starting at %d handling index %d\n", threadData->startInd, i);
-        }
+        // if (i%50 == 0){
+        //     printf("for thread starting at %d handling index %d\n", threadData->startInd, i);
+        // }
         thread_sum += getArrVal(i,threadData);
     }
     incrementTotalSum(thread_sum, threadData);
     // printf("Finished array sum with start ind %d\n", threadData->startInd);
-    return NULL;
+    int *res = (int*)malloc(sizeof(int));
+    *res = 0;
+    pthread_exit(res);  
 }
 
 // Takes the difference between two timeval structs
@@ -217,8 +228,8 @@ float getTVDiff(struct timeval tv1, struct timeval tv2){
     return ((float)(secondPassed * 1000000 + microsecondsPassed)) / 1000;
 }
 
-// NOTE: Should be the same in both versions.
-void outputResult(long long int sum, float durationMs){
+void outputResult(long long int sum, float totalDurationMs, float runningDurationMs){
     printf("Total value of array: %lld\n", sum);
-    printf("Time taken (ms): %.3f\n", durationMs);
+    printf("Time taken (ms): %.3f\n", totalDurationMs);
+    printf("Time taken to run the threads (ms): %.3f\n", runningDurationMs);
 }
