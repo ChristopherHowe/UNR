@@ -1,0 +1,42 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 446}
+\hmwkTitle{Prgramming Assignment 2, threading}
+\hmwkDueDate{March 2, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Sarah Davis}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Question 1}
+\subsection{instructions}
+Run looped sum and threaded sum a few times with whatever data file you like.
+\subsection{What output is the same when a program with the same data is run many times? Explain.}
+\subsection{What output changes when a program is run with the same data many times? Explain.}
+
+\section{Question 2}
+\subsection{instructions}
+Run looped\_sum with the tenValues.txt file many times.
+\subsection{Do you get the same sum when you run threaded\_sum with ten\_values.txt and no lock?}
+\subsection{Do you get the same sum when you run threaded\_sum with ten\_values.txt and a lock?}
+\subsection{How does the run time of looped\_sum and threaded\_sum (locked AND not locked) compare}
+\subsection{Is the total time to calculate the sum for the three cases different? Were they what you expected? Why or why not?}
+
+\section{Question 3}
+\subsection{instructions}
+Run looped\_sum with the oneThousandValues.txt file many times. If run times do not vary consistently, try running with oneHundredMillion.txt instead
+\subsection{Do you get the same sum when threaded\_sum runs with oneThousandValues.txt and no lock?}
+\subsection{Do you get the same sum when threaded\_sum runs with oneThousandValues.txt and a lock?}
+\subsection{How does the run time (in ms) of looped\_sum and threaded\_sum (locked AND not locked) compare?}
+\subsection{Is the total time to calculate the sum for the three programs different? Were they what you expected? Why or why not?}
+
+\section{Question 4}
+\subsection{Does the use of a lock in a threaded program have any impact on performance? How does the number of threads and the amount of data affect the performance of the threaded program with and without locks?}
+\section{Question 5}
+\subsection{Is the lock necessary to compute consistent values every time the program is run? Why or why not? Why do you think that occurs? You should run the program with and without a lock and with a few different data files to get the full picture.}
+\section{Question 6}
+\subsection{What considerations decided what was the Critical Section? Explain.}
+\end{document}
