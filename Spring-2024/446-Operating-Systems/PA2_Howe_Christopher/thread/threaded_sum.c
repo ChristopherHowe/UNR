@@ -10,7 +10,7 @@ Date: 3/1/24
 #include <sys/time.h>
 #include <pthread.h>
 
-#define MAX_NUM_INTS_TO_SUM 100000000
+#define MAX_NUM_INTS_TO_SUM 100000000 // From Specification
 
 // Thread Data structure (Provided in assignment specifications)
 typedef struct _thread_data_t {
@@ -22,7 +22,16 @@ typedef struct _thread_data_t {
 } thread_data_t;
 
 // Function Prototypes
+// Required
 int readFile(char filename[], int fileInts[]);
+void* arraySum(void* data);
+// Additional
+int getArrVal(int ind, thread_data_t *data);
+void incrementTotalSum(long long int threadSum, thread_data_t *data);
+int startThreads(pthread_t threads[], thread_data_t threadDataObjs[], int numThreads);
+int waitForThreads(pthread_t threads[], int numThreads);
+float getTVDiff(struct timeval tv1, struct timeval tv2);
+void outputResult(long long int sum, float totalDurationMs, float runningDurationMs);
 void fillThreadDataArray(
     thread_data_t threadDataObjs[],
     pthread_mutex_t* mutexPtr,
@@ -31,13 +40,8 @@ void fillThreadDataArray(
     int numInts,
     long long int *totalSum
 );
-int getArrVal(int ind, thread_data_t *data);
-void incrementTotalSum(long long int threadSum, thread_data_t *data);
-void* arraySum(void* data);
-int startThreads(pthread_t threads[], thread_data_t threadDataObjs[], int numThreads);
-int waitForThreads(pthread_t threads[], int numThreads);
-float getTVDiff(struct timeval tv1, struct timeval tv2);
-void outputResult(long long int sum, float totalDurationMs, float runningDurationMs);
+int safeStringToInt(char str[], int *out);
+
 // Main Loop
 int main(int argc, char* argv[]){    
     if (argc != 4){
@@ -45,8 +49,17 @@ int main(int argc, char* argv[]){
         printf("(./threaded_sum 9 example.txt 0)\n");
         return -1;
     }
-    int numThreads = atoi(argv[1]);
-    int useLocks = atoi(argv[3]); // 0 for no 1 for yes.
+    int numThreads;
+    if (safeStringToInt(argv[1], &numThreads) != 0){
+        printf("Failed to parse number of threads (%s) to int\n", argv[1]);
+        return -1;
+    }
+
+    int useLocks; // 0 for no 1 for yes.
+    if (safeStringToInt(argv[3], &useLocks) != 0){
+        printf("Failed to parse useLocks value (%s) to int\n", argv[3]);
+        return -1;
+    }
     
     // NOTE: If this is statically allocated like `long long int fileInts[SIZE];` then seg faults may occur.
     // In order to circumvent this, allocating dynamically.
@@ -55,15 +68,19 @@ int main(int argc, char* argv[]){
     if (numInts == -1){
         return 1;
     }
-    // Setting a timer point to measure when the file reading finishes and thread overhead begins.
-    struct timeval overHeadStart, threadStart, end;
-    gettimeofday(&overHeadStart, NULL); 
-
-    printf("Checking numthreads\n");
+    
     if (numThreads > numInts){ // Check that the user didn't request more threads than the number of ints.
         printf("Too many threads requested\n");
         return -1;
     }
+
+    // Initialize the total_sum that will be accessible by all the thread data objects.
+    long long int totalSum = 0;
+
+    // Setting a timer point to measure when the file reading finishes and thread overhead begins.
+    struct timeval overHeadStart, threadStart, end;
+    gettimeofday(&overHeadStart, NULL); 
+
 
     // Set up the mutex
     pthread_mutex_t *mutex; // declare a pointer to the mutex
@@ -77,26 +94,19 @@ int main(int argc, char* argv[]){
         mutex = NULL;
     }
 
-    // Initialize the total_sum that will be accessible by all the thread data objects.
-    long long int totalSum = 0;
-
     // Create array of thread data.
-    printf("Creating thread data\n");
-
     thread_data_t threadDataObjs[numThreads];
     fillThreadDataArray(threadDataObjs, mutex, numThreads, fileInts, numInts, &totalSum);
     // Start a timer to measure how long the threads actually take to execute
     gettimeofday(&threadStart, NULL);
-    // Start all the threads
     
-    printf("Starting threads\n");
+    // Start all the threads
     pthread_t threads[numThreads];
     if (startThreads(threads,threadDataObjs, numThreads) != 0){
         printf("Failed to start threads\n");
         return 1;
     }
     // Wait for all the threads to finish
-    printf("Waiting for threads\n");
     if (waitForThreads(threads, numThreads) != 0){
         printf("Failed to wait for threads\n");
         return 1;
@@ -109,6 +119,7 @@ int main(int argc, char* argv[]){
 }
 
 int readFile(char filename[], int fileInts[]){
+    printf("Reading data...\n");
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         printf("File not found...\n");
@@ -118,11 +129,12 @@ int readFile(char filename[], int fileInts[]){
     while (fscanf(file, "%d", &fileInts[count]) == 1) {
         count++;
         if (count > MAX_NUM_INTS_TO_SUM) {
-            printf("Too many integers in the file. The Looped sum file only supports %d\n", MAX_NUM_INTS_TO_SUM);
+            printf("Too many integers in the file. This program only supports up to %d values\n", MAX_NUM_INTS_TO_SUM);
             break;
         }
     }
     fclose(file);
+    printf("Finished Reading Data\n");
     return count; 
 }
 
@@ -136,7 +148,6 @@ void fillThreadDataArray(
 ){
     int remainderInts = numInts%numThreads;
     for (int i = 0; i < numThreads; i++){
-        // printf("Creating thread data for thread %d\n", i);
         thread_data_t newThreadData;
             newThreadData.data = fileInts;
             newThreadData.startInd = i * numInts/numThreads;
@@ -150,7 +161,6 @@ void fillThreadDataArray(
 
 int startThreads(pthread_t threads[], thread_data_t threadDataObjs[], int numThreads){
     for (int i = 0; i < numThreads; i++){
-        // printf("Creating thread %d\n", i);
         if (pthread_create(&threads[i], NULL, arraySum, (void*)&threadDataObjs[i]) != 0){
             printf("An error occured while trying to create a new thread\n");
             return 1;
@@ -162,7 +172,6 @@ int startThreads(pthread_t threads[], thread_data_t threadDataObjs[], int numThr
 int waitForThreads(pthread_t threads[], int numThreads){
     void* threadResult;
     for (int i =0; i < numThreads; i++){
-        // printf("Joining thread %d\n", i);
         if ( pthread_join(threads[i], &threadResult) != 0){
             printf("An error occured in the main thread while waiting for a child thread.\n");
             return 1;
@@ -176,21 +185,14 @@ int waitForThreads(pthread_t threads[], int numThreads){
 }
 
 int getArrVal(int ind, thread_data_t *data){
-    // NOTE: calling pthread_mutex_lock with null mutex is undefined behavior.
-    pthread_mutex_t *l = data->lock;
-    if (l == NULL){
-        return data->data[ind];
-    } else {
-        // TODO: Check that instructions specify that reading requires locking.
-        pthread_mutex_lock(l);
-        int val = data->data[ind];
-        pthread_mutex_unlock(l);
-        return val;
-    }
+    // I decided that the actual array data, while shared by all is not actually a critical region
+    // Reason being is that the threads *should* never access the same portion of the array.
+    // Additionally, since all of the threads access the array in a read only manner, there is no need
+    // To add synchronization primitives.
+    return data->data[ind];
 }
 
 void incrementTotalSum(long long int threadSum, thread_data_t *data){
-    // printf("Calling incrementTotalSum for threadedSum:%lld for thread starting at %d, with total being %lld before\n", threadSum, data->startInd, *(data->totalSum));
     pthread_mutex_t *l = data->lock;
     if (l == NULL){
         *(data->totalSum) += threadSum;
@@ -199,21 +201,15 @@ void incrementTotalSum(long long int threadSum, thread_data_t *data){
         *(data->totalSum) += threadSum;
         pthread_mutex_unlock(l);
     }
-    // printf("Finished incrementTotalSum for threadedSum:%lld for thread starting at %d, with total now %lld\n", threadSum, data->startInd, *(data->totalSum));
 }
 
 void* arraySum(void* data){
     thread_data_t* threadData = (thread_data_t*) data;
-    // printf("Calling array sum with start ind %d\n", threadData->startInd);
     long long int thread_sum = 0;
     for (int i = threadData->startInd; i <= threadData->endInd; i++){
-        // if (i%50 == 0){
-        //     printf("for thread starting at %d handling index %d\n", threadData->startInd, i);
-        // }
         thread_sum += getArrVal(i,threadData);
     }
     incrementTotalSum(thread_sum, threadData);
-    // printf("Finished array sum with start ind %d\n", threadData->startInd);
     int *res = (int*)malloc(sizeof(int));
     *res = 0;
     pthread_exit(res);  
@@ -232,4 +228,15 @@ void outputResult(long long int sum, float totalDurationMs, float runningDuratio
     printf("Total value of array: %lld\n", sum);
     printf("Time taken (ms): %.3f\n", totalDurationMs);
     printf("Time taken to run the threads (ms): %.3f\n", runningDurationMs);
+}
+
+int safeStringToInt(char str[], int *out){
+    char *endptr;
+    int result = strtol(str, &endptr, 10);
+    if (*endptr != '\0') {
+        printf("Failed to parse int\n");
+        return 1;
+    }
+    *out = result;
+    return 0;
 }

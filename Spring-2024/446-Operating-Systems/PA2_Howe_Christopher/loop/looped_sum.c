@@ -43,7 +43,7 @@ int main(int argc, char* argv[]){
 
     struct timeval start, end;
     gettimeofday(&start, NULL); 
-    long long int sum = sumArray(fileInts, inputVals);
+    long long int sum = sumArray(inputVals, numInts);
     gettimeofday(&end, NULL);    
 
     free(inputVals);
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
 // Reads a file of integers to be used as input
 // NOTE: Should be the same in both versions.
 int readFile(char filename[], int fileInts[]){
-    printf("Reading data...");
+    printf("Reading data...\n");
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         printf("File not found...\n");
@@ -71,6 +71,7 @@ int readFile(char filename[], int fileInts[]){
         }
     }
     fclose(file);
+    printf("Finished Reading Data\n");
     return count; 
 }
 
