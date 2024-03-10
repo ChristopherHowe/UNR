@@ -200,3 +200,7 @@
         \label{fig:#1}
     \end{figure}
 }
+
+% Used for latex proofs, WIP, has hardcoded #2 parbox width
+\usepackage{varwidth}
+\newcommand{\proofline}[2]{& #1 && \textbf{\parbox[t]{7cm}{#2}} \\}
