@@ -1,0 +1,59 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 456}
+\hmwkTitle{Quiz 3}
+\hmwkDueDate{March 10, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Problem Description}
+What is the relationship (if any) between $L(r_1)$ and $L(r_2)$ defined below. Show and explain/justify your answers. Use a formal approach - using definitions of regular expressions, language of regular expressions and set operations. You must show both derived languages in set listing notation and show/explain each step of your derivation.
+$$r_1 = (a^*+b^*)\cdot(\lambda + \phi)$$
+$$r_2 = (a^* \cdot (\lambda + \phi))+ (b^* + (\lambda \cdot \phi))$$
+
+\section{Solution}
+In order to determine if there is a relationship between $L(r_1)$ and $L(r_2)$ the simplist path is to convert the regular expression to a regular langage. This can be done by using the properties of regular expressions to convert the language of an expression to a regular language. One possible relationship that can be determined is if the two regular expressions are equivilant. Two regular expressions are equal if they both generate the same regular language. Please note henceforth regular expressions will be reffered to a "regex".
+
+\section{Notes}
+The result of the concatentation of two languages is $L_1L_2=\{xy: x \in L_1, y \in L_2\}$ (An introduction to formal languages and Automata Pg. 48). 
+If one of those languages is $\phi$ (The empty set) then the result of the concatentation is $\phi$.
+If one of those languages is ${\lambda}$ then the result of the concatentation is the other language. 
+
+The result of the union of two langauages is $L_1 \cup L_2  = \{x; x\in L_1 \lor x \in L_2\}$
+If one of those languages is $\phi$ (The empty set) then the result of the union is the other language.
+If one of those languages is ${\lambda}$ then the result of the union includes $\lambda$. 
+
+\subsection{Work}
+First determine the language represented by $r_1$. See The derivation below.
+\begin{align*}
+    \proofline{r_1 = (a^* + b^*) \cdot (\lambda + \phi)}{Initial regex (given).}
+    \proofline{= (L(a)^* + L(b)^*) \cdot (\{\lambda\} \cup \{\})}{Regex star closure language expansion, def of $\lambda$, def of $\phi$.}
+    \proofline{= (\{a\}^*+\{b\}^*) \cdot \{\lambda\}}{Set notation, union with the empty set.}
+    \proofline{= (\{\lambda, a,aa,aaa,\dots\} \cup \{\lambda,b,bb,bbb,...\}) \cdot \{\lambda\}}{Star closure expansion.}
+    \proofline{= \{\lambda,a,aa,aaa,\dots,b,bb,bbb,\dots\} \cdot \{\lambda\}}{Union of sets.}
+    \proofline{= \{\lambda,a,aa,aaa,\dots,b,bb,bbb,\dots\} }{Union with the empty string with a set that already contains the empty string.}
+\end{align*}
+
+We also need to determine the language represented by $r_2$. See the derivation below.
+\begin{align*}
+    \proofline{r_2=(a^* \cdot (\lambda + \phi)) + (b^*+(\lambda \cdot \phi))}{Initial regex (given).}
+    \proofline{= (L(a)^* \cdot (\{\lambda\}+ \{\})) + (L(b)^*+(\{\lambda\} \cdot \{\}))}{Regex star closure language expansion, def of $\lambda$, def of $\phi$.}
+    \proofline{= (\{a\}^*\cdot\{\lambda\})+(\{b\}^*+ \phi)}{Set notation, union with the empty set, concatentation with the empty set.}
+    \proofline{= (\{\lambda,a,aa,aaa,\dots\} \cdot \{\lambda\}) + (\{\lambda,b,bb,bbb,\dots\} + \phi)}{Star closure expansion.}
+    \proofline{= \{\lambda,a,aa,aaa,\dots\} + \{\lambda,b,bb,bbb,\dots\}}{Concatenation with the set with the empty string, union with the empty set.}
+    \proofline{= \{\lambda,a,aa,aaa,\dots,b,bb,bbb,\dots\}}{Union of sets.}
+\end{align*}
+
+\section{Answer}
+After doing the work, it is clear that the relationship between $r_1$ and $r_2$ is that the two regular expressions accept the same language. The languages found while reducing the regular expressions are equivilant. This makes sense since both regular expressions are just the union of a and b under star closure with some extra terms. The languages found from these derivations can be defined in set notation as so. They can also be defined literally as "all strings made of either all a's, all b's, or the empty string"
+
+$$\Sigma=\{a,b\}$$
+$$L(r_1) = \{x^* | x \in \Sigma \}$$
+$$L(r_2) = \{x^* | x \in \Sigma \}$$
+
+\end{document}
