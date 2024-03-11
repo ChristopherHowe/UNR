@@ -1,0 +1,48 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CPE 400}
+\hmwkTitle{Homework 2}
+\hmwkDueDate{March 11, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Igor Remizov}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+
+\section{Part 1}
+\subsection{Explain the differences between Go-Back-N and Selective Repeat}
+Reliable data transfer(RDT) protocols are protocols that allow transfer between two entities while satisfying a number of requirements. These include error checking, acknowledgements, and retransmission. Go-Back-N (GBN) and Selective Repeat (SR) are both specific RDT Protocol implementations. 
+
+In Go-Back-N, the sender uses a window of N packets containing some packets that have already been sent and some that have not. I tracks a $send_base$ pointer tracks start of window and a $nextseqnum$ pointer tracks next packet that has not been sent. The sender sends packets incrementing $nextseqnum$ every time one is sent. The $send_base$ is updated when the packets are acknowledged.
+If a Packet is not acknowledged before it times out, then the packet is assumed to have not been received/corrupted and the sender sends it again. 
+
+The receiver keeps track of the expected $nextseqnum$. if the packet received is greater than the $nextseqnum$ or corrupted, its discarded. The receiver can send lump acknowledges for multiple packets. The receiver can optionally send a NACK.
+
+Selective Repeat is functions similarly to GBN. It also uses a sliding window to track which packets have been sent and are available. However, it differs in that instead of discarding packets with a greater sequence number, it stores them in a buffer and acknowledges the packet. In SR, the receiver also keeps track of the window of packets being received. Instead of sending lump ACKs, the receiver must explicitly acknowledge all packets. Any packets that are not acknowledged are retransmitted individually.  This protocol can be more performant in poor lines since only retransmits corrupted/wrong frame. Special consideration must be given to the window size and sequence number size
+
+\section{Part 2}
+\subsection{Instructions}
+In this part, we'll explore transport layer through Wireshark. We'll do so by analyzing a trace of
+the TCP segments sent and received using the given packet capture (HW2-P2.pcapng).
+Open the HW2-P2 packet capture using Wireshark.
+Enter “http” (just the letters, not the quotation marks) in the display-filter-specification
+window, so that only captured HTTP messages will be displayed in the packet-listing
+window.
+Select the first Get packet and open the transport layer detail of this packet.
+Answer the following questions. When answering the following questions, you should take
+screen shots and indicate where in the screenshots you've found the information that
+answers the following questions
+
+\subsection{What is the source port of the client in this message? What is the destination port?}
+\subsection{What is the relative sequence number of this packet that wireshark displays? What is the
+actual sequence number of this packet? (Hint: To see the actual sequence numbers, go to
+Preferences>Protocols>TCP and uncheck “relative sequence numbers”.)}
+\subsection{What are the TCP flag status in this packet? Describe what flags are set to 0, and what
+flags are set to 1. Can you think of some justifications of the flags’ status?}
+\subsection{Is SYN flag set to 1 in this packet? If yes, why yes? If not, why not?}
+
+
+\end{document}
