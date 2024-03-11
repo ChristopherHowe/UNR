@@ -2,7 +2,7 @@
 
 \hmwkClass{CS 456}
 \hmwkTitle{Quiz 3}
-\hmwkDueDate{Mark 10, 2024}
+\hmwkDueDate{March 10, 2024}
 \hmwkClassTime{Section 1001}
 \hmwkClassInstructor{Nancy LaTorrette}
 \hmwkAuthorName{Christopher Howe}
@@ -17,7 +17,7 @@ $$r_1 = (a^*+b^*)\cdot(\lambda + \phi)$$
 $$r_2 = (a^* \cdot (\lambda + \phi))+ (b^* + (\lambda \cdot \phi))$$
 
 \section{Solution}
-In order to determine if there is a relationship between $L(r_1)$ and $L(r_2)$ the simplist path is to convert the regular expression to a regular langage. This can be done by using the properities of regular expressions to convert the language of an expression to a regular language. One possible relationship that can be determined is if the two regular expressions are equivilant. Two regular expressions are equal if they both generate the same regular language. Please note henceforth regular expressions will be reffered to a "regex".
+In order to determine if there is a relationship between $L(r_1)$ and $L(r_2)$ the simplist path is to convert the regular expression to a regular langage. This can be done by using the properties of regular expressions to convert the language of an expression to a regular language. One possible relationship that can be determined is if the two regular expressions are equivilant. Two regular expressions are equal if they both generate the same regular language. Please note henceforth regular expressions will be reffered to a "regex".
 
 \section{Notes}
 The result of the concatentation of two languages is $L_1L_2=\{xy: x \in L_1, y \in L_2\}$ (An introduction to formal languages and Automata Pg. 48). 
@@ -50,6 +50,10 @@ We also need to determine the language represented by $r_2$. See the derivation 
 \end{align*}
 
 \section{Answer}
-After doing the work, it is clear that the relationship between $r_1$ and $r_2$ is that the two regular expressions accept the same language. The languages found while reducing the regular expressions are equivilant. This makes sense since both regular expressions are just the union of a and b under star closure with some extra terms.
+After doing the work, it is clear that the relationship between $r_1$ and $r_2$ is that the two regular expressions accept the same language. The languages found while reducing the regular expressions are equivilant. This makes sense since both regular expressions are just the union of a and b under star closure with some extra terms. The languages found from these derivations can be defined in set notation as so. They can also be defined literally as "all strings made of either all a's, all b's, or the empty string"
+
+$$\Sigma=\{a,b\}$$
+$$L(r_1) = \{x^* | x \in \Sigma \}$$
+$$L(r_2) = \{x^* | x \in \Sigma \}$$
 
 \end{document}
