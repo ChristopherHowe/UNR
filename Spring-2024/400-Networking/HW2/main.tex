@@ -16,12 +16,12 @@
 \subsection{Explain the differences between Go-Back-N and Selective Repeat}
 Reliable data transfer(RDT) protocols are protocols that allow transfer between two entities while satisfying a number of requirements. These include error checking, acknowledgements, and retransmission. Go-Back-N (GBN) and Selective Repeat (SR) are both specific RDT Protocol implementations. 
 
-In Go-Back-N, the sender uses a window of N packets containing some packets that have already been sent and some that have not. I tracks a $send_base$ pointer tracks start of window and a $nextseqnum$ pointer tracks next packet that has not been sent. The sender sends packets incrementing $nextseqnum$ every time one is sent. The $send_base$ is updated when the packets are acknowledged.
+In Go-Back-N, the sender uses a window of N packets containing some packets that have already been sent and some that have not. It tracks a $send\_base$ pointer tracks start of window and a $nextseqnum$ pointer tracks next packet that has not been sent. The sender sends packets incrementing $nextseqnum$ every time one is sent. The $send\_base$ is updated when the packets are acknowledged.
 If a Packet is not acknowledged before it times out, then the packet is assumed to have not been received/corrupted and the sender sends it again. 
 
 The receiver keeps track of the expected $nextseqnum$. if the packet received is greater than the $nextseqnum$ or corrupted, its discarded. The receiver can send lump acknowledges for multiple packets. The receiver can optionally send a NACK.
 
-Selective Repeat is functions similarly to GBN. It also uses a sliding window to track which packets have been sent and are available. However, it differs in that instead of discarding packets with a greater sequence number, it stores them in a buffer and acknowledges the packet. In SR, the receiver also keeps track of the window of packets being received. Instead of sending lump ACKs, the receiver must explicitly acknowledge all packets. Any packets that are not acknowledged are retransmitted individually.  This protocol can be more performant in poor lines since only retransmits corrupted/wrong frame. Special consideration must be given to the window size and sequence number size
+Selective Repeat functions similarly to GBN. It also uses a sliding window to track which packets have been sent and are available. However, it differs in that instead of discarding packets with a greater sequence number, it stores them in a buffer and acknowledges the packet. In SR, the receiver also keeps track of the window of packets being received. Instead of sending lump ACKs, the receiver must explicitly acknowledge all packets. Any packets that are not acknowledged are retransmitted individually.  This protocol can be more performant in poor lines since only retransmits corrupted/wrong frame. Special consideration must be given to the window size and sequence number size.
 
 \section{Part 2}
 \subsection{Instructions}
@@ -36,13 +36,54 @@ Answer the following questions. When answering the following questions, you shou
 screen shots and indicate where in the screenshots you've found the information that
 answers the following questions
 
-\subsection{What is the source port of the client in this message? What is the destination port?}
-\subsection{What is the relative sequence number of this packet that wireshark displays? What is the
-actual sequence number of this packet? (Hint: To see the actual sequence numbers, go to
-Preferences>Protocols>TCP and uncheck “relative sequence numbers”.)}
-\subsection{What are the TCP flag status in this packet? Describe what flags are set to 0, and what
-flags are set to 1. Can you think of some justifications of the flags’ status?}
-\subsection{Is SYN flag set to 1 in this packet? If yes, why yes? If not, why not?}
+\subsection{Pictures}
+\img{p2-packets}{All http packets in HW2-P2.pcapng}
+\img{p2-GET-Transmission-Layer}{Transmission Layer}
 
+\subsection{What is the source port of the client in this message? What is the destination port?}
+The source port of the client in this message is 57733. The destination port in this message is 80. This information is visibile in Figure \ref{fig:p2-GET-Transmission-Layer} under the Transmission Control protocol. It makes sense that the client sent an HTTP request to port 80 since this is the default port for http transactions.
+
+\subsection{What is the relative sequence number of this packet that wireshark displays? What is the
+actual sequence number of this packet? }
+\subsubsection{(Hint: To see the actual sequence numbers, go to Preferences>Protocols>TCP and uncheck “relative sequence numbers”.)}
+The relative sequence number of this packet that wireshark display is 1. The version of wireshark I am using displays the actual and relative sequence numbers when relative sequence numbers is checked so I did not have to disable it. The raw/actual sequence number is 2045237503.
+
+\subsection{What are the TCP flag status in this packet? Describe what flags are set to 0, and what flags are set to 1. Can you think of some justifications of the flags' status?}
+The TCP Flags can be defined as a hexidecimal value of $0x018$ (or $0000\_0001\_1000$). This represents the flags described in table \ref{tab:tcp-flags}. The meaning of these flags is as follows. 
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|l|p{0.6\linewidth}|}
+        \hline
+        \textbf{Flag} & \textbf{Description} \\
+        \hline
+        \textbf{Push} & 1: The client that sent this request wants the data to be immediately handed to the process instead of buffered while waiting for the rest of the packets. \\
+        \hline
+        \textbf{Acknowledgement} & 1: This request is from the http client to the http server so the ACK flag being set indicates the server acknowledging the request from the client. \\
+        \hline
+        \textbf{Reserved} & 000: These bits are for flags that have not been defined. These should always be cleared. \\
+        \hline
+        \textbf{Congestion Window Reduced} & 0: The sender window was not reduced in half to allow for slow start. \\
+        \hline
+        \textbf{ECN-Echo} & 0: There are no intermediary devices between the client and server that are facing high volumes of data. \\
+        \hline
+        \textbf{Urgent} & 0: There is no data in this packet that needs to be prioritized over other data in the packet. \\
+        \hline
+        \textbf{Reset} & 0: Nothing went wrong with the TCP communication requiring a reset. \\
+        \hline
+        \textbf{Syn} & 0: This is not a 3-way handshake packet; the receiver/sender do not need to synchronize the sequence numbers. \\
+        \hline
+        \textbf{Fin} & 0: This packet does not denote the end of the connection. \\
+        \hline
+    \end{tabular}
+    \caption{Description of TCP Flags}
+    \label{tab:tcp-flags}
+\end{table}
+    
+\textit{It is worth noting that the Syn and Fin flags are set in previous and subsequent TCP  packets between the client and server to set up the 3 way handshake and gracefully close the connection.}
+
+\subsection{Is SYN flag set to 1 in this packet? If yes, why yes? If not, why not?}
+The SYN flag is not set to 1 in this packet. The Syn flag is not set because this packet is not part of the 3 way handshake used to synchronize the sender and receiver sequence numbers. There are TCP Packets that preceed the HTTP GET request from the client that include the SYN flag and are used to synchronize the sequence numbers and establish the TCP connection. Those can be seen in figure 
+\img{p2-tcp-packets}{TCP Packets involved in setting up and gracefully closing the connection used by the HTTP GET and response}
 
 \end{document}
