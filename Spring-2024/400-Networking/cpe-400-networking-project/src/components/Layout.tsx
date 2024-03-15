@@ -20,7 +20,8 @@ export default function Layout(props: LayoutProps) {
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">                           
         <Sidebar/>
       </div>
-      <div className="lg:pl-72">
+      <div className="lg:pl-72 h-screen flex flex-col">
+        {/* Header */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <button type="button" className="-m-2.5 p-2.5 text-gray-700 lg:hidden" onClick={() => setSidebarOpen(true)}>
             <span className="sr-only">Open sidebar</span>
@@ -38,8 +39,8 @@ export default function Layout(props: LayoutProps) {
           </div>
         </div>
 
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">{children}</div>
+        <main className="py-10 flex-grow">
+          <div className="px-4 sm:px-6 lg:px-8 h-full">{children}</div>
         </main>
       </div>
     </div>
