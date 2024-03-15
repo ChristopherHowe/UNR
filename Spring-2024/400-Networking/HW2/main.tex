@@ -37,8 +37,8 @@ screen shots and indicate where in the screenshots you've found the information 
 answers the following questions
 
 \subsection{Pictures}
-\img{p2-packets}{All http packets in HW2-P2.pcapng}
-\img{p2-GET-Transmission-Layer}{Transmission Layer}
+\img{p2-packets}{All http packets in HW2-P2.pcapng}[1\linewidth]
+\img{p2-GET-Transmission-Layer}{Transmission Layer}[1\linewidth]
 
 \subsection{What is the source port of the client in this message? What is the destination port?}
 The source port of the client in this message is 57733. The destination port in this message is 80. This information is visibile in Figure \ref{fig:p2-GET-Transmission-Layer} under the Transmission Control protocol. It makes sense that the client sent an HTTP request to port 80 since this is the default port for http transactions.
@@ -84,6 +84,6 @@ The TCP Flags can be defined as a hexidecimal value of $0x018$ (or $0000\_0001\_
 
 \subsection{Is SYN flag set to 1 in this packet? If yes, why yes? If not, why not?}
 The SYN flag is not set to 1 in this packet. The Syn flag is not set because this packet is not part of the 3 way handshake used to synchronize the sender and receiver sequence numbers. There are TCP Packets that preceed the HTTP GET request from the client that include the SYN flag and are used to synchronize the sequence numbers and establish the TCP connection. Those can be seen in figure 
-\img{p2-tcp-packets}{TCP Packets involved in setting up and gracefully closing the connection used by the HTTP GET and response}
+\img{p2-tcp-packets}{TCP Packets involved in setting up and gracefully closing the connection used by the HTTP GET and response}[1\linewidth]
 
 \end{document}
