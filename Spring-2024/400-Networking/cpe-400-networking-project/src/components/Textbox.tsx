@@ -12,7 +12,7 @@ export default function Textbox(props: TextboxProps) {
   };
 
   return (
-    <div>
+    <div className='m-2'>
       <label className="block text-sm font-medium leading-6 text-gray-900">
         {label}
       </label>

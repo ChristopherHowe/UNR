@@ -4,6 +4,7 @@ import { Controls } from "@/components/Controls";
 import { useState } from 'react';
 import  {Node,Edge, } from 'reactflow';
 import SmoothDialog from "@/components/Dialog";
+import AddHostDialog from "@/components/AddHostDialog";
 
 
 interface Host {
@@ -36,14 +37,19 @@ export default function Home(){
 
   async function addHost(name: string){
     const hostMACAddr = await generateUniqueMACAddress()
+    console.log("adding a new host")
     setHosts(prevHosts => [...prevHosts, {
       name: name,
       macAddress: hostMACAddr,
     }])
   }
 
-  function handleOpenAddHost(){
+  function openAddHostDialog(){
     setaddHostDialopOpen(true)
+  }
+
+  function closeHostDialog(){
+    setaddHostDialopOpen(false)
   }
 
   return(
@@ -51,10 +57,10 @@ export default function Home(){
       <Layout>
         <div className="relative h-full">
           <Diagram {...{nodes, edges}}/>
-          <Controls addHost={handleOpenAddHost}/>
+          <Controls addHost={openAddHostDialog}/>
         </div>
       </Layout>
-      <SmoothDialog open={addHostDialopOpen} setOpen={setaddHostDialopOpen}/>
+      <AddHostDialog open={addHostDialopOpen} onClose={closeHostDialog} addHost={addHost}/>
     </>
     
   )
