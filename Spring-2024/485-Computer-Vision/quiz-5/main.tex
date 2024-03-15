@@ -1,0 +1,46 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 485}
+\hmwkTitle{Quiz 5}
+\hmwkDueDate{March 13, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Dr. Emily Hand}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{What are the two main improvements that SURF makes over SIFT? Briefly explain. (4 points)}
+The first improvement that SURF makes over SIFT is that it uses the integral image to apply box filters to calculate the location of interest points at all scales simultaneously, without the need for iterative filtering. This makes it much faster than SIFT and less computationally intense.
+
+The second improvement that SURF makes over SIFT is its efficiency in calculating the orientation of feature descriptors for interest points. Once again, SURF uses the integral images to determine the Haar Wavelet responses (An Approximation of the gradient). Using the HW response instead of the gradient makes it so the time complexity is constant instead of having to calculate the gradient at each pixel level.
+
+\section{How does SURF approximate the DoG pyramid from SIFT? (2 points)}
+The DoG pyramid is used by SIFT to determine which pixels are interest points. Surf approximates the DoG pyramid by applying multiple box filters at one pixel to determine how likely the pixel is to be an interest point. These box filters all have the same time complexity as each other since they all require 4n computations to apply where n is the number of different rectangular regions in the filter. Essentially, their performance is not related to their size. Instead of iteratively applying filters to get multiple images, SURF calls one function on a pixel to determine its interest point value which takes into account different scales and blur values to allow for scale independent detection.
+
+\section{Give the steps for the LBP feature extractor. (4 points)}
+
+The algorithm below explains the steps of the Local Binary pattern feature descriptor process.
+\begin{algorithm}
+    \caption{Local Binary Pattern Feature Descriptors}
+    \label{alg:corner_detection}
+    \begin{algorithmic}[1]
+        \State Detect corners/interest points using some method.
+        \For{each interest point}
+            \State Create a $16 \times 16$ window around the point:
+            \For{each pixel in the $16 \times 16$ window}
+                \For{Each pixel in a $3 \times 3$ window around the pixel}
+                    \State Convert each pixel to either a 1 or a 0 using thresholding where the threshold is based on the centra pixel (gets 8 values since middle is central pixel, will always be 0).
+                \EndFor
+                \State Align the 8 pixels in some order (same for all pixels) so that they form a single 8-bit value.
+                \State Convert the 8-bit value to base 10.
+                \State Add the value to a histogram.
+            \EndFor
+        \EndFor
+        \State Final histogram should have 256 (16$\times$16) values.
+    \end{algorithmic}
+    \end{algorithm}
+
+\textit{Note: This algorithm was written by me using latex based on the notes I took in class, it's not copied.}
+\end{document}
