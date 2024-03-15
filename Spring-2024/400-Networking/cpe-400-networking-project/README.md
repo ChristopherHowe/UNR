@@ -10,11 +10,11 @@ The goal of this project was to create a simple simulation environment that user
 * DNS?
 
 ## Things that need to be completed
-Create a function to add nodes in locations besides the origin.
-Create a function to make nodes moveable
-Create router nodes.
-Add Packets
+* Create a function to add nodes in locations besides the origin.
+* Create a function to make nodes moveable
+* Create router nodes.
+    * Add Packets
 * potentially could just be a box moving along the path.
-Add support so that when a user zooms out, nodes no longer show text and become clickable.
-Add some kind of way to add packets to each node with destination/payload
+* Add support so that when a user zooms out, nodes no longer show text and become clickable.
+* Add some kind of way to add packets to each node with destination/payload
 
