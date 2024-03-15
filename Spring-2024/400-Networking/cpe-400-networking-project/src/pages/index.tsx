@@ -1,17 +1,12 @@
 import Diagram from "@/components/Diagram";
 import Layout from "@/components/Layout";
 import { Controls } from "@/components/Controls";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import  {Node,Edge, } from 'reactflow';
 import SmoothDialog from "@/components/Dialog";
 import AddHostDialog from "@/components/AddHostDialog";
+import { Host } from "@/models";
 
-
-interface Host {
-  name: string
-  macAddress: string
-  ipAddress?: string
-}
 const usedMACAddresses: Set<string> = new Set();
 
 function randomMacAddress(): string {
@@ -41,6 +36,7 @@ export default function Home(){
     setHosts(prevHosts => [...prevHosts, {
       name: name,
       macAddress: hostMACAddr,
+      ipAddress: '129.12.12.123'
     }])
   }
 
@@ -51,6 +47,21 @@ export default function Home(){
   function closeHostDialog(){
     setaddHostDialopOpen(false)
   }
+
+  function addHostNode(host: Host){
+    setNodes(prevNodes => [... prevNodes,{
+      id: host.macAddress,
+      position:{x:0, y:0},
+      data:{host: host},
+      type: 'hostNode'
+    }])
+  }
+
+  useEffect(()=>{
+    for (const host of hosts){
+      addHostNode(host);
+    }
+  },[hosts])
 
   return(
     <>
