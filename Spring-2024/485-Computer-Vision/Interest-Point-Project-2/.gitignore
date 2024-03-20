@@ -2,3 +2,4 @@ filteringVenv
 images
 images(greyscale)
 __pycache__
+venv
