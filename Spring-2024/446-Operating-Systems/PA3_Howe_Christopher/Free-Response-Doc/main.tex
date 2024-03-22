@@ -1,10 +1,10 @@
 \documentclass{assignment-x}
 
-\hmwkClass{CS 456}
-\hmwkTitle{Quiz 3}
-\hmwkDueDate{March 10, 2024}
+\hmwkClass{CS 446}
+\hmwkTitle{Project 3, Scheduling}
+\hmwkDueDate{March 22, 2024}
 \hmwkClassTime{Section 1001}
-\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkClassInstructor{Sara Davis}
 \hmwkAuthorName{Christopher Howe}
 
 \begin{document}
@@ -19,5 +19,37 @@ This project should be ran at least once on a machine running linux on bare meta
 Run the program with the same number of threads as there are CPUs on the machine. What do you observe?
 \subsection{Answer}
 \subsubsection{output of `nproc -all`'}
+\subsubsection{Observations}
+
+\section {Question 2}
+\subsection{Instructions}
+Run the program again with the same number of threads. 
+At the same time run `watch -n .5 grep ctxt /proc/<pid>/status`. This command outputs the number of voluntary and involuntary context switches that a process has undergone, updating every 0.5 seconds. 
+PID of sched.c should be printed by the sched executable by the $`print_progress`$ function.
+Preform this procedure with both the real time and normal scheduling policies
+Preform this procedure with a few different priority levels.
+Report the commands used to find find different results.
+Report any observations.
+\subsection{Answer}
+\subsubsection{Commands Ran}
+\subsubsection{Observations}
+
+\section{Question 3}
+\subsection{Instructions}
+Run the program again with the same number of Threads. Create cpuset named system with all CPUs except 1. This is described in the background section containing the Linux Multi-Processor Control subsection that contains Method b. Move all Tasks (all User-Level and Kernel-Level ones that are possible to move) into that set. Create a cpuset named dedicated with only the CPU that is excluded from the system cpuset. Move one of the Threads of sched.c to the dedicated cpuset. What sequence of commands did you use to answer this question? What did you observe?
+\subsection{Answer}
+\subsubsection{Commands Ran}
+\subsubsection{Observations}
+
+\section{Question 4}
+\subsection{Instructions}
+Run the same procedure as question 3 but overserve the context switches using `watch -n .5 grep ctxt /proc/<pid>/status`. 
+Preform this procedure with both the real time and normal scheduling policies
+Preform this procedure with a few different priority levels.
+Report the commands used to find find different results.
+Report any observations.
+\subsection{Answer}
+\subsubsection{Commands Ran}
+\subsubsection{Observations}
 
 \end{document}
