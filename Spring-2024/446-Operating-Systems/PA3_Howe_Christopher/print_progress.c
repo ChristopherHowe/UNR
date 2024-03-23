@@ -34,7 +34,7 @@ void print_progress(pid_t localTid, size_t value) {
 	const char suffix[] = "]";
 	const size_t prefix_length = strlen(prefix);
 	const size_t suffix_length = sizeof(suffix) - 1;
-	char *buffer = calloc(bound + prefix_length + suffix_length + 1, 1);
+    char *buffer = (char*)calloc(bound + prefix_length + suffix_length + 1, 1);
 	size_t i = 0;
 
 	strcpy(buffer, prefix);
@@ -64,21 +64,4 @@ void print_progress(pid_t localTid, size_t value) {
 	fflush(stdout);
 	free(buffer);
 }
-
-int main(int argc, char *argv[]){
-    
-    TERM_CLEAR();
-
-    print_progress(0, 100000);
-    print_progress(1, 200000);
-    print_progress(2, 300000);
-    print_progress(3, 400000);
-    print_progress(4, 400000);
-    print_progress(5, 300000);
-    print_progress(6, 200000);
-    print_progress(7, 100000);
-    
-    return 0;
-}
-
 

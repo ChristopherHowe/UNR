@@ -64,7 +64,7 @@ int main(int argc, char* argv[]){
     struct _thread_data_t thread_datas[numThreads];
     for (int i = 0; i < numThreads; i++){
         struct _thread_data_t newThreadData;
-            newThreadData.data = &junkInts;
+            newThreadData.data = junkInts;
             newThreadData.localTid = i;
             newThreadData.lock = &mutex;
             newThreadData.numVals = ARR_SIZE;
@@ -89,6 +89,9 @@ int main(int argc, char* argv[]){
 
 void* arraySum(void* a){
 // This function should run indefinitely (inside while 1)
+    while(1){
+        
+    }
     // every loop of the while loop should sum all the values of the array and incrmement the totalSum value by the sum
     // Create a double storing the max latency
     // For each iteration of the for loop
@@ -100,7 +103,8 @@ void* arraySum(void* a){
             // update the max latency
     // For each iteration of the while loop extract the max latency for all the for loop iterations
     // print the max latency with print_progress(pid_t local_tid, size_t value)
-    print_progress(5,6);
+    print_progress(0, 100000);
+    pthread_exit(NULL);  
 }
 
 int safeStringToInt(char str[], int *out){

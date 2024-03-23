@@ -3,4 +3,4 @@ set -e
 
 cd $PWD
 make
-./sched
+./sched 4
