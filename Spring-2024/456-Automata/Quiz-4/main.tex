@@ -1,0 +1,41 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 456}
+\hmwkTitle{Quiz 3}
+\hmwkDueDate{March 10, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Problem Description}
+In class we covered the closure property of regular languages under the union operator using finite acceptors. Now applying either regular grammars or regular expressions, prove that regular languages are closed under the star closure operation.
+
+\section{Solution}
+In order to show that regular languages are closed under star closure, we need to create a generic regular expression or regular grammar and show that the regular grammar/expression, when enclosed under star closure, will always produce a regular grammar/expression. In order to do so, we can apply similar techniques to the methods used to show that regular grammars are closed under the union operator.
+
+\section{Proof}
+\subsection{Goal}
+Given some regular language $L(r1)$  that is defined by a regular expression r1. 
+$r_1$ can be any regular expression.
+In order to show that regular languages are closed under star cloure, we need to show that $(L(r1))^*$ is always a regular language.
+
+\subsection{Steps}
+Given some generic regular language $L_1$, show that $L_1^*$ is a regular langauage.
+Any regular language can be represented by a regular grammar.
+Define some generic regular grammar $G  = (V,T,S,P)$ where V is the set of variables, T is the set of terminals, S is the start symbol, and P is the set of productions that can be created from S containing only members of T.
+In order for a grammar to be a regular grammar, it must only contain terms that are either left linear or right linear. For a left linear grammar, all production rules must either be $A -> Bx$ or $A->x$ where A and B are variables in V and x is a terminal is T.
+In order to show that languages are closed under star closure using regular grammars, A regular grammar must be created, enclosed under star closure, and shown to still be a regular language.
+In order to enclose the grammar under star closure, a new grammar will be created $G_1$. 
+$G_1$ is the same as $G$ except it has some additional productions. For every production that ends in only a terminal symbol (ie every production that matches the form $A -> x$) an additional 2 productions are added one where the variable producing the terminal is prepended to the result of the production and a second where the variable producing the terminal produces the start symbol. 
+For example, if there was a production $A -> x$  in $G$, then $G_1$ would have an additional production $A -> Ax$ and $A -> S$.
+We know the language of this grammar $G_1$ is the star closure of $L_1$ because $G$ has to be resolved to a string of only terminals and in order to do that, the last production used to produce a string must end in a rule with the form $V->T$. Adding the two rules allows for looping back to the start of the grammar at the end of a word from $G$.
+This grammar is still regular since the productions added adhere to Left linear form.
+This works for right linear grammars as well since any right linear grammar has an equivilant left linear grammar.
+Since a $G$ is regular, and $G_1$ is regular and $G$ and $G_1$ are regular grammars, and the language of $G_1$ is the star closure of $L_1$, then the star closure of any regular language is regular.
+
+
+\end{document}

@@ -1,0 +1,26 @@
+$(L(r_1))^*$ is equal to $L((r_1)^*)$ because of the properties of regular expressions.
+
+In order to show that $L((r_1)^*)$ is regular, we only need to show that $r_1^*$ is regular since the language of a regular expression is a regular language.
+
+$r_1^*$ being regular can be proved using a proof by induction.
+
+If $isRegular(r_1^n) -> isRegular(r_1^n+1)$ and $isRegular(r_1)$ then $r_1^*$ is true for all values greater than or equal to 1.
+
+Its worth noting that also need to prove $r_1^0$ is a regular language since star closure includes lambda.
+
+Assume $r_1^k$ is true for some $k < n$. 
+
+$r_1^k + 1$ = $r_1^k \cup r_1$
+
+Regular expressions are closed under union.
+
+Therefore $isRegular(r_1^n) -> isRegular(r_1^n+1)$
+
+Basecase: $isRegular(r_1)$ is true since $r_1$ being regular is part of the definition of $r_1$.
+
+Second basecase: $isRegular(r_1^0)$ is true since the language of $r_1^0$ is ${\lambda}$
+
+Therefore, regular languages are closed under star closure.
+
+% $r_1^* = {\lambda, r_1, r_1 \cdot r_1, r_1 \cdot r_1 \cdot r_1,  \dots}$ by the definition of star closure.
+% \subsubsection
