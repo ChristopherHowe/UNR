@@ -1,0 +1,126 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 456}
+\hmwkTitle{Quiz 4}
+\hmwkDueDate{March 22, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkAuthorName{Christopher Howe}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newenvironment{example}[1][Example]{\begin{trivlist}
+    \item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Problem Description}
+In class we covered the closure property of regular languages under the union operator using finite acceptors. Now applying either regular grammars or regular expressions, prove that regular languages are closed under the star closure operation.
+
+\section{Solution}
+In order to show that regular languages are closed under star closure, we need to create a generic regular expression or regular grammar and show that the regular grammar/expression, when enclosed under star closure, will always produce a regular grammar/expression. In order to do so, we can apply similar techniques to the methods used to show that regular grammars are closed under the union operator.
+
+\section{Proof}
+\begin{proof}[Goal]
+    Given some generic regular language $L_1$, show that $L_1^*$ is a regular langauage. In order to show that languages are closed under star closure using regular grammars, A regular grammar must be created, enclosed under star closure, and shown to still be a regular language.
+\end{proof}
+\begin{lemma}
+    Any regular language can be represented by a regular grammar.
+\end{lemma}
+\begin{definition}
+     $G$ is some generic regular grammar $G  = (V,T,S,P)$ where V is the set of variables, T is the set of terminals, S is the start symbol, and P is the set of productions that can be created from S containing only members of T.    
+\end{definition}
+\begin{lemma}
+    In order for a grammar to be a regular grammar, it must only contain terms that are either left linear or right linear. For a left linear grammar, all production rules must either be $A \rightarrow Bx$ or $A \rightarrow x$ where A and B are variables in V and x is a terminal is T. 
+\end{lemma}
+
+\subsection{New Grammar $G_1$}
+\begin{remark}
+    In order to enclose the grammar under star closure, a new grammar will be created $G_1$. 
+\end{remark}
+\begin{example}
+    $G_1$ is the same as $G$ except it has some additional productions. For every production that ends in only a terminal symbol (ie every production that matches the form $A \rightarrow x$) an additional 2 productions are added one where the variable producing the terminal is prepended to the result of the production and a second where the variable producing the terminal produces the start symbol. Also add a production that the start symbol produces $\lambda$ to account for the fact that star closure includes the empty string.
+    For example, if there was a production $A \rightarrow x$  in $G$, then $G_1$ would have an additional production $A \rightarrow Ax$ and $A \rightarrow S$.
+\end{example}
+\begin{proof}
+    We know the language of this grammar $G_1$ is the star closure of $L_1$ because $G$ has to be resolved to a string of only terminals and in order to do that, the last production used to produce a string must end in a rule with the form $V \rightarrow T$. Adding the two rules allows for looping back to the start of the grammar at the end of a word from $G$.
+\end{proof}
+\begin{proof}
+    This grammar is still regular since the productions added adhere to left linear form.
+\end{proof}
+\begin{remark}
+    This works for right linear grammars as well since any right linear grammar has an equivilant left linear grammar.
+\end{remark}
+
+\subsection{Conclusion}
+\begin{proof}
+    Since $G$ and $G_1$ are regular grammars, and the language of $G_1$ is the star closure of $L_1$, then the star closure of any regular language is regular.   
+\end{proof}
+
+\section{Example}
+An example of how a grammar $G$ could be extended to form $G_1$. Their grammars are defined below. An example string that could be produced by $G$ is $baaa$. $G_1$ can produce the star closure of the same string $(baaa)^* = baaabaaa...$
+
+
+\begin{multicols}{2}
+\begin{align*}
+    &G  = (\{B,C\},\{a,b\},B,P) \\ \\
+    &P = 
+    \left\{
+    \begin{aligned}
+    &B \rightarrow Ca \\
+    &B \rightarrow Ba \\
+    &C \rightarrow ba \\
+    &C \rightarrow a \\
+    \end{aligned}
+    \right\}
+\end{align*}
+\columnbreak
+
+\begin{align*}
+    &G_1  = (\{B,C\},\{a,b\},B,P_1) \\ \\
+    &P_1 = 
+    \left\{
+    \begin{aligned}
+    &B \rightarrow Ca \\
+    &B \rightarrow Ba \\
+    &C \rightarrow ba \\
+    &C \rightarrow a \\
+    \end{aligned}
+    \right\} 
+    \cup
+    \left\{
+    \begin{aligned}
+    &B \rightarrow \lambda \\
+    &C \rightarrow Cba \\
+    &C \rightarrow B \\
+    &C \rightarrow Ca \\
+    \end{aligned}
+    \right\}
+    =
+    \left\{
+        \begin{aligned}
+        &B \rightarrow \lambda \\
+        &B \rightarrow Ca \\
+        &B \rightarrow Ba \\
+        &C \rightarrow Cba \\
+        &C \rightarrow ba \\
+        &C \rightarrow Ca \\
+        &C \rightarrow a \\
+        &C \rightarrow B \\
+        \end{aligned}
+        \right\}
+\end{align*}
+\end{multicols}
+
+\img{GrammarTrees}{Production Tree for $L(G)$ and $L(G_1)$}[0.6\linewidth]
+
+
+\end{document}
