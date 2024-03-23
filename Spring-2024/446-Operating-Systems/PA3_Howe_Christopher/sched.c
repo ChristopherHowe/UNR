@@ -7,7 +7,7 @@ Date: 3/1/24
 // Preprocessor directives
 // #include <stdio.h>
 // #include <stdlib.h>
-// #include <sys/time.h>
+#include <sys/time.h>
 #include <pthread.h>
 #include "print_progress.c"
 
@@ -29,6 +29,7 @@ void* arraySum(void* a);
 // Additional
 int safeStringToInt(char str[], int *out);
 int waitForThreads(pthread_t threads[], int numThreads);
+float getTimeSpecDiff(struct timespec tv1, struct timespec tv2);
 
 // Main Loop, expected format ./<executable name> <number of threads>
 int main(int argc, char* argv[]){   
@@ -49,6 +50,7 @@ int main(int argc, char* argv[]){
     // create long long int totalSum to hold sum of arr with val 0
     long long int totalSum = 0;
     // create a mutex
+    printf("Creating the mutex\n");
     pthread_mutex_t mutex;
     if (pthread_mutex_init(&mutex, NULL) != 0){
         printf("Failed to initialize the mutex\n");
@@ -61,6 +63,7 @@ int main(int argc, char* argv[]){
             // numVals Corresponding to arr size
             // lock field pointing to created mutex
             // pointer to totalSum
+    printf("Creating thread data\n");
     struct _thread_data_t thread_datas[numThreads];
     for (int i = 0; i < numThreads; i++){
         struct _thread_data_t newThreadData;
@@ -72,6 +75,7 @@ int main(int argc, char* argv[]){
         thread_datas[i] = newThreadData;
     }
     // Make an arr of len <cli arg> of threads that each call arraySum with the corresponding thread data.
+    printf("Creating threads\n");
     pthread_t threads[numThreads];
     for (int i = 0; i < numThreads; i++){
         if (pthread_create(&threads[i], NULL, arraySum, (void*)&thread_datas[i]) != 0){
@@ -79,31 +83,49 @@ int main(int argc, char* argv[]){
             return 1;
         }
     }
-    return 0;
     // join all the threads
+    printf("Waiting for threads\n");
     if (waitForThreads(threads, numThreads) != 0){
         printf("Failed to wait for threads\n");
         return 1;
     }
+    return 0;
 }
 
 void* arraySum(void* a){
-// This function should run indefinitely (inside while 1)
+    // This function should run indefinitely (inside while 1)
+    thread_data_t* threadData = (thread_data_t*) a;
     while(1){
-        
-    }
-    // every loop of the while loop should sum all the values of the array and incrmement the totalSum value by the sum
-    // Create a double storing the max latency
-    // For each iteration of the for loop
-        // add a val from the arr to the localSum
-        // calculate the latency of the for loop
+        // every loop of the while loop should sum all the values of the array and incrmement the totalSum value by the sum
+        // Create a double storing the max latency
+        double maxLatency = 0;
+        long long int thread_sum = 0;
+        for (int i = 0; i <= threadData->numVals; i++){
+            struct timespec start, finish; 
             // create a struct timespec object at the beggining of the loop using clock_gettime
+            if (clock_gettime(CLOCK_REALTIME, &start) != 0){
+                printf("Failed to get timestamp");
+            }
+            // add a val from the arr to the localSum
+            thread_sum += threadData->data[i];
             // create a struct timespec object at the end of the loop using clock_gettime
+            if (clock_gettime(CLOCK_REALTIME, &finish) != 0){
+                printf("Failed to get timestamp");
+            }
+            // calculate the latency of the for loop
             // calculate the duration of the for loop iteration (ns) (long int)
+
+            float latency = getTimeSpecDiff(start, finish);
+            // For each iteration of the while loop extract the max latency for all the for loop iterations
             // update the max latency
-    // For each iteration of the while loop extract the max latency for all the for loop iterations
-    // print the max latency with print_progress(pid_t local_tid, size_t value)
-    print_progress(0, 100000);
+            if (latency > maxLatency){
+                maxLatency = latency;
+            }
+        }
+        // print the max latency with print_progress(pid_t local_tid, size_t value)
+        print_progress(threadData->localTid, maxLatency);   
+    }
+            
     pthread_exit(NULL);  
 }
 
@@ -131,4 +153,12 @@ int waitForThreads(pthread_t threads[], int numThreads){
         }
     }
     return 0;
+}
+
+// Takes the difference between two timespec structs
+// assumes that tv2 is after tv1
+float getTimeSpecDiff(struct timespec tv1, struct timespec tv2){
+    long secondPassed = tv2.tv_sec - tv1.tv_sec;
+    long nanosecondsPassed = tv2.tv_nsec - tv1.tv_nsec;
+    return ((float)(secondPassed * 1000000000 + nanosecondsPassed)) / 1000;
 }
