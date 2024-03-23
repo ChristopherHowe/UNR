@@ -1,8 +1,8 @@
 \documentclass{assignment-x}
 
 \hmwkClass{CS 456}
-\hmwkTitle{Quiz 3}
-\hmwkDueDate{March 10, 2024}
+\hmwkTitle{Quiz 4}
+\hmwkDueDate{March 22, 2024}
 \hmwkClassTime{Section 1001}
 \hmwkClassInstructor{Nancy LaTorrette}
 \hmwkAuthorName{Christopher Howe}
@@ -62,7 +62,7 @@ In order to show that regular languages are closed under star closure, we need t
 
 \subsection{Conclusion}
 \begin{proof}
-    Since a $G$ is regular, and $G_1$ is regular and $G$ and $G_1$ are regular grammars, and the language of $G_1$ is the star closure of $L_1$, then the star closure of any regular language is regular.   
+    Since $G$ and $G_1$ are regular grammars, and the language of $G_1$ is the star closure of $L_1$, then the star closure of any regular language is regular.   
 \end{proof}
 
 \section{Example}
@@ -72,48 +72,49 @@ An example of how a grammar $G$ could be extended to form $G_1$. Their grammars 
 \begin{multicols}{2}
 \begin{align*}
     &G  = (\{B,C\},\{a,b\},B,P) \\ \\
-    &P:
+    &P = 
     \left\{
     \begin{aligned}
-    &B -> Ca \\
-    &B -> Ba \\
-    &C -> ba \\
-    &C -> a \\
+    &B \rightarrow Ca \\
+    &B \rightarrow Ba \\
+    &C \rightarrow ba \\
+    &C \rightarrow a \\
     \end{aligned}
     \right\}
 \end{align*}
 \columnbreak
+
 \begin{align*}
-    &G_1  = (\{B,C\},\{a,b\},B,P) \\ \\
+    &G_1  = (\{B,C\},\{a,b\},B,P_1) \\ \\
     &P_1 = 
     \left\{
     \begin{aligned}
-    &B -> Ca \\
-    &B -> Ba \\
-    &C -> ba \\
-    &C -> a \\
+    &B \rightarrow Ca \\
+    &B \rightarrow Ba \\
+    &C \rightarrow ba \\
+    &C \rightarrow a \\
     \end{aligned}
     \right\} 
     \cup
     \left\{
     \begin{aligned}
-    &B -> \lambda \\
-    &C -> Cba \\
-    &C -> B \\
-    &C -> Ca \\
+    &B \rightarrow \lambda \\
+    &C \rightarrow Cba \\
+    &C \rightarrow B \\
+    &C \rightarrow Ca \\
     \end{aligned}
     \right\}
     =
     \left\{
         \begin{aligned}
-        &B -> \lambda \\
-        &B -> Ca \\
-        &B -> Ba \\
-        &C -> Cba \\
-        &C -> ba \\
-        &C -> Ca \\
-        &C -> a \\
-        &C -> B \\
+        &B \rightarrow \lambda \\
+        &B \rightarrow Ca \\
+        &B \rightarrow Ba \\
+        &C \rightarrow Cba \\
+        &C \rightarrow ba \\
+        &C \rightarrow Ca \\
+        &C \rightarrow a \\
+        &C \rightarrow B \\
         \end{aligned}
         \right\}
 \end{align*}
