@@ -19,7 +19,11 @@ This project should be ran at least once on a machine running linux on bare meta
 Run the program with the same number of threads as there are CPUs on the machine. What do you observe?
 \subsection{Answer}
 \subsubsection{output of `nproc -all`'}
-\subsubsection{Observations}
+Based on the output of `nproc --all`, my CPU has 12 cores. However, it is worth noting this includes 6 virtual cores for each real core as well.
+\subsection{Observations}
+I noticed that when I ran the program with the same number of threads as there are CPUs on the machine (12), the maximum latency jumped in a huge way. When running the program with 11 cores, I saw an average max latency of around 500,000 ns (.5ms).  300,000 ns (0.3ms). 
+\img{12-core-output}{Output progress bars when sched executable is ran on 12 cores}[0.6\linewidth]
+\img{11-core-output}{Output progress bars when sched executable is ran on 11 cores}[0.6\linewidth]
 
 \section {Question 2}
 \subsection{Instructions}
