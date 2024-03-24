@@ -29,7 +29,7 @@ void* arraySum(void* a);
 // Additional
 int safeStringToInt(char str[], int *out);
 int waitForThreads(pthread_t threads[], int numThreads);
-float getTimeSpecDiff(struct timespec tv1, struct timespec tv2);
+int getTimeSpecDiff(struct timespec tv1, struct timespec tv2);
 
 // Main Loop, expected format ./<executable name> <number of threads>
 int main(int argc, char* argv[]){   
@@ -76,6 +76,9 @@ int main(int argc, char* argv[]){
     }
     // Make an arr of len <cli arg> of threads that each call arraySum with the corresponding thread data.
     printf("Creating threads\n");
+
+    
+
     pthread_t threads[numThreads];
     for (int i = 0; i < numThreads; i++){
         if (pthread_create(&threads[i], NULL, arraySum, (void*)&thread_datas[i]) != 0){
@@ -104,18 +107,18 @@ void* arraySum(void* a){
             struct timespec start, finish; 
             // create a struct timespec object at the beggining of the loop using clock_gettime
             if (clock_gettime(CLOCK_REALTIME, &start) != 0){
-                printf("Failed to get timestamp");
+                printf("Failed to get start timestamp");
             }
             // add a val from the arr to the localSum
             thread_sum += threadData->data[i];
             // create a struct timespec object at the end of the loop using clock_gettime
             if (clock_gettime(CLOCK_REALTIME, &finish) != 0){
-                printf("Failed to get timestamp");
+                printf("Failed to get finish timestamp");
             }
             // calculate the latency of the for loop
             // calculate the duration of the for loop iteration (ns) (long int)
 
-            float latency = getTimeSpecDiff(start, finish);
+            int latency = getTimeSpecDiff(start, finish);
             // For each iteration of the while loop extract the max latency for all the for loop iterations
             // update the max latency
             if (latency > maxLatency){
@@ -123,9 +126,9 @@ void* arraySum(void* a){
             }
         }
         // print the max latency with print_progress(pid_t local_tid, size_t value)
+        printf("Calling from tid %d ", threadData->localTid);
         print_progress(threadData->localTid, maxLatency);   
     }
-            
     pthread_exit(NULL);  
 }
 
@@ -157,8 +160,8 @@ int waitForThreads(pthread_t threads[], int numThreads){
 
 // Takes the difference between two timespec structs
 // assumes that tv2 is after tv1
-float getTimeSpecDiff(struct timespec tv1, struct timespec tv2){
+int getTimeSpecDiff(struct timespec tv1, struct timespec tv2){
     long secondPassed = tv2.tv_sec - tv1.tv_sec;
     long nanosecondsPassed = tv2.tv_nsec - tv1.tv_nsec;
-    return ((float)(secondPassed * 1000000000 + nanosecondsPassed)) / 1000;
+    return (secondPassed * 1000000000 + nanosecondsPassed);
 }
