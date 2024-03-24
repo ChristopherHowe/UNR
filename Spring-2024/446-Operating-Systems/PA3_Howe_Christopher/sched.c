@@ -54,7 +54,7 @@ int main(int argc, char* argv[]){
 
     // create long long int totalSum to hold sum of arr with val 0
     long long int totalSum = 0;
-    
+        
     // create a mutex
     pthread_mutex_t mutex;
     if (pthread_mutex_init(&mutex, NULL) != 0){
@@ -82,12 +82,9 @@ int main(int argc, char* argv[]){
 void* arraySum(void* a){
     // This function should run indefinitely (inside while 1)
     thread_data_t* threadData = (thread_data_t*) a;
-    float maxEver = 0;
     while(1){
         // every loop of the while loop should sum all the values of the array and incrmement the totalSum value by the sum
         double maxLatency = 0; // Create a double storing the max latency
-        float averageLatency=0;
-        int numVals=0;
         long long int thread_sum = 0;
         for (int i = 0; i <= threadData->numVals; i++){
             struct timespec start, finish; // used to determine loop latency
@@ -107,11 +104,6 @@ void* arraySum(void* a){
             if (latency > maxLatency){
                 maxLatency = latency;
             }
-            numVals++;
-            averageLatency = (averageLatency*numVals + latency)/(numVals);
-        }
-        if (maxLatency>maxEver){
-            maxEver=maxLatency;
         }
         // printf("Finished adding in thread %d, thread_sum:%lld\n", threadData->localTid, thread_sum);
         pthread_mutex_lock(threadData->lock);
@@ -122,8 +114,6 @@ void* arraySum(void* a){
         // threads. If this is not protected in this way, undefined behavior occurs where occasionally threads may write to different lines than
         // they are supposed to. (See example screen shots)
         print_progress(threadData->localTid, maxLatency);
-        print_progress(threadData->localTid + 7, maxEver);
-
         pthread_mutex_unlock(threadData->lock);
 
     }
