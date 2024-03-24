@@ -19,6 +19,8 @@ Other normal scheduling processes  = SCHED_BATCH, SCHED_IDLE, SHED_DEADLINE
 always able to premempt normal tasks, always have higher prio
 
 use fix priority level policies
+* priority range is from 0-99
+    * for some reason 99 is the highest prio task   
 * task with prio of 5 is placed in prio_5 queue
 * if task is preempted ends back in the same prio queue
 * tasks with a higher prio immediately preempt lower prio tasks
@@ -27,10 +29,10 @@ use fix priority level policies
 **SCHED_RR** = second method of i8mpelemtning real time task prios, allows preemption at end of time quanta
 
 ## `chrt` Comand
-used to manipulate scheduling policy and priority of a task
+used to manipulate scheduling policy and priority of a task.
 - `chart -m` displays min/max prio for each policiy
-- `sudo chart -p -r <prio> <pid>` make task PID be a real time task with a certain prio with RR impementation
-- `sudo chart -p -f <prio> <pid>` make task PID be a real time task with a certain prio with FIFO impementation
+- `sudo chrt -p -r <prio> <pid>` make task PID be a real time task with a certain prio with RR impementation
+- `sudo chrt -p -f <prio> <pid>` make task PID be a real time task with a certain prio with FIFO impementation
 - `sudo chrt -p -o 0 <pid>` switch task pid to Normal OTHER Policy
 
 ## Isolating CPUs
