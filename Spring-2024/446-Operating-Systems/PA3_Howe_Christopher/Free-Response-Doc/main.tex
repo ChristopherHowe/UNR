@@ -1,0 +1,76 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 446}
+\hmwkTitle{Project 3, Scheduling}
+\hmwkDueDate{March 22, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Sara Davis}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Instructions}
+This project should be ran at least once on a machine running linux on bare metal in order to get accurate results (no VM)
+
+\section{Question 1}
+\subsection{Instructions}
+Run the program with the same number of threads as there are CPUs on the machine. What do you observe?
+\subsection{Answer}
+\subsubsection{output of `nproc -all`'}
+Based on the output of `nproc --all`, my CPU has 12 cores. However, it is worth noting this includes 6 virtual cores for each real core as well.
+\subsection{Observations}
+I noticed that when I ran the program with the same number of threads as there are CPUs on the machine (12), the maximum latency jumped in a huge way. When running the program with 11 cores, I saw an average max latency of around 500,000 ns (.5ms).  300,000 ns (0.3ms). 
+\img{12-core-output}{Output progress bars when sched executable is ran on 12 cores}[0.6\linewidth]
+\img{11-core-output}{Output progress bars when sched executable is ran on 11 cores}[0.6\linewidth]
+
+\section {Question 2}
+\subsection{Instructions}
+Run the program again with the same number of threads. 
+At the same time run `watch -n .5 grep ctxt /proc/<pid>/status`. This command outputs the number of voluntary and involuntary context switches that a process has undergone, updating every 0.5 seconds. 
+PID of sched.c should be printed by the sched executable by the $`print_progress`$ function.
+Preform this procedure with both the real time and normal scheduling policies
+Preform this procedure with a few different priority levels.
+Report the commands used to find find different results.
+Report any observations.
+\subsection{Answer}
+\subsubsection{Bash Script used to test question 2}
+\setminted{baselinestretch=0.25}
+\inputminted{bash}{../swap-scheduler-and-watch.sh}
+
+\subsubsection{Observations}
+While running the test defined in the bash script I noticed that the number of context switches in the FIFO implementation was the lowest. In real time FIFO scheduling the number of context switches is minimal since the only process that can preempt a FIFO running process is a process with a higher priority. The algorithm does not periodically preempt them. In running the RR scheduling I noticed that the number of context switches was higher than the FIFO implementation. This is most likely due to the fact that every time quanta, round robin causes a time switch to the next process in the same queue. However, RR did have lower latency values that FIFO since every process got the CPU faster.
+
+
+\section{Question 3}
+\subsection{Instructions}
+Run the program again with the same number of Threads. Create cpuset named system with all CPUs except 1. This is described in the background section containing the Linux Multi-Processor Control subsection that contains Method b. Move all Tasks (all User-Level and Kernel-Level ones that are possible to move) into that set. Create a cpuset named dedicated with only the CPU that is excluded from the system cpuset. Move one of the Threads of sched.c to the dedicated cpuset. What sequence of commands did you use to answer this question? What did you observe?
+\subsection{Answer}
+\subsubsection{Bash Script to answer question 3}
+\inputminted{bash}{../cpuset.sh}
+
+\subsubsection{Observations}
+I was able to successfully allocate an entire core to one thread of the CPU. When this operation was preformed, the max latency of the associated thread never rose too high. This makes sense since if one thread has an entire CPU there are no other tasks besides some few kernel tasks also using the same CPU.
+\img{part-3-output}{Output from Question 3 tests}
+
+\section{Question 4}
+\subsection{Instructions}
+Run the same procedure as question 3 but overserve the context switches using `watch -n .5 grep ctxt /proc/<pid>/status`. 
+Preform this procedure with both the real time and normal scheduling policies
+Preform this procedure with a few different priority levels.
+Report the commands used to find find different results.
+Report any observations.
+\subsection{Answer}
+\subsubsection{Commands Ran}
+In order to preform these tasks, I combined the scripts I wrote for parts 2 and part 3. 
+\subsubsection{Observations}
+The results were similar to those obtained in part 2 except the first thread (with the dedicated CPU) did not undergo any of the issues either with FIFO or RR. Ie the first thread did not see increased context switches while using RR or a increase in latency while using FIFO. I did also notice at this stage that sometimes the entire sched executable would freeze for about half a second. I think this may be due to the fact that there is a decrease in the number of available cores and the 5 other real cores were not able to keep up with everything else running
+\img{part-4-output}{Output demonstrating combined efforts of  part 2 and part 3 (Different scheduling policies selected with an isolated CPU)}
+
+\section{Suplemental scripts}
+\subsection{get-average-ctx-switches.sh}
+\inputminted{bash}{../get-average-ctx-switches.sh}
+\subsection{test.sh}
+\inputminted{bash}{../test.sh}
+\end{document}
