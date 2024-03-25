@@ -76,6 +76,8 @@ int main(int argc, char* argv[]){
         printf("Failed to wait for threads\n");
         return 1;
     }
+
+    free(junkInts);
     return 0;
 }
 // TODO: Remove average latency calculation, remove maxEver Stuff
