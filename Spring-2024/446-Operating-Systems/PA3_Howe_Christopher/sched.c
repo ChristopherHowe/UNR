@@ -107,7 +107,6 @@ void* arraySum(void* a){
                 maxLatency = latency;
             }
         }
-        // printf("Finished adding in thread %d, thread_sum:%lld\n", threadData->localTid, thread_sum);
         pthread_mutex_lock(threadData->lock);
         threadData->totalSum += thread_sum;
         // Print the max latency using the provided maxLatency object
