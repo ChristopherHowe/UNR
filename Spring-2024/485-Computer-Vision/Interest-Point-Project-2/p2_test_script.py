@@ -9,7 +9,7 @@ import project2 as p2
 
 #Load and display image
 img1 = p2.load_img("test_img1.jpg")
-p2.display_img(img)
+p2.display_img(img1)
 img2 = p2.load_img("test_img2.jpg")
 p2.display_img(img2)
 
