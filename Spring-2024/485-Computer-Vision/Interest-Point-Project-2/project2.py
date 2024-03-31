@@ -145,7 +145,7 @@ def binary_img_to_point_arr(image: np.ndarray) -> List[point]:
 # Currently assumes all channels are equal (grey scale)
 def moravec_detector(image: np.ndarray) -> List[point]:
     WINDOW_SIZE:int = 3
-    THRESHOLD=700
+    THRESHOLD=10000
     PRINC_DIRS = [point(0,-1), point(0,1), point(-1,0), point(-1,-1), point(-1,1), point(1,0), point(1,-1), point(1,1)]
 
     local_src = np.copy(image)
@@ -245,22 +245,229 @@ def extract_LBP(image, keypoint: point):
                 histogram[binary_pattern] += 1
     return histogram
 
+def generate_gaussian(sigma, filter_w, filter_h):
+    def gaussian_func_2d(x, y, sigma):
+        base = 1 / (2 * math.pi * sigma * sigma)
+        exponent = -1 * ((x * x + y * y) / (2 * sigma * sigma))
+        result = base * math.exp(exponent)
+        return result
+    
+    if filter_w < 1 or filter_h < 1:
+        raise ValueError("filter height and width must be 1 or greater")
+    
+    mask = np.zeros((filter_w, filter_h))
+    for x in range(0, filter_w):
+        for y in range(0, filter_h):
+            x_val = x - (filter_w / 2) + 0.5
+            y_val = y - (filter_h / 2) + 0.5
+            v = gaussian_func_2d(x_val, y_val, sigma)
+            mask[x][y] = v
+    normalized_mask = mask / np.sum(mask)
+    return normalized_mask
+
+def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value: int):
+    def correlation(image: np.ndarray, mask: np.ndarray, img_x: int, img_y: int):
+        val: int = 0
+        for mask_x in range(mask_w):
+            for mask_y in range(mask_h):
+                x_diff = int(mask_x - (mask_w / 2) + 0.5)
+                y_diff = int(mask_y - (mask_h / 2) + 0.5)
+                src_val = np.mean(image[img_x + x_diff][img_y + y_diff])
+                step = src_val * mask[mask_x][mask_y]
+                val += step
+        return val
+
+    def handle_padding(image):
+        pad_values = ()
+        if image.ndim == 3:
+            pad_values = ((pad_pixels, pad_pixels), (pad_pixels, pad_pixels), (0, 0))
+        elif image.ndim == 2:
+            pad_values = ((pad_pixels, pad_pixels), (pad_pixels, pad_pixels))
+
+        if pad_value == 0:
+            image = np.pad(image, pad_values, mode='constant', constant_values=0)
+        else:
+            image = np.pad(image, pad_values, mode='edge')
+        return image, pad_values
+
+    def handle_unpadding(image, prev_padding):
+        def unpad(x, pad_width):
+            # this unpad function comes from this stack overflow question https://stackoverflow.com/a/57956349
+            slices = []
+            for c in pad_width:
+                e = None if c[1] == 0 else -c[1]
+                slices.append(slice(c[0], e))
+            return x[tuple(slices)]
+
+        if pad_pixels >= req_w_space and pad_pixels >= req_h_space:
+            image = unpad(new_img, prev_padding)
+        else:
+            if image.ndim == 3:
+                pad_values = ((req_w_space, req_w_space), (req_h_space, req_h_space), (0, 0))
+            elif image.ndim == 2:
+                pad_values = ((req_w_space, req_w_space), (req_h_space, req_h_space))
+            image = unpad(new_img, pad_values)
+        return image
+
+    def handle_mask_check(mask: np.ndarray):
+        if mask.ndim == 1:  # make 1D arrays into 2D with width 1
+            mask = mask.reshape(1, -1)
+        if mask.ndim > 2:
+            raise ValueError("Does not support masks with a higher dimension than 2")
+        return mask
+
+    mask = handle_mask_check(mask)
+    mask_w = mask.shape[0]
+    mask_h = mask.shape[1] if mask.ndim == 2 else 0
+    req_w_space = math.floor(mask_w / 2)
+    req_h_space = math.floor(mask_h / 2)
+
+    src = np.copy(image)
+
+    src, pad_values = handle_padding(src)
+
+    src_w = src.shape[0]
+    src_h = src.shape[1]
+
+    new_img = np.zeros(src.shape, dtype=src.dtype)
+    for img_x in range(req_w_space, src_w - req_w_space):
+        for img_y in range(req_h_space, src_h - req_h_space):
+            v = correlation(src, mask, img_x, img_y)
+            new_img[img_x][img_y] = v
+
+    new_img = handle_unpadding(new_img, pad_values)
+
+    return new_img
+
+def make_gradiant(img: np.ndarray, gaussian_size: int):
+    img_w=img.shape[0]
+    img_h=img.shape[1]
+    sigma = gaussian_size / 5
+    gaussian = generate_gaussian(sigma, gaussian_size, gaussian_size)
+    horizontal_kernel = np.array([[-1, 0, 1]])
+    vertical_kernel = np.array([[-1], [0], [1]])
+    x_deriv_gaussian = apply_filter(gaussian, horizontal_kernel, 1, 1)
+    y_deriv_gaussian = apply_filter(gaussian, vertical_kernel, 1, 1)
+    
+    new_img = np.mean(img, axis=2)  # Greyscale
+    Mx = apply_filter(new_img, x_deriv_gaussian, math.floor(gaussian_size / 2), 1)
+    My = apply_filter(new_img, y_deriv_gaussian, math.floor(gaussian_size / 2), 1)
+    gradient = np.zeros((img_w, img_h, 2), dtype=np.float64)
+    for img_x in range(img_w):
+        for img_y in range(img_h):
+            magnitude = math.sqrt(math.pow(Mx[img_x][img_y], 2) + math.pow(My[img_x][img_y], 2))
+            angle = math.atan2(Mx[img_x][img_y], My[img_x][img_y])
+            gradient[img_x][img_y] = [magnitude, angle]
+    return gradient
+
+def extract_HOG(image, keypoint):
+    WINDOW_SIZE=16
+    BIN_DEG_RANGE=40
+    if (360 % BIN_DEG_RANGE != 0):
+        raise ValueError("BIN_DEG_RANGE does not evenly divide 360")
+    num_bins = int(360/BIN_DEG_RANGE)
+    offset = math.floor(WINDOW_SIZE/2)
+    histogram=np.zeros(num_bins)
+    gradient = make_gradiant(image[keypoint.x-offset:keypoint.x+offset+1, keypoint.y-offset:keypoint.y+offset+1],3)
+    magnitude = gradient[:,:,0]
+    orientation = gradient[:,:,1]
+    print("Orietnation")
+    print(orientation)
+    # display_img_normalized(gradient[:,:,1])
+    bin_rad_range=math.radians(BIN_DEG_RANGE)
+    for wx in range(0,WINDOW_SIZE):
+        for wy in range(0,WINDOW_SIZE):
+            assigned_bin = math.floor((orientation[wx, wy] + math.pi) / bin_rad_range)
+            histogram[assigned_bin] += magnitude[wx, wy]
+    return histogram
+
+def feature_matching(image1, image2, detector, extractor):
+    NEAREST_MATCH_RATIO_THRESHOLD=1
+    if detector != "Moravec" and detector != "Harris":
+        raise ValueError("Detector type must be Moravec or Harris")
+    if extractor != "LBP" and extractor != "HOG":
+        raise ValueError("Extractor Must be LBP or HOG")
+    
+    img_1_keypoints = []
+    img_2_keypoints = []
+    
+    print("Detecting interest points")
+    if detector == "Moravec":
+        img_1_keypoints = moravec_detector(image1)
+        img_2_keypoints = moravec_detector(image2)
+    else:
+        raise ValueError("Harris detector is not yet implemented")
+    img_1_feature_descriptors = []
+    img_2_feature_descriptors = []
+    display_img(plot_keypoints(image1, img_1_keypoints))
+    print("num features 1:", len(img_1_keypoints))
+    display_img(plot_keypoints(image1, img_1_keypoints))
+
+    print("num features 2:", len(img_2_keypoints))
+    plot_keypoints(image2, img_2_keypoints)
 
 
-
-
-# def extract_HOG(image, keypoint):
-# def feature_matching(image1, image2, detector, extractor):
-# def plot_matches(image1, image2, matches):
+    def getAllDescriptors(img, keypoints:List[point],extractorFunc):
+        descriptors = []
+        for keypoint in keypoints:
+            descriptors.append(extractorFunc(img, keypoint))
+        return descriptors
+    
+    print("Getting all feature descriptors")
+    if extractor =="HOG":
+        img_1_feature_descriptors = getAllDescriptors(image1,img_1_keypoints, extract_HOG)
+        img_2_feature_descriptors = getAllDescriptors(image2,img_2_keypoints, extract_HOG)
+    else:
+        img_1_feature_descriptors = getAllDescriptors(image1,img_1_keypoints, extract_LBP)
+        img_2_feature_descriptors = getAllDescriptors(image2,img_2_keypoints, extract_LBP)
+    
+    def matchFeatures(img_1_keypoints, img_1_feature_descriptors, img_2_keypoints, img_2_feature_descriptors):
+        img_1_matches=[]
+        img_2_matches=[]
+        for i, descriptor1 in enumerate(img_1_feature_descriptors):
+            bestMatchSoFar = 100000
+            closest_match: tuple[point] = ()
+            for j, descriptor2 in enumerate(img_2_feature_descriptors):
+                SSD = np.sum((descriptor1-descriptor2)**2)
+                if SSD < bestMatchSoFar:
+                    bestMatchSoFar = SSD
+                    closest_match = (img_1_keypoints[i], img_2_keypoints[j])
+            if bestMatchSoFar < NEAREST_MATCH_RATIO_THRESHOLD:
+                img_1_matches.append(closest_match[0])
+                img_2_matches.append(closest_match[1])
+        return [img_1_matches, img_2_matches]
+                
+    print("Matching features")
+    return matchFeatures(img_1_keypoints, img_1_feature_descriptors, img_2_keypoints, img_2_feature_descriptors)
+        
+def plot_matches(image1, image2, matches):
+    img_1_with_kp = plot_keypoints(image1, matches[0])
+    img_1_matches = matches[0]
+    img_2_with_kp = plot_keypoints(image2, matches[1])
+    img_2_matches = matches[1]
+    img_1_h = image1.shape[1]
+    result = np.concatenate((img_1_with_kp, img_2_with_kp),axis=1)
+    for ind in range(0, len(matches[0])):
+        p1=img_1_matches[ind]
+        p2=img_2_matches[ind]
+        cv2.line(result, (p1.y, p1.x),(p2.y + img_1_h, p2.x), (0,0,255))
+    return result
 
 def main():
-    img_names = ['eye.png', 'clipped-trees.png', 'low-contrast-forest.png', 'low-contrast-rose.png','pretty-tree.png', 'sandwhich.png','square.jpg','diamond-pattern.jpg','shapes.jpg']
-    img = load_img('images(greyscale)/' + img_names[0])
-    img = aspect_scale(img,300)
-    display_img(img)
-    
-    LBP = extract_LBP(img, point(100,100))
-    print(LBP)
+    img_names = [
+        'eye.png', 'clipped-trees.png', 'low-contrast-forest.png', 'low-contrast-rose.png',
+        'pretty-tree.png', 'sandwhich.png','square.jpg','diamond-pattern.jpg','shapes.jpg','pika1.jpg',
+        'pika2.jpg'
+    ]
+    img1 = load_img('images(greyscale)/' + img_names[9])
+    img1 = aspect_scale(img1,300)
+    img2 = load_img('images(greyscale)/' + img_names[10])
+    img2 = aspect_scale(img1,300)
+
+    display_img(img1)
+    display_img(img2)
+    matches = feature_matching(img1, img2, "Moravec", "LBP")
+    display_img(plot_matches(img1, img2, matches))
     # points = moravec_detector(img)
     # img_w_keypoints = plot_keypoints(img, points)
     # display_img(aspect_scale(img_w_keypoints,600))
@@ -278,7 +485,6 @@ def main():
     # display_img(test_vals)
 
     # suppressed = non_maxima_suppression(test_vals,90)
-
 # entry point
 if __name__ == "__main__":
     main()
