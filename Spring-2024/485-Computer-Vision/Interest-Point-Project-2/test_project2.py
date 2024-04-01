@@ -18,6 +18,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(p2.safe_slice(arr, 2, 4, 2, 5).shape, (2, 3))
         self.assertEqual(p2.safe_slice(arr, -1, 4, 2, 5).shape, (5, 3))
         self.assertEqual(p2.safe_slice(arr, 2, 5, -1, 4).shape, (3, 5))
+    
 
 
 if __name__ == "__main__":

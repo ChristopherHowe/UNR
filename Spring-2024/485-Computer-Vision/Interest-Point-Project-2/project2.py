@@ -2,6 +2,13 @@ import cv2
 import numpy as np
 import math
 from typing import List
+import helpers as h
+
+
+class point:
+    def __init__(self, x, y):
+        self.x: int = x
+        self.y: int = y
 
 
 def load_img(file_name):
@@ -12,28 +19,6 @@ def display_img(image: np.ndarray):
     cv2.imshow("image filtering project 1", image)
     k = cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-
-def display_img_normalized(image: np.ndarray):
-    # normalized_image = np.zeros(image.shape, dtype=np.uint8)
-    # cv2.normalize(image, normalized_image, 0,255,cv2.NORM_MINMAX)
-    normalized_image = np.uint8(
-        (image - np.min(image)) / (np.max(image) - np.min(image)) * 255
-    )
-    cv2.imshow("image filtering project 1", normalized_image)
-    k = cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-
-def aspect_scale(img: np.ndarray, height):
-    ratio = img.shape[0] / img.shape[1]
-    return cv2.resize(img, (height, int(height * ratio)))
-
-
-class point:
-    def __init__(self, x, y):
-        self.x: int = x
-        self.y: int = y
 
 
 def pad_img(image, size, val):
@@ -62,6 +47,62 @@ def unpad_img(src, pad_width):
 def threshold(img: np.ndarray, threshold: int):
     new_img = np.where(img < threshold, 0, 1)
     return new_img
+
+
+def normalizedThreshold(img: np.ndarray, percent):
+    sorted_minvals = np.sort(img[img != 0].flatten())
+    normalized_t = sorted_minvals[int(len(sorted_minvals) * (percent / 100))]
+    return threshold(img, normalized_t)
+
+
+def safe_slice(arr: np.ndarray, x1, x2, y1, y2):
+    arr_w = arr.shape[0]
+    arr_h = arr.shape[1]
+    if x1 < 0 or x2 > arr_w or y1 < 0 or y2 > arr_h:
+        l_pad = max(0 - x1, 0)
+        r_pad = max(x2 - arr_w, 0)
+        t_pad = max(0 - y1, 0)
+        b_pad = max(y2 - arr_h, 0)
+        padding = ((l_pad, r_pad), (t_pad, b_pad))
+        if arr.ndim == 3:
+            padding = ((l_pad, r_pad), (t_pad, b_pad), (0, 0))
+        padded_arr = np.pad(arr, padding, mode="edge")
+        return padded_arr[x1 + l_pad : x2 + l_pad, y1 + t_pad : y2 + t_pad]
+    return arr[x1:x2, y1:y2]
+
+
+# returns an image that is grey whether the input is color or grey
+def guarantee_greyscale(img) -> np.ndarray:
+    result = np.copy(img)
+    if result.ndim == 3:
+        return np.uint8(np.mean(img, axis=2))
+    elif result.ndim == 2:
+        return result
+    else:
+        raise ValueError("img does not have 2 or 3 dimensions")
+
+
+# returns an image with three channels, for example if input is 1 channel makes 3 duplicate channels
+def guarantee_color(img) -> np.ndarray:
+    result = np.copy(img)
+    if result.ndim == 3:
+        return result
+    elif result.ndim == 2:
+        return np.stack([result] * 3, axis=-1)
+    else:
+        raise ValueError("img does not have 2 or 3 dimensions")
+
+
+# returns a new image with two input images next to each other
+def make_side_by_side(img1: np.ndarray, img2: np.ndarray):
+    if img1.shape[0] > img2.shape[0]:
+        blank = np.zeros((img1.shape[0], img2.shape[1], 3), dtype=img1.dtype)
+        blank[0 : img2.shape[0], 0 : img2.shape[1]] = img2
+        return np.concatenate((img1, blank), axis=1)
+    else:
+        blank = np.zeros((img2.shape[0], img1.shape[1], 3), dtype=img1.dtype)
+        blank[0 : img1.shape[0], 0 : img1.shape[1]] = img1
+        return np.concatenate((blank, img2), axis=1)
 
 
 # assumes that the src has single value data (not rgb)
@@ -108,9 +149,7 @@ def non_maxima_suppression(src: np.ndarray):
 
     # Check that src has intensity data (not rgb)
     if src.ndim != 2:
-        raise ValueError(
-            "src does not have two dimensions, make sure you are not passing it intensity data"
-        )
+        raise ValueError("src does not have two dimensions, make sure you are not passing it intensity data")
     # tiles can be any size less than the tile size (edges can be less if corners size is not evenly divided by tile size)
     result = np.zeros(src.shape, dtype=src.dtype)
 
@@ -134,16 +173,6 @@ def non_maxima_suppression(src: np.ndarray):
             result[tile_x_start:tile_x_end, tile_y_start:tile_y_end] = result_tile
 
     return result
-
-
-def rgb2gray(rgb: np.ndarray):
-    grey = np.zeros(rgb.shape[:-1], dtype=np.uint8)
-    rgb_w = rgb.shape[0]
-    rgb_h = rgb.shape[1]
-    for rgb_x in range(0, rgb_w):
-        for rgb_y in range(0, rgb_h):
-            grey[rgb_x][rgb_y] = int(sum(rgb[rgb_x][rgb_y]) / 3)
-    return grey
 
 
 def binary_img_to_point_arr(image: np.ndarray) -> List[point]:
@@ -170,16 +199,11 @@ def moravec_detector(image: np.ndarray) -> List[point]:
         point(1, 1),
     ]
 
-    local_src = np.copy(image)
-    if image.ndim == 3:
-        local_src = rgb2gray(image)
-
+    local_src = guarantee_greyscale(image)
     img_w = local_src.shape[0]
     img_h = local_src.shape[1]
 
-    padding_size: int = (
-        math.floor(WINDOW_SIZE / 2) + 1
-    )  # plus val should be equal to princ dir len
+    padding_size: int = math.floor(WINDOW_SIZE / 2) + 1  # plus val should be equal to princ dir len
     padded_src, padVals = pad_img(local_src, padding_size, 0)
 
     def getSW(image: np.ndarray, x: int, y: int, princDir: point):
@@ -203,22 +227,15 @@ def moravec_detector(image: np.ndarray) -> List[point]:
                 minVal = min(minVal, Sw)
             new_img[img_x][img_y] = minVal
 
-    def normalizedThreshold(val_img: np.ndarray, percent):
-        sorted_minvals = np.sort(val_img[val_img != 0].flatten())
-        return sorted_minvals[int(len(sorted_minvals) * (percent / 100))]
-
     unpadded_img = unpad_img(new_img, padVals)
     suppressed_img = non_maxima_suppression(unpadded_img)
-    thresheld_img = threshold(
-        suppressed_img, normalizedThreshold(suppressed_img, THRESHOLD)
-    )
+    thresheld_img = normalizedThreshold(suppressed_img, THRESHOLD)
     return binary_img_to_point_arr(thresheld_img)
 
 
 # def harris_detector(image):
 
 
-# Expects image to be in color
 def plot_keypoints(image, keypoints: List[point]):
     def markPx(image, x, y):
         MARK_SIZE = 5
@@ -231,14 +248,14 @@ def plot_keypoints(image, keypoints: List[point]):
         ]
         for lx in range(0, MARK_SIZE):
             for ly in range(0, MARK_SIZE):
-                if (
-                    pattern[lx][ly] == 1
-                    and x + lx - 2 < image.shape[0]
-                    and y + ly - 2 < image.shape[1]
-                ):
+                if pattern[lx][ly] == 1 and x + lx - 2 < image.shape[0] and y + ly - 2 < image.shape[1]:
                     image[x + lx - 2][y + ly - 2] = [0, 0, 255]
 
     result = np.copy(image)
+    if result.ndim != 3:
+        if result.ndim == 2:
+            result = np.stack([result] * 3, axis=-1)
+
     for keypoint in keypoints:
         markPx(result, keypoint.x, keypoint.y)
     return result
@@ -257,7 +274,7 @@ def extract_LBP(image, keypoint: point):
 
     local_src = np.copy(image)
     if image.ndim == 3:
-        local_src = rgb2gray(image)
+        local_src = np.mean(image, axis=2)
 
     histogram = np.zeros(256)
     WINDOW_SIZE = 16
@@ -272,9 +289,7 @@ def extract_LBP(image, keypoint: point):
             else:
                 binary_pattern = get_binary_pattern_as_base_10(local_src, img_x, img_y)
                 if binary_pattern not in range(0, 256):
-                    raise ValueError(
-                        "Something went wrong extracting binary pattern, value is not 0-255"
-                    )
+                    raise ValueError("Something went wrong extracting binary pattern, value is not 0-255")
                 histogram[binary_pattern] += 1
     return histogram
 
@@ -389,34 +404,16 @@ def make_gradiant(img: np.ndarray, gaussian_size: int):
     x_deriv_gaussian = apply_filter(gaussian, horizontal_kernel, 1, 1)
     y_deriv_gaussian = apply_filter(gaussian, vertical_kernel, 1, 1)
 
-    new_img = np.mean(img, axis=2)  # Greyscale
+    new_img = guarantee_greyscale(img)
     Mx = apply_filter(new_img, x_deriv_gaussian, math.floor(gaussian_size / 2), 1)
     My = apply_filter(new_img, y_deriv_gaussian, math.floor(gaussian_size / 2), 1)
     gradient = np.zeros((img_w, img_h, 2), dtype=np.float64)
     for img_x in range(img_w):
         for img_y in range(img_h):
-            magnitude = math.sqrt(
-                math.pow(Mx[img_x][img_y], 2) + math.pow(My[img_x][img_y], 2)
-            )
+            magnitude = math.sqrt(math.pow(Mx[img_x][img_y], 2) + math.pow(My[img_x][img_y], 2))
             angle = math.atan2(Mx[img_x][img_y], My[img_x][img_y])
             gradient[img_x][img_y] = [magnitude, angle]
     return gradient
-
-
-def safe_slice(arr: np.ndarray, x1, x2, y1, y2):
-    arr_w = arr.shape[0]
-    arr_h = arr.shape[1]
-    if x1 < 0 or x2 > arr_w or y1 < 0 or y2 > arr_h:
-        l_pad = max(0 - x1, 0)
-        r_pad = max(x2 - arr_w, 0)
-        t_pad = max(0 - y1, 0)
-        b_pad = max(y2 - arr_h, 0)
-        padding = ((l_pad, r_pad), (t_pad, b_pad))
-        if arr.ndim == 3:
-            padding = ((l_pad, r_pad), (t_pad, b_pad), (0, 0))
-        padded_arr = np.pad(arr, padding, mode="edge")
-        return padded_arr[x1 + l_pad : x2 + l_pad, y1 + t_pad : y2 + t_pad]
-    return arr[x1:x2, y1:y2]
 
 
 def extract_HOG(image: np.ndarray, keypoint):
@@ -425,29 +422,20 @@ def extract_HOG(image: np.ndarray, keypoint):
     if 360 % BIN_DEG_RANGE != 0:
         raise ValueError("BIN_DEG_RANGE does not evenly divide 360")
 
-    def deg_to_bin(degree) -> int:
-        return math.floor(((degree + 180) % 360) / BIN_DEG_RANGE)
+    def rad_to_bin(rad) -> int:
+        return math.floor(((math.degrees(rad) + 180) % 360) / BIN_DEG_RANGE)
 
     num_bins = int(360 / BIN_DEG_RANGE)
     offset = math.floor(WINDOW_SIZE / 2)
     histogram = np.zeros(num_bins)
-    gradient = make_gradiant(
-        safe_slice(
-            image,
-            keypoint.x - offset,
-            keypoint.x + offset + 1,
-            keypoint.y - offset,
-            keypoint.y + offset + 1,
-        ),
-        3,
-    )
+    gradient = make_gradiant(safe_slice(image, keypoint.x - offset, keypoint.x + offset + 1, keypoint.y - offset, keypoint.y + offset + 1), 3)
 
     magnitude = gradient[:, :, 0]
     orientation = gradient[:, :, 1]
 
     for wx in range(0, WINDOW_SIZE):
         for wy in range(0, WINDOW_SIZE):
-            assigned_bin = deg_to_bin(math.degrees(orientation[wx, wy]))
+            assigned_bin = rad_to_bin(orientation[wx, wy])
             histogram[assigned_bin] += magnitude[wx, wy]
     return histogram
 
@@ -468,6 +456,7 @@ def feature_matching(image1, image2, detector, extractor):
         img_2_keypoints = moravec_detector(image2)
     else:
         raise ValueError("Harris detector is not yet implemented")
+
     img_1_feature_descriptors = []
     img_2_feature_descriptors = []
 
@@ -484,31 +473,13 @@ def feature_matching(image1, image2, detector, extractor):
 
     print("Getting all feature descriptors")
     if extractor == "HOG":
-        img_1_feature_descriptors = getAllDescriptors(
-            image1, img_1_keypoints, extract_HOG
-        )
-        img_2_feature_descriptors = getAllDescriptors(
-            image2, img_2_keypoints, extract_HOG
-        )
+        img_1_feature_descriptors = getAllDescriptors(image1, img_1_keypoints, extract_HOG)
+        img_2_feature_descriptors = getAllDescriptors(image2, img_2_keypoints, extract_HOG)
     else:
-        img_1_feature_descriptors = getAllDescriptors(
-            image1, img_1_keypoints, extract_LBP
-        )
-        img_2_feature_descriptors = getAllDescriptors(
-            image2, img_2_keypoints, extract_LBP
-        )
+        img_1_feature_descriptors = getAllDescriptors(image1, img_1_keypoints, extract_LBP)
+        img_2_feature_descriptors = getAllDescriptors(image2, img_2_keypoints, extract_LBP)
 
-    def checkTwoMatches(k1, k2):
-        feature1 = safe_slice(image1, k1.x - 8, k1.x + 9, k1.y - 8, k1.y + 9)
-        feature2 = safe_slice(image2, k2.x - 8, k2.x + 9, k2.y - 8, k2.y + 9)
-        display_img(np.concatenate((feature1, feature2), axis=1))
-
-    def matchFeatures(
-        img_1_keypoints,
-        img_1_feature_descriptors,
-        img_2_keypoints,
-        img_2_feature_descriptors,
-    ):
+    def matchFeatures(img_1_keypoints, img_1_feature_descriptors, img_2_keypoints, img_2_feature_descriptors):
         img_1_matches = []
         img_2_matches = []
         for i, descriptor1 in enumerate(img_1_feature_descriptors):
@@ -527,12 +498,7 @@ def feature_matching(image1, image2, detector, extractor):
         return [img_1_matches, img_2_matches]
 
     print("Matching features")
-    return matchFeatures(
-        img_1_keypoints,
-        img_1_feature_descriptors,
-        img_2_keypoints,
-        img_2_feature_descriptors,
-    )
+    return matchFeatures(img_1_keypoints, img_1_feature_descriptors, img_2_keypoints, img_2_feature_descriptors)
 
 
 def plot_matches(image1, image2, matches):
@@ -542,17 +508,7 @@ def plot_matches(image1, image2, matches):
     img_2_matches = matches[1]
     img_1_h = image1.shape[1]
 
-    def combine_imgs(img1: np.ndarray, img2: np.ndarray):
-        if img1.shape[0] > img2.shape[0]:
-            blank = np.zeros((img1.shape[0], img2.shape[1], 3), dtype=img1.dtype)
-            blank[0 : img2.shape[0], 0 : img2.shape[1]] = img2
-            return np.concatenate((img1, blank), axis=1)
-        else:
-            blank = np.zeros((img2.shape[0], img1.shape[1], 3), dtype=img1.dtype)
-            blank[0 : img1.shape[0], 0 : img1.shape[1]] = img1
-            return np.concatenate((blank, img2), axis=1)
-
-    result = combine_imgs(img_1_with_kp, img_2_with_kp)
+    result = make_side_by_side(img_1_with_kp, img_2_with_kp)
     for ind in range(0, len(matches[0])):
         p1 = img_1_matches[ind]
         p2 = img_2_matches[ind]
@@ -577,31 +533,14 @@ def main():
         "church2.jpg",
     ]
     img1 = load_img("images(greyscale)/" + img_names[11])
-    img1 = aspect_scale(img1, 300)
+    img1 = h.aspect_scale(img1, 150)
     img2 = load_img("images(greyscale)/" + img_names[12])
-    img2 = aspect_scale(img2, 300)
+    img2 = h.aspect_scale(img2, 150)
 
     display_img(img1)
     display_img(img2)
-    matches = feature_matching(img1, img2, "Moravec", "HOG")
-    display_img(aspect_scale(plot_matches(img1, img2, matches), 1000))
-
-    # points = moravec_detector(img1)
-    # img_w_keypoints = plot_keypoints(img1, points)
-    # display_img(aspect_scale(img_w_keypoints,600))
-    # test_vals = np.uint8(np.array(
-    #     [
-    #         [0,0,0,98,0,100],
-    #         [0,0,112,145,0,80],
-    #         [134,0,0,149,0,70],
-    #         [16,0,0,122,0,60],
-    #         [16,0,18,0,20,50],
-    #         [12,0,12,0,100,70]
-    #     ]
-    # ))
-    # display_img(test_vals)
-
-    # suppressed = non_maxima_suppression(test_vals,90)
+    matches = feature_matching(img1, img2, "Moravec", "LBP")
+    display_img(h.aspect_scale(plot_matches(img1, img2, matches), 1000))
 
 
 # entry point
