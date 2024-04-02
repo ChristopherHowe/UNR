@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import math
 from typing import List
-import helpers as h
 
 
 class point:
@@ -108,7 +107,6 @@ def harris_detector(image):
     Mxy = apply_filter(Mx, sobel_kernel_y, 1, 1)
 
     Aw = np.stack((Mxx, Mxy, Mxy, Myy), axis=2).reshape(Mx.shape[0], Mx.shape[1], 2, 2)
-
     detected = np.zeros_like(Mx)
     for img_x in range(padding_size, img_w - padding_size):
         for img_y in range(padding_size, img_h - padding_size):
@@ -149,36 +147,38 @@ def plot_keypoints(image, keypoints: List[point]):
     return result
 
 
+def get_binary_pattern_as_base_10(image, x, y):
+    threshold = image[x][y]
+    val = 0
+    for wx in range(-1, 2):
+        for wy in range(-1, 2):
+            if wx == 0 and wy == 0:
+                continue
+            val = val * 2 + (1 if image[x + wx][y + wy] > threshold else 0)
+    return val
+
+
 def extract_LBP(image, keypoint: point):
-    def get_binary_pattern_as_base_10(image, x, y):
-        threshold = image[x][y]
-        val = 0
-        for wx in range(-1, 2):
-            for wy in range(-1, 2):
-                if wx == 0 and wy == 0:
-                    continue
-                val = val * 2 + (1 if image[x + wx][y + wy] > threshold else 0)
-        return val
-
-    local_src = np.copy(image)
-    if image.ndim == 3:
-        local_src = np.mean(image, axis=2)
-
-    histogram = np.zeros(256)
     WINDOW_SIZE = 16
-    img_w = local_src.shape[0]
-    img_h = local_src.shape[1]
-    for wx in range(0, WINDOW_SIZE):
-        img_x = keypoint.x + wx - int(WINDOW_SIZE / 2) - 1
-        for wy in range(0, WINDOW_SIZE):
-            img_y = keypoint.y + wy - int(WINDOW_SIZE / 2) - 1
-            if (img_x not in range(1, img_w - 1)) or (img_y not in range(1, img_h - 1)):
-                histogram[0] += 1
-            else:
-                binary_pattern = get_binary_pattern_as_base_10(local_src, img_x, img_y)
-                if binary_pattern not in range(0, 256):
-                    raise ValueError("Something went wrong extracting binary pattern, value is not 0-255")
-                histogram[binary_pattern] += 1
+    BINARY_WINDOW_SIZE = 3
+    offset = math.floor(WINDOW_SIZE / 2)
+    padding = math.floor(BINARY_WINDOW_SIZE / 2)
+    image_slice = guarantee_greyscale(
+        safe_slice(
+            image,
+            keypoint.x - offset - padding,
+            keypoint.x + offset + padding,
+            keypoint.y - offset - padding,
+            keypoint.y + offset + padding,
+        )
+    )
+    histogram = np.zeros(256)
+    for wx in range(1, WINDOW_SIZE):
+        for wy in range(1, WINDOW_SIZE):
+            binary_pattern = get_binary_pattern_as_base_10(image_slice, wx, wy)
+            if binary_pattern not in range(0, 256):
+                raise ValueError("Something went wrong extracting binary pattern, value is not 0-255")
+            histogram[binary_pattern] += 1
     return histogram
 
 
@@ -207,7 +207,7 @@ def extract_HOG(image: np.ndarray, keypoint):
 
 
 def feature_matching(image1, image2, detector, extractor):
-    NEAREST_MATCH_RATIO_THRESHOLD = 0.5
+    NEAREST_MATCH_RATIO_THRESHOLD = 0.6
     if detector != "Moravec" and detector != "Harris":
         raise ValueError("Detector type must be Moravec or Harris")
     if extractor != "LBP" and extractor != "HOG":
@@ -542,17 +542,9 @@ def main():
         "church1.jpg",
         "church2.jpg",
     ]
-    img1 = load_img("images(greyscale)/" + img_names[8])
-    img1 = h.aspect_scale(img1, 150)
-    img2 = load_img("images(greyscale)/" + img_names[8])
-    img2 = h.aspect_scale(img2, 150)
-
-    display_img(img1)
-    # display_img(img2)
-    display_img(h.aspect_scale(plot_keypoints(img1, harris_detector(img1)), 600))
-    display_img(h.aspect_scale(plot_keypoints(img1, moravec_detector(img1)), 600))
-
-    # display_img(h.aspect_scale(plot_matches(img1, img2, feature_matching(img1, img2, "Harris", "HOG")), 1000))
+    img1 = load_img("images(greyscale)/" + img_names[11])
+    img2 = load_img("images(greyscale)/" + img_names[12])
+    display_img(plot_matches(img1, img2, feature_matching(img1, img2, "Harris", "LBP")))
 
 
 # entry point
