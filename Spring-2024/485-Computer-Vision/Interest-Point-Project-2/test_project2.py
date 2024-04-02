@@ -25,17 +25,13 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(p2.unpad_img(arr_grey, ((1, 1), (1, 1))).shape, (3, 3))
         self.assertEqual(p2.unpad_img(arr_col, ((1, 1), (1, 1), (0, 0))).shape, (3, 3, 3))
 
-    def test_extract_hog(self):
-        array = np.zeros((20, 20), dtype=np.uint8)
-
-        # Alternate between 0 and 255 every 4 spaces
-        array[::2, ::4] = 255
-        array[1::2, 1::4] = 255
-        print(array)
-
-        p2.extract_HOG()
-
-
+    def test_get_binary_parrtern(self):
+        test1 = np.array([[5, 5, 5], [5, 1, 5], [5, 5, 5]])
+        self.assertEqual(p2.get_binary_pattern_as_base_10(test1, 1, 1), 255)
+        test2 = np.array([[0, 5, 5], [5, 1, 5], [5, 5, 5]])
+        self.assertEqual(p2.get_binary_pattern_as_base_10(test2, 1, 1), 127)
+        test3 = np.array([[0, 0, 5], [5, 1, 5], [5, 0, 5]])
+        self.assertEqual(p2.get_binary_pattern_as_base_10(test3, 1, 1), 61)
 
 
 if __name__ == "__main__":
