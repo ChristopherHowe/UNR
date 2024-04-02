@@ -1,3 +1,6 @@
+# Packages Used
+I used the numpy, math and cv2 packages. I realized quickly during this project that my understanding of everything that you can do with the numpy package is limited and it was good getting to be a little more familiar with it.
+
 # Moravec Detector Implementation
 The Moravec detector shifts a window in that 8 principal directions and calculates the Sw value for each window. The corner-ness value of a pixel is equal to the minimum Sw value for each window shift in the principal direction. The Sw value is calculated by the sum of the squared differences between the anchor window (anchor centered on the pixel in question) and the shifted window. Before determining the Sw values, it adds enough padding to account for the size of the window shifted around and the shifting movements. After all the values have been calculated, the Moravec detector removes the padding. It then applies the nonmaximal suppression function, applies the normalizedThreshold function, and returns a list of points representing corners. The list of points is created by the `binary_img_to_point_arr` function which just iterates over the image and appends any nonzero values to the point array.
 

@@ -4,6 +4,9 @@ set -e
 SUB_DIR=Project2
 ZIP_NAME=howe_christopher_project2.zip
 
+if [ -d $SUB_DIR ]; then
+    rm $SUB_DIR -r
+fi
 mkdir $SUB_DIR
 
 cp README.md ./$SUB_DIR/README.txt
