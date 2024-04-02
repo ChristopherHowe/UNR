@@ -75,7 +75,53 @@ def moravec_detector(image: np.ndarray) -> List[point]:
     return binary_img_to_point_arr(thresheld_img)
 
 
-# def harris_detector(image):
+def harris_detector(image):
+    WINDOW_SIZE = 3
+    THTRESHOLD_PERCENT = 80
+    K_VAL = 0.005
+
+    img_w = image.shape[0]
+    img_h = image.shape[1]
+    padding_size: int = math.floor(WINDOW_SIZE / 2)
+
+    greyscaled = guarantee_greyscale(image)
+    padded_src, pad_vals = pad_img(greyscaled, padding_size, 0)
+
+    sobel_kernel_y = np.array(
+        [
+            [-1, -2, -1],
+            [0, 0, 0],
+            [1, 2, 1],
+        ]
+    )
+    sobel_kernel_x = np.array(
+        [
+            [-1, 0, 1],
+            [-2, 0, 2],
+            [-1, 0, 1],
+        ]
+    )
+    Mx = apply_filter(padded_src, sobel_kernel_x, 1, 1)
+    My = apply_filter(padded_src, sobel_kernel_y, 1, 1)
+    Mxx = apply_filter(Mx, sobel_kernel_x, 1, 1)
+    Myy = apply_filter(My, sobel_kernel_y, 1, 1)
+    Mxy = apply_filter(Mx, sobel_kernel_y, 1, 1)
+
+    Aw = np.stack((Mxx, Mxy, Mxy, Myy), axis=2).reshape(Mx.shape[0], Mx.shape[1], 2, 2)
+
+    detected = np.zeros_like(Mx)
+    for img_x in range(padding_size, img_w - padding_size):
+        for img_y in range(padding_size, img_h - padding_size):
+            Aw_xy = Aw[img_x][img_y]
+            R = np.linalg.det(Aw_xy) - K_VAL * (np.trace(Aw_xy) ** 2)
+            # if R < 0 edge, if R ~ small -> flat, if R > 0 and big -> corner
+            #### dropping flats is handled by thresholding, dropping edges handled by max func
+            detected[img_x][img_y] = max(0, R)
+
+    unpadded = unpad_img(detected, pad_vals)
+    suppressed = non_maxima_suppression(unpadded)
+    thresheld = normalizedThreshold(suppressed, THTRESHOLD_PERCENT)
+    return binary_img_to_point_arr(thresheld)
 
 
 def plot_keypoints(image, keypoints: List[point]):
@@ -177,12 +223,8 @@ def feature_matching(image1, image2, detector, extractor):
         img_1_keypoints = moravec_detector(image1)
         img_2_keypoints = moravec_detector(image2)
     else:
-        raise ValueError("Harris detector is not yet implemented")
-
-    display_img(plot_keypoints(image1, img_1_keypoints))
-    print("num features 1:", len(img_1_keypoints))
-    display_img(plot_keypoints(image2, img_2_keypoints))
-    print("num features 2:", len(img_2_keypoints))
+        img_1_keypoints = harris_detector(image1)
+        img_2_keypoints = harris_detector(image2)
 
     def getAllDescriptors(img, keypoints: List[point], extractorFunc):
         descriptors = []
@@ -443,7 +485,7 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
     src_w = src.shape[0]
     src_h = src.shape[1]
 
-    new_img = np.zeros(src.shape, dtype=src.dtype)
+    new_img = np.zeros(src.shape, dtype=np.float64)
     for img_x in range(req_w_space, src_w - req_w_space):
         for img_y in range(req_h_space, src_h - req_h_space):
             v = correlation(src, mask, img_x, img_y)
@@ -500,15 +542,17 @@ def main():
         "church1.jpg",
         "church2.jpg",
     ]
-    img1 = load_img("images(greyscale)/" + img_names[9])
+    img1 = load_img("images(greyscale)/" + img_names[8])
     img1 = h.aspect_scale(img1, 150)
-    img2 = load_img("images(greyscale)/" + img_names[10])
+    img2 = load_img("images(greyscale)/" + img_names[8])
     img2 = h.aspect_scale(img2, 150)
 
     display_img(img1)
-    display_img(img2)
-    matches = feature_matching(img1, img2, "Moravec", "LBP")
-    display_img(h.aspect_scale(plot_matches(img1, img2, matches), 1000))
+    # display_img(img2)
+    display_img(h.aspect_scale(plot_keypoints(img1, harris_detector(img1)), 600))
+    display_img(h.aspect_scale(plot_keypoints(img1, moravec_detector(img1)), 600))
+
+    # display_img(h.aspect_scale(plot_matches(img1, img2, feature_matching(img1, img2, "Harris", "HOG")), 1000))
 
 
 # entry point

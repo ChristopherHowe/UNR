@@ -25,6 +25,18 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(p2.unpad_img(arr_grey, ((1, 1), (1, 1))).shape, (3, 3))
         self.assertEqual(p2.unpad_img(arr_col, ((1, 1), (1, 1), (0, 0))).shape, (3, 3, 3))
 
+    def test_extract_hog(self):
+        array = np.zeros((20, 20), dtype=np.uint8)
+
+        # Alternate between 0 and 255 every 4 spaces
+        array[::2, ::4] = 255
+        array[1::2, 1::4] = 255
+        print(array)
+
+        p2.extract_HOG()
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
