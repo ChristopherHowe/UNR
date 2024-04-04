@@ -1,0 +1,42 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 456}
+\hmwkTitle{Quiz 5}
+\hmwkDueDate{April 4, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Problem Description}
+Prove the following language is not regular, using the pumping lemma for regular languages
+$$L = \{n_a(w)+2 \leq n_b(w): w \in \{a,b\}^*\}$$
+
+\section{Solution, Proof by contradiction}
+\subsection{Assumption}
+Assume that $L$ is a regular language. If $L$ is regular, then for all strings ($s$) in $L$, the length of $L$ is greater than or equal to $P$ where $P$ is a positive integer, $s$ can be decomposed into $xyz$ where the length of $xy$ is less than $P$ and the length of $y$ is greater than 1. Then, $s=xy^iz$ is also in the language for all $i \geq 0$.
+
+\subsection{Counter Example}
+Assume that $s$ is a string in the language $L$ where $s = a^P b^{(P+2)}$. This string is in the language since there are 2 more $b$'s than $a$'s and the language mandates that the number of $b$'s is at least two more than the number of $a$'s.
+
+\subsection{String Decomposition}
+The string can be decomposed into an $x$, a $y$ and a $z$ value. The $xy$ portion must be less than or equal to $P$ so an acceptable value for $xy$ is $a^P$. the $y$ portion of this, can be any number $k$ of the $a$'s. The values for $x$, $y$, and $z$ are shown below. It is also helpful to split the string into the portion that is included in y and the portion that is not included in y and this is also shown below.
+\[ x=a^{P-k},\ y=a^k,\ z=b^{P+2}\]
+\[y = a^k,\ not\ y = a^{P-k}b^{P+2} \]
+
+\subsection{Pumping the $i$ value}
+In order for the language to be regular $s=xy^iz$ must be in the language for all $i \geq 0$. In order to show that the language is not regular, some $i$ value must be found such that $s=xy^iz$ is not in the language. To find this, we will test a couple different values.
+
+\begin{align*}
+    \proofline{i=0, s = a^{P-k}b^{P+2}}{Does not prove language is not regular, $s_0 \in L$}
+    \proofline{i=1, s = a^Pb^{P+2}}{Does not prove language is not regular, if $s \in L$, then $s_1$ is always in $L$}
+    \proofline{i=2, s = a^{P-k}a^{2k}b^{P+2} = a^{P+k}b^{P+2}}{$s_2 \notin L$ In $s_2$, the number of $b$'s is not at least 2 more than the number of $a$'s }
+\end{align*}
+
+\subsection{Conclusion}
+By proof by contradiction, the language $L$ is not a regular lanuage because it does not adhere to the pumping lemma. In order for a language to be regular, it must be possible to "pump" any string in the language. A counter example $s$ in the language $L$ was found that when "pumped"  to $s_2$ was no longer in the language. $s_2$ is not in the language since it has $P+2$ $b$'s and $P+k$ $a$'s. The number of $b$'s is not at least 2 more than the number of $a$'s since $k$ is an integer greater than or equal to 1.
+
+\end{document}
