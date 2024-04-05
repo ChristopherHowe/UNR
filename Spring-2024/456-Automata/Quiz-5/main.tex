@@ -17,7 +17,7 @@ $$L = \{n_a(w)+2 \leq n_b(w): w \in \{a,b\}^*\}$$
 
 \section{Solution, Proof by contradiction}
 \subsection{Assumption}
-Assume that $L$ is a regular language. If $L$ is regular, then for all strings ($s$) in $L$, the length of $L$ is greater than or equal to $P$ where $P$ is a positive integer, $s$ can be decomposed into $xyz$ where the length of $xy$ is less than $P$ and the length of $y$ is greater than 1. Then, $s=xy^iz$ is also in the language for all $i \geq 0$.
+Assume that $L$ is a regular language. If $L$ is regular, then all strings of length $P$ or greater can be decomposed into $xyz$ where the length of $xy$ is less than or equal to $P$ and the length of $y$ is greater than 1. Then, $s=xy^iz$ is also in the language for all $i \geq 0$. $P$ is the number of states used in the FA used to accept the languge and is a positive integer.
 
 \subsection{Counter Example}
 Assume that $s$ is a string in the language $L$ where $s = a^P b^{(P+2)}$. This string is in the language since there are 2 more $b$'s than $a$'s and the language mandates that the number of $b$'s is at least two more than the number of $a$'s.
