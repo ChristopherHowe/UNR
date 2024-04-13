@@ -15,7 +15,7 @@
 Convert the following CFG into Chomsky Normal form using the method demonstrated in lecture
 
 \begin{align*}
-    G=&(\{S,A,B,C,D\},\{a,b,c\}, S, P) where\ P\ is\ the\ following\\
+    G=&(\{S,A,B,C,D\},\{a,b,c\}, S, P)\ where\ P\ is\ the\ following\\
     &S \rightarrow ABDa|aa\\
     &A \rightarrow BC|a\\
     &B \rightarrow bB|b|\lambda\\
@@ -76,5 +76,54 @@ However, after removing the $\lambda$ productions, A new one is produced for A w
         \textit{Productions after $A \rightarrow \lambda$ is removed}
     \end{center}
 \end{multicols}
+\pagebreak
+
+\subsection{Remove Unit Rules}
+After removing all $\lambda$ transitions, all unit rules can be removed and dropped since they serve no purpose.
+This can be done by determining what can be produced by each unit rule.
+In this grammar, there are only two unit rules: $A \rightarrow B$ and $A \rightarrow C$
+In order to remove these, the LHS of the production can add the production rules of the RHS.
+The resulting productions of A are as follows.
+\begin{center}
+    $A \rightarrow BC|a|bB|b|CD$
+\end{center}
+
+\subsection{Rule Splitting and terminal substituition}
+After the removing all the unit rules and productions resulting in the empty string, the productions must be mutated to only contain rules adhering to chompsky normal form. The productions for $S$, $A$, and $B$ do not adhere to this form. In order to change them, create new variables to wrap illegal forms.
+
+\begin{center}
+    \textit{Fixed productions for $S$}
+    \begin{align*}
+        &S \rightarrow Y_1, Y_2|BY_2|AY_2|DU_a|U_aU_a \\
+        &Y_1 \rightarrow AB \\
+        &Y_2 \rightarrow DU_a \\
+        &U_a \rightarrow a \\
+    \end{align*}
+    \textit{Fixed productions for $A$}
+    \begin{align*}
+        &A \rightarrow BC|a|U_bB|b|CD \\
+        &U_b \rightarrow b \\
+    \end{align*}
+    \textit{Fixed productions for $B$}
+    \begin{align*}
+        &B \rightarrow U_bB|b \\
+    \end{align*}
+\end{center}
+
+\subsection{Grammar in Chomsky Normal Form}
+The resulting grammar is in chompsky normal form. See below.
+
+\begin{align*}
+    G_{chomsky}=&(\{S,A,B,C,D,Y_1,Y_2,U_a, U_b\},\{a,b,c\}, S, P_1)\ where\ P_1\ is\ the\ following\\
+    &S \rightarrow Y_1, Y_2|BY_2|AY_2|DU_a|U_aU_a \\
+    &A \rightarrow BC|a|U_bB|b|CD \\
+    &B \rightarrow U_bB|b \\
+    &C \rightarrow CD\\
+    &D \rightarrow c\\
+    &Y_1 \rightarrow AB \\
+    &Y_2 \rightarrow DU_a \\
+    &U_a \rightarrow a \\
+    &U_b \rightarrow b \\
+\end{align*}
 
 \end{document}
