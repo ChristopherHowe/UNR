@@ -12,10 +12,10 @@
 \pagebreak
 
 \section{Problem}
-Convert the following CFG into Chomsky Normal form using the method demonstrated in lecture
+Convert the following CFG into Chomsky Normal form using the method demonstrated in the lecture.
 
 \begin{align*}
-    G=&(\{S,A,B,C,D\},\{a,b,c\}, S, P)\ where\ P\ is\ the\ following\\
+    G=&(\{S,A,B,C,D\},\{a,b,c\}, S, P)\text{where $P$ is the following}\\
     &S \rightarrow ABDa|aa\\
     &A \rightarrow BC|a\\
     &B \rightarrow bB|b|\lambda\\
@@ -25,10 +25,9 @@ Convert the following CFG into Chomsky Normal form using the method demonstrated
 
 \section{Solution}
 The process demonstrated in class follows 5 main steps. 
-First, ensure that the start variable is not produced by any other rules, if it is, add an additional start symbol.
-Second, remove any rule that produces the empty string ($\lambda$)
-Third simplify/ "shortcut" any unit rules.
-These are productions that follow the form $A \rightarrow B$
+First, ensure that the start variable is not produced by any other rules; if it is, add another start symbol.
+Second, remove any rule that produces the empty string ($\lambda$).
+Third, simplify/"shortcut" any unit rules. These are productions that follow the form $A \rightarrow B$.
 Fourth, break apart any productions that are more than two symbols and replace terminals in production rules with two symbols.
 Fifth, remove any unreachable or redundant rules.
 
@@ -36,9 +35,9 @@ Fifth, remove any unreachable or redundant rules.
 This step can be skipped since no rules produce the start symbol.
 
 \subsection{Remove any rule that produces the empty string}
-There are two variables that can produce the empty string, B and C.
-We will remove them by adding an additional rule to every production that has B to use the empty string instead.
-However, after removing the $\lambda$ productions, A new one is produced for A which must also be removed
+Two variables that can produce the empty string, B and C.
+We will remove them by adding a rule to every production that has B to use the empty string instead.
+However, after removing the $\lambda$ productions, a new one is produced for A which must also be removed.
 
 \begin{multicols}{3}
     \begin{align*}
@@ -81,15 +80,15 @@ However, after removing the $\lambda$ productions, A new one is produced for A w
 \subsection{Remove Unit Rules}
 After removing all $\lambda$ transitions, all unit rules can be removed and dropped since they serve no purpose.
 This can be done by determining what can be produced by each unit rule.
-In this grammar, there are only two unit rules: $A \rightarrow B$ and $A \rightarrow C$
-In order to remove these, the LHS of the production can add the production rules of the RHS.
+In this grammar, there are only two unit rules: $A \rightarrow B$ and $A \rightarrow C$.
+To remove these, the LHS of the production can add the production rules of the RHS.
 The resulting productions of A are as follows.
 \begin{center}
     $A \rightarrow BC|a|bB|b|CD$
 \end{center}
 
-\subsection{Rule Splitting and terminal substituition}
-After the removing all the unit rules and productions resulting in the empty string, the productions must be mutated to only contain rules adhering to chompsky normal form. The productions for $S$, $A$, and $B$ do not adhere to this form. In order to change them, create new variables to wrap illegal forms.
+\subsection{Rule Splitting and terminal substitution}
+After removing all the unit rules and productions resulting in the empty string, the productions must be mutated to only contain rules adhering to Chomsky normal form. The productions for $S$, $A$, and $B$ do not adhere to this form. To change them, create new variables to wrap illegal forms.
 
 \begin{center}
     \textit{Fixed productions for $S$}
@@ -111,10 +110,10 @@ After the removing all the unit rules and productions resulting in the empty str
 \end{center}
 
 \subsection{Grammar in Chomsky Normal Form}
-The resulting grammar is in chompsky normal form. See below.
+The resulting grammar is in Chomsky normal form. See below.
 
 \begin{align*}
-    G_{chomsky}=&(\{S,A,B,C,D,Y_1,Y_2,U_a, U_b\},\{a,b,c\}, S, P_1)\ where\ P_1\ is\ the\ following\\
+    G_{\text{Chomsky}}=&(\{S,A,B,C,D,Y_1,Y_2,U_a, U_b\},\{a,b,c\}, S, P_1)\text{where $P_1$ is the following}\\
     &S \rightarrow Y_1, Y_2|BY_2|AY_2|DU_a|U_aU_a \\
     &A \rightarrow BC|a|U_bB|b|CD \\
     &B \rightarrow U_bB|b \\
