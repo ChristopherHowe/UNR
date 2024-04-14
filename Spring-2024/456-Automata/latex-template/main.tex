@@ -1,0 +1,128 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 456}
+\hmwkTitle{Quiz 3}
+\hmwkDueDate{March 10, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Problem}
+Convert the following CFG into Chomsky Normal form using the method demonstrated in the lecture.
+
+\begin{align*}
+    G=&(\{S,A,B,C,D\},\{a,b,c\}, S, P)\text{where $P$ is the following}\\
+    &S \rightarrow ABDa|aa\\
+    &A \rightarrow BC|a\\
+    &B \rightarrow bB|b|\lambda\\
+    &C \rightarrow CD|\lambda\\
+    &D \rightarrow c\\
+\end{align*}
+
+\section{Solution}
+The process demonstrated in class follows 5 main steps. 
+First, ensure that the start variable is not produced by any other rules; if it is, add another start symbol.
+Second, remove any rule that produces the empty string ($\lambda$).
+Third, simplify/"shortcut" any unit rules. These are productions that follow the form $A \rightarrow B$.
+Fourth, break apart any productions that are more than two symbols and replace terminals in production rules with two symbols.
+Fifth, remove any unreachable or redundant rules.
+
+\subsection{Ensure the start variable is not the product of any other rules}
+This step can be skipped since no rules produce the start symbol.
+
+\subsection{Remove any rule that produces the empty string}
+Two variables that can produce the empty string, B and C.
+We will remove them by adding a rule to every production that has B to use the empty string instead.
+However, after removing the $\lambda$ productions, a new one is produced for A which must also be removed.
+
+\begin{multicols}{3}
+    \begin{align*}
+        &S \rightarrow ABDa|ADa|aa\\
+        &A \rightarrow BC|C|a\\
+        &B \rightarrow bB|b\\
+        &C \rightarrow CD|\lambda\\
+        &D \rightarrow c\\
+    \end{align*}
+    \begin{center}
+        \textit{Productions after $B \rightarrow \lambda$ is removed}
+    \end{center}
+\columnbreak
+    
+    \begin{align*}
+        &S \rightarrow ABDa|ADa|aa\\
+        &A \rightarrow BC|B|C|\lambda|a\\
+        &B \rightarrow bB|b\\
+        &C \rightarrow CD\\
+        &D \rightarrow c\\
+    \end{align*}
+    \begin{center}
+        \textit{Productions after $C \rightarrow \lambda$ is removed}
+    \end{center}
+\columnbreak
+    
+    \begin{align*}
+        &S \rightarrow ABDa|BDa|ADa|Da|aa\\
+        &A \rightarrow BC|B|C|a\\
+        &B \rightarrow bB|b\\
+        &C \rightarrow CD\\
+        &D \rightarrow c\\
+    \end{align*}
+    \begin{center}
+        \textit{Productions after $A \rightarrow \lambda$ is removed}
+    \end{center}
+\end{multicols}
+\pagebreak
+
+\subsection{Remove Unit Rules}
+After removing all $\lambda$ transitions, all unit rules can be removed and dropped since they serve no purpose.
+This can be done by determining what can be produced by each unit rule.
+In this grammar, there are only two unit rules: $A \rightarrow B$ and $A \rightarrow C$.
+To remove these, the LHS of the production can add the production rules of the RHS.
+The resulting productions of A are as follows.
+\begin{center}
+    $A \rightarrow BC|a|bB|b|CD$
+\end{center}
+
+\subsection{Rule Splitting and terminal substitution}
+After removing all the unit rules and productions resulting in the empty string, the productions must be mutated to only contain rules adhering to Chomsky normal form. The productions for $S$, $A$, and $B$ do not adhere to this form. To change them, create new variables to wrap illegal forms.
+
+\begin{center}
+    \textit{Fixed productions for $S$}
+    \begin{align*}
+        &S \rightarrow Y_1, Y_2|BY_2|AY_2|DU_a|U_aU_a \\
+        &Y_1 \rightarrow AB \\
+        &Y_2 \rightarrow DU_a \\
+        &U_a \rightarrow a \\
+    \end{align*}
+    \textit{Fixed productions for $A$}
+    \begin{align*}
+        &A \rightarrow BC|a|U_bB|b|CD \\
+        &U_b \rightarrow b \\
+    \end{align*}
+    \textit{Fixed productions for $B$}
+    \begin{align*}
+        &B \rightarrow U_bB|b \\
+    \end{align*}
+\end{center}
+
+\subsection{Grammar in Chomsky Normal Form}
+The resulting grammar is in Chomsky normal form. See below.
+
+\begin{align*}
+    G_{\text{Chomsky}}=&(\{S,A,B,C,D,Y_1,Y_2,U_a, U_b\},\{a,b,c\}, S, P_1)\text{where $P_1$ is the following}\\
+    &S \rightarrow Y_1, Y_2|BY_2|AY_2|DU_a|U_aU_a \\
+    &A \rightarrow BC|a|U_bB|b|CD \\
+    &B \rightarrow U_bB|b \\
+    &C \rightarrow CD\\
+    &D \rightarrow c\\
+    &Y_1 \rightarrow AB \\
+    &Y_2 \rightarrow DU_a \\
+    &U_a \rightarrow a \\
+    &U_b \rightarrow b \\
+\end{align*}
+
+\end{document}
