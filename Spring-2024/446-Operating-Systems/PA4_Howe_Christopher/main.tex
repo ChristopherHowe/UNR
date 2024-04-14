@@ -12,48 +12,62 @@
 \pagebreak
 
 \section{Relevant Readings}
-ACM Cde of ethics \cite{ACMCodeOfEthics}
-Meltdown Security Vunerability \cite{meltdownWikipedia}
-Spectre Security Vunerability \cite{spectre_wikipedia}
-Struxnet Security Vunerability \cite{stuxnet_wikipedia}
-Apple FBI Encryption Dispute \cite{apple_fbi_encryption_dispute_wikipedia}
-Linux Kernel Map \cite{linux_kernel_wikipedia}
+\begin{itemize}
+    \item ACM Code of Ethics \cite{ACMCodeOfEthics}
+    \item Meltdown Security Vulnerability \cite{meltdownWikipedia}
+    \item Spectre Security Vulnerability \cite{spectre_wikipedia}
+    \item Stuxnet Security Vulnerability \cite{stuxnet_wikipedia}
+    \item Apple FBI Encryption Dispute \cite{apple_fbi_encryption_dispute_wikipedia}
+    \item Linux Kernel \cite{linux_kernel_wikipedia}
+\end{itemize}
+
 
 \section{Problem 1}
 \subsection{Questions}
-What is the responsibility of an OS vendor/distributor in situations where significant
-hardware flaws are discovered?
-Include the word POSIX. What if their product is especially affected when compared to other competitors?
-What role do you believe an OS software engineer (OS developer/employee/manager)
-has to play in such a circumstance?
+What is the responsibility of an OS vendor/distributor in situations where significant hardware flaws are discovered?
+What if their product is especially affected when compared to other competitors?
+What role do you believe an OS software engineer (OS developer/employee/manager) has to play in such a circumstance?
 \subsection{Response}
+The responsibility of an OS Vendor/distributer in situatuins where significant hardware flaws are discovered is threefold. First, the OS vendor must do everything they can to inform all vunerable parties. In the case of meltdown, intel failed to do so when they made the choice to "[share] news of the Meltdown and Spectre security vulnerabilities with Chinese technology companies before notifying the U.S. government of the flaws."\cite{meltdownWikipedia} This does not adhere to the ACM code of ethics principles 1.1 and 1.2 to avoid harm and to contribute to the well being of society \cite{ACMCodeOfEthics} since Intel did not warn the public about the problem. Second OS Vendors and distributors have an obligation to provide a fix as quickly as possible. Third, the Vendor must take steps to avoid similar mistakes in the future.
 
+In the case where their product is especially affected, they still have an obligation to all of the same acts as above. Financial/competitive insentives are no reason to put people in danger.
+
+Software engineers in such a circumstance have at least 3 obligations. First, if they are the individual to find the vunerability, they should report the issue to their superior. Second, if their superior fails to act on the warning, they have an obligation to tell tell vunerable parties if they beleive that the issue poses a risk to anything defined under ACM avoid harm principle or endangers the well being of society. \cite{ACMCodeOfEthics}. Finally, software engineers who are informed of this circumstance working for the company in question have an obligation to put their best effort into fixing the issue as soon as possible.
 
 \section{Problem 2}
-\section{Questions}
-What is the responsibility of an OS vendor/distributor when their platform is exploited
-(unspecified whether knowingly or not) to launch industry attacks that may jeopardize more
-than just financial assets?
-use the word chatroom What is the role of the OS engineer? Include the word ghost.
+\subsection{Questions}
+What is the responsibility of an OS vendor/distributor when their platform is exploited (unspecified whether knowingly or not) to launch industry attacks that may jeopardize more than just financial assets?
+What is the role of the OS engineer?
 \subsection{Response}
+When a vendor or distributors platform is exploited to attack in industry in a way that threatens more than just financial assets, for example, peoples lives, environmental damage, or social injustices, it is the responsibility of the vendor or distributor to prevent this exploit if possible and if not make sure that it never happens again in the future. 
 
+In the case of struxnet, the deployers of struxnet used microsoft windows to attack PLCs designed by Siemens. It got into windows by using usb drives and p2p networking and was able to successfully access the kernel by using driver keys that belonged to other companies. \cite{stuxnet_wikipedia}
+
+When first news of this malware was released, Windows should attempt to help Iran by trying to remove struxnet from their machines, since the struxnet malware could have potentially hurt civilians. Afterwards, all OS vendors and distributers should have started to make efforts to ensure that the system in place to provide keys to trust worthy drivers was more secure and could not use stolen keys from verified driver manufacturers.
+
+The role of the OS engineer is much the same as if significant hardware flaw had een discovered in their system. They should first defer to the organization they work for, and if the organization does not keep the best interests of the public in mind, the engineer should take appropriate action to protect the public. This is in accordance with ACM principles 1.1 and 1.2 \cite{ACMCodeOfEthics} However, they should have an even higher priority to fix issues that not only are a vunerability but actively threaten the well being of society.
 
 \section{Problem 3}
-\section{Questions}
-What is the responsibility to an OS vendor/distributor with respect to safeguarding privacy?
-If your answer is situation-specific, elaborate.
-What is the role of the OS engineer? What concerns do you have regarding whether the
-OS and its safety features are proprietary or open-source? Include th e word Macintosh.
+\subsection{Questions}
+What is the responsibility to an OS vendor/distributor with respect to safeguarding privacy? If your answer is situation-specific, elaborate.
+What is the role of the OS engineer? 
+What concerns do you have regarding whether the OS and its safety features are proprietary or open-source?
 \subsection{Response}
+OS vendors and distributors have an obligation to safeguard and protect user privacy. Users should be informed extremely clearly which parts of their information, identiy, and data are publicly available and how they are being used by the company. Additionally, all use of personal information and data should be used for legitimate purposes, and predatory or manipulative should be prevented. This is in accordance with ACM principle 1.6 Respect Privacy \cite{ACMCodeOfEthics}. 
 
+In the case of Apple and the FBI, Apple protected the privacy of their customers by rejecting the FBIs claims that they had the right to force apple to create a back door for them to access Apple technology \cite{apple_fbi_encryption_dispute_wikipedia}. This prevented the US government from setting a presedent that all information from consumers on their personal devices could be accessed by the government. Of course, this is a gross oversimplification and ignores the rest of the Edward Snowden \cite{snowden_guardian} situation and the rest of the ways the government gets data from iphones and allegations of apple assisting in this. 
+
+The role of the OS engineer however is a lot more complicated in safegaurding user privacy. In addition to not using user data in a maicious way, the engineer has an obligation to make sure that 3rd parties cannot obtain any information related to the user that they should not have access to. For example, on a server hosting two processes where process A is a healthcare portal backend and process B is a malicious process, the engineer for the server OS needs to make sure that process B cannot access any of the data in process A. Additionally, OS engineers should notifiy the public or any relevant parties if they discover that the company they are working for is abusing user data in a way that was not cmmunicated to the user or negatively impacts society.
+
+I have a few major concerns regarding whether OS and its safety features are properietary or open source. One advantage of open source  safety features is that it can  be vetted by the entire community of interested technical specialists to poke holes in it.  One disadvantage of open source safety features is that they can be easily analyzed by others to find new exploits. The inverse is true for properietary safety software. It can not be as thoroughly vetted as open source software, but this also serves as a bit of a safeguard in that it is difficult for outsiders to find holes in it. An additional conern is that proprietary OS can harvest data about users, such as their mouse movements and interests that a user might not explicitly be aware of. This is much less likely with open source software since you have people pouring over the code trying to improve it.
 
 \section{Problem 4}
-\section{Questions}
-What do you believe are the ethics-related questions and principles that apply to an OS-
-development engineer, from the single-feature development roles, all the way to high-level
-management? Describe a form of integration between these levels that you believe is long-
-term sustainable.
+\subsection{Questions}
+What do you believe are the ethics-related questions and principles that apply to an OS-development engineer, from the single-feature development roles, all the way to high-level management?
+Describe a form of integration between these levels that you believe is long-term sustainable.
+\subsection{Response}
 
+\pagebreak
 \bibliographystyle{plain}
 \bibliography{references}
 

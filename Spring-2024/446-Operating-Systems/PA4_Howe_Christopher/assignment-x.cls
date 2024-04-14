@@ -14,7 +14,6 @@
 \RequirePackage{algpseudocode}
 \RequirePackage{xparse}
 \RequirePackage{minted}
-\RequirePackage{parskip}
 \RequirePackage{siunitx}
 \RequirePackage{multirow}
 \RequirePackage{multicol}
@@ -55,6 +54,7 @@
 \renewcommand\footrulewidth{0.4pt}
 
 \setlength\parindent{0pt}
+\setlength{\parskip}{1em} % Adjust the spacing between paragraphs
 
 %
 % Create Problem Sections
