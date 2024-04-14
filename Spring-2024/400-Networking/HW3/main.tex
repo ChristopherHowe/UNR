@@ -1,0 +1,55 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 456}
+\hmwkTitle{Quiz 3}
+\hmwkDueDate{March 10, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+\section{Experiement prodedure}
+The goal of this experiment is to gain an understanding of how DHCP transactions occur. First, the machine's IP is released. Next wireshark is started to monitor what packets are part of the DHCP transaction. Then, a DHCP transaction is started to renew the lease twice. Then the lease is released and renewed one last time before finally stopping the wireshark capture.
+This all is accomplished using the Linux commands described below.
+\inputminted{bash}{./linux-commands.sh}
+
+\section{Questions}
+\subsection{Generate a flow graph for the first transaction}
+\img{flow_chart_a}{Flow Graph for the initial DHCP transaction performed}
+
+\subsection{DHCP Transaction Source and Destinations}
+The following chart describes which ports and IP addresses were used for the first DHCP transaction described in this experiment. The values found are shown in the screenshots shown below (figures \ref{fig:T1_Discover} - \ref{fig:T1_ACK})
+\begin{table}[h]
+    \centering
+    \caption{DHCP Packet Information}
+    
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        DHCP Packet Name & Source IP & Source Port & Destination IP & Destination Port \\
+        \hline
+        Discover & & & & \\
+        \hline
+        Offer & & & & \\
+        \hline
+        Request & & & & \\
+        \hline
+        Acknowledge & & & & \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{landscape}
+    \begin{multicols}{2}
+    \img{T1_Discover}{Discover packet for the first DHCP Transaction}[0.9\linewidth]
+    \img{T1_Offer}{Offer packet for the first DHCP Transaction}[0.9\linewidth]
+    \columnbreak
+    \img{T1_Request}{Request packet for the first DHCP Transaction}[0.9\linewidth]
+    \img{T1_ACK}{ACK packet for the first DHCP Transaction}[0.9\linewidth]
+    \end{multicols}
+\end{landscape}
+
+
+
+\end{document}
