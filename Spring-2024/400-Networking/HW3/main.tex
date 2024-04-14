@@ -1,0 +1,73 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CPE 400}
+\hmwkTitle{Homework 3}
+\hmwkDueDate{April 14, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Igor Remizov}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+\section{Experiement prodedure}
+The goal of this experiment is to gain an understanding of how DHCP transactions occur. First, the machine's IP is released. Next wireshark is started to monitor what packets are part of the DHCP transaction. Then, a DHCP transaction is started to renew the lease twice. Then the lease is released and renewed one last time before finally stopping the wireshark capture. This all is accomplished using the Linux commands described below. Figure \ref{fig:full_experiment} shows all the packets captured in this experiment.
+
+\inputminted{bash}{./linux-commands.sh}
+\img{full_experiment}{DHCP Packets captured during this experiment}[0.8\linewidth]
+
+\section{Questions}
+\subsection{Question A - Generate a flow graph for the first transaction}
+\img{flow_chart_a}{Flow Graph for the initial DHCP transaction performed}
+
+\subsection{Questions B and C - DHCP Transaction Source and Destination IP and Ports}
+The following chart describes which ports and IP addresses were used for the first DHCP transaction described in this experiment. The values found are shown in the screenshots shown below (figures \ref{fig:T1_Discover} - \ref{fig:T1_ACK})
+
+\begin{table}[h]
+    \centering
+    \caption{DHCP Packet Information}
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        DHCP Packet Name & Source IP & Source Port & Destination IP & Destination Port \\
+        \hline
+        Discover &0.0.0.0 & 68 &255.255.255.255 & 67\\
+        \hline
+        Offer & 192.168.86.1 &67 &192.168.86.66 &68 \\
+        \hline
+        Request &0.0.0.0 & 68 &255.255.255.255 & 67\\
+        \hline
+        Acknowledge & 192.168.86.1 &67 &192.168.86.66 &68 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{landscape}
+    \begin{multicols}{2}
+    \img{T1_Discover}{Discover packet for the first DHCP Transaction, the source port is 68 and destination port is 67}[0.9\linewidth]
+    \img{T1_Offer}{Offer packet for the first DHCP Transaction, the source port is 67 and destination port is 68}[0.9\linewidth]
+    \columnbreak
+    \img{T1_Request}{Request packet for the first DHCP Transaction, the source port is 68 and destination port is 67}[0.9\linewidth]
+    \img{T1_ACK}{ACK packet for the first DHCP Transaction, the source port is 67 and destination port is 68}[0.9\linewidth]
+    \end{multicols}
+\end{landscape}
+
+\subsection{Question D and E - Transaction ID}
+The transaction ID for all 4 of the packets involved in this DHCP Transaction is "0xe0d7743e". This can be seen in all the packet screenshots in figures \ref{fig:T1_Discover} - \ref{fig:T1_ACK} in the transaction ID field. The transaction ID is a random string chosen by the client so that the DHCP server and client can differentiate different transactions. It also assists in debugging DHCP transactions since developers can tell which packets are responding to which transactions. The DHCP server can use this value to differentiate different requests, especially when multiple transactions are occurring at the same time.
+
+\subsection{Question F - Differences between Request packet and Discover Packet}
+Many values differ between a request packet and a discover packet. They have different message types (option 53). The request packet additionally includes the DHCP Server Identifier field (option 54 with value 192.168.86.1) The requestion packet also additionally includes the requested DHCP address (option 50 with value 192.168.86.66) All of the IP/UDP information is the same between these two packets. These differences can be seen in figures \ref{fig:T1_Discover} and \ref{fig:T1_Request}
+
+\subsection{Question G - Lease Times}
+The purpose of DHCP lease times is to make sure that the DHCP server can reclaim unused IPs. For example, if one device disconnects from the network and never comes back, then the DHCP server does not renew its lease allowing it to assign the IP to another device. This reduces the need to keep track of a large number of IPs. It also creates a more secure network by making sure that devices that are no longer authorized to access the network do not have an IP to access it.
+
+In this experiment, the lease time is 86400 seconds or 1 day. This can be seen in figure \ref{fig:lease_time}. 
+
+\img{lease_time}{Acknowledgement packet specification of the lease time}[0.4\linewidth]
+
+\subsection{Question H - DHCP Releases}
+The purpose of the DHCP release message is to inform a DHCP server that a DHCP client no longer needs the address assigned to it. This can be done for a variety of reasons. For example, if a DHCP client is shutting down or moving to another network, it should release the IP it is currently using so that the DHCP server can assign it to another device without having to wait for the lease to expire. Additionally, releasing an IP can be done to troubleshoot network issues. Sometimes releasing and renewing an IP can resolve connection issues.
+
+The DHCP server did not issue an acknowledgment of receipt of the DHCP release request. This is because the release request does not require the server to do anything. This is because if the client's DHCP release message is lost, nothing significant will happen. The DHCP server would still have a lease for the IP, but since the client would not request to renew that lease, the lease would eventually expire. This leads to the same outcome as if the release message reached the server. The only difference is that the lease would be held for its full duration instead of being returned to the pool of available IPs. The release packet from this experiment is shown in figure \ref{fig:release_packet}.
+\img{release_packet}{Release Packet From the experiment}[0.7\linewidth]
+
+\end{document}
