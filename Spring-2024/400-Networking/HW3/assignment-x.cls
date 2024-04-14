@@ -56,6 +56,7 @@
 \renewcommand\footrulewidth{0.4pt}
 
 \setlength\parindent{0pt}
+\setlength\parskip{1em}
 
 %
 % Create Problem Sections
