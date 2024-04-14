@@ -1,0 +1,83 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 446}
+\hmwkTitle{Homework Assignment 4}
+\hmwkDueDate{April 13, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Sarah Davis}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Relevant Readings}
+\begin{itemize}
+    \item ACM Code of Ethics \cite{ACMCodeOfEthics}
+    \item Meltdown Security Vulnerability \cite{meltdownWikipedia}
+    \item Spectre Security Vulnerability \cite{spectre_wikipedia}
+    \item Stuxnet Security Vulnerability \cite{stuxnet_wikipedia}
+    \item Apple FBI Encryption Dispute \cite{apple_fbi_encryption_dispute_wikipedia}
+    \item Linux Kernel \cite{linux_kernel_wikipedia}
+\end{itemize}
+
+
+\section{Problem 1}
+\subsection{Questions}
+What is the responsibility of an OS vendor/distributor in situations where significant hardware flaws are discovered?
+What if their product is especially affected when compared to other competitors?
+What role do you believe an OS software engineer (OS developer/employee/manager) has to play in such a circumstance?
+\subsection{Response}
+The responsibility of an OS Vendor/distributor in situations where significant hardware flaws are discovered is threefold. First, the OS vendor must do everything they can to inform all vulnerable parties. In the case of Meltdown, intel failed to do so when they chose to "[share] news of the Meltdown and Spectre security vulnerabilities with Chinese technology companies before notifying the U.S. government of the flaws."\cite{meltdownWikipedia} This does not adhere to the ACM code of ethics principles 1.1 and 1.2 to avoid harm and to contribute to the well-being of society \cite{ACMCodeOfEthics} since Intel did not warn the public about the problem. Second OS Vendors and distributors must provide a fix as quickly as possible. Third, the Vendor must take steps to avoid similar mistakes in the future.
+
+In the case where their product is especially affected, they still must do all of the same acts as above. Financial/competitive incentives are no reason to put people in danger.
+
+Software engineers in such a circumstance have at least 3 obligations. First, if they are the individual to find the vulnerability, they should report the issue to their superior. Second, if their superior fails to act on the warning they should tell vulnerable parties if they believe that the issue poses a risk to anything defined under ACM avoid harm principle, or endanger the well-being of society. \cite{ACMCodeOfEthics}. Third, software engineers who are informed of this circumstance working for the company in question must put their best effort into fixing the issue as soon as possible.
+
+\section{Problem 2}
+\subsection{Questions}
+What is the responsibility of an OS vendor/distributor when their platform is exploited (unspecified whether knowingly or not) to launch industry attacks that may jeopardize more than just financial assets?
+What is the role of the OS engineer?
+\subsection{Response}
+When a vendor or distributor platform is exploited to attack an industry in a way that threatens more than just financial assets, such as people's lives, environmental damage, or social injustices, it is the responsibility of the vendor or distributor to prevent this exploit if possible and if not, make sure that it never happens again in the future. 
+
+In the case of Stuxnet, the developers of Stuxnet used Microsoft Windows to attack PLCs designed by Siemens. It got into Windows by using USB drives and p2p networking and was able to successfully access the kernel by installing drivers signed with driver keys belonging to other companies. \cite{stuxnet_wikipedia}
+
+When the first news of this malware was released, Windows should attempt to help Iran by trying to remove Stuxnet from their machines, since the Stuxnet malware could have potentially hurt civilians. Afterward, all OS vendors and distributors should have started to make efforts to ensure that the system in place to provide keys to trustworthy drivers was more secure and could not use stolen keys from verified driver manufacturers.
+
+The role of the OS engineer is much the same as if a significant hardware flaw had been discovered in their system. They should first defer to the organization they work for, and if the organization does not keep the best interests of the public in mind, the engineer should take appropriate action to protect the public. This is per ACM principles 1.1 and 1.2 \cite{ACMCodeOfEthics} However, it should be an even higher priority to fix issues that represent not only a hardware flaw but actively threaten the well-being of society.
+
+\section{Problem 3}
+\subsection{Questions}
+What is the responsibility of an OS vendor/distributor with respect to safeguarding privacy? If your answer is situation-specific, elaborate.
+What is the role of the OS engineer? 
+What concerns do you have regarding whether the OS and its safety features are proprietary or open-source?
+\subsection{Response}
+OS vendors and distributors must safeguard and protect user privacy. Users should be informed extremely clearly which parts of their information, identity, and data are publicly available and how the company is using them. Additionally, all use of personal information and data should be used for legitimate purposes, and predatory or manipulative should be prevented. This is per ACM principle 1.6 Respect Privacy \cite{ACMCodeOfEthics}. 
+
+In the case of Apple and the FBI, Apple protected the privacy of their customers by rejecting the FBI's claims that they had the right to force Apple to create a back door for them to access Apple technology \cite{apple_fbi_encryption_dispute_wikipedia}. This prevented the US government from setting a precedent that all information from consumers on their devices could be accessed by the government. Of course, this is a gross oversimplification and ignores the rest of the Edward Snowden \cite{snowden_guardian} situation and the rest of the ways the government gets data from iPhones and allegations of Apple assisting in this. 
+
+The role of the OS engineer however is a lot more complicated in safeguarding user privacy. In addition to not maliciously using user data, the engineer must make sure that 3rd parties cannot obtain any information related to the user that they should not have access to. For example, on a server hosting two processes where process A is a healthcare portal back end and process B is a malicious process, the engineer for the server OS needs to make sure that process B cannot access any of the data in process A. Additionally, OS engineers should notify the public or any relevant parties if they discover that the company they are working for is abusing user data in a way that was not communicated to the user or negatively impacts society.
+
+I have a few major concerns regarding whether OS and its safety features are proprietary or open source. One advantage of open-source safety features is that it can be vetted by the entire community of interested technical specialists to poke holes in it.  One disadvantage of open-source safety features is that they can be easily analyzed by others to find new exploits. The inverse is true for proprietary safety software. It can not be as thoroughly vetted as open-source software, but this also serves as a bit of a safeguard in that it is difficult for outsiders to find holes in it. An additional concern is that proprietary OS can harvest data about users, such as their mouse movements and interests that a user might not explicitly be aware of. \cite{hackernews_windows10_privacy} This is much less likely with open-source software since you have people pouring over the code trying to improve it.
+
+\section{Problem 4}
+\subsection{Questions}
+What do you believe are the ethics-related questions and principles that apply to an OS development engineer, from the single-feature development roles, all the way to high-level management?
+Describe a form of integration between these levels that you believe is long-term sustainable.
+\subsection{Response}
+There are many ethic-related questions and principles that apply to OS development engineers. Analyzing ethical circumstances relating to the development are high and low-level features of the OS can be challenging even when the engineer's intentions are fully aligned with the best interests of the public. 
+
+At each level of development, the engineers should be asking themselves questions about what effect the changes they are introducing are going to have. Will this map feature make it easy to meet up with your friends? Or will it allow strangers to know where you are all day long? If the user's personal information, name, address, and medical history are stored in plain text, what happens if someone gains access to the kernel of this device?
+
+A non-extensive list of the questions an engineer should be asking themselves no matter what level of development they are creating can be based loosely on the ACM code of ethics \cite{ACMCodeOfEthics}. Am I protecting society as a whole and the individual? Am I acting transparently and fairly while preventing discrimination and bias? Am I protecting the confidentiality and privacy of the customers I am creating software for? Am I protecting the interests of the company I am working for? Would people describe me as professional and willing to learn?
+
+For the development of a single feature, this might look like "Have I adequately tested this feature concerning the severity if it does not function as intended?" For a high-level overlook of an entire product, this could look like "Am I satisfied with how this product represent the company I work for? Does it introduce any negative consequences?"
+
+Development of a system that creates this kind of integration between single feature and overall product development requires implementation of several key business practices. Within a business, some steps that can be taken include providing regular ethical training, demonstrating ethical development practices in leaderships and rewarding ethical behavior \cite{boisestate_ethical_business_practices}. Team members should have a good understanding of the ethical concerns sorrounding a product at all levels. This also applies at a political level as well. Governments and the world community as a whole should work to create policies and systems to reward companies that priorityize generating ethical products.
+
+\pagebreak
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
