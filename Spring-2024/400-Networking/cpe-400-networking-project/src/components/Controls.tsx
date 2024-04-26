@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface ControlButtonProps {
   text: string;
   onClick: () => void;
@@ -15,15 +17,17 @@ function ControlButton(props: ControlButtonProps) {
 }
 
 interface ControlsProps {
-  addHost: () => void;
+  setOpenDialog: React.Dispatch<React.SetStateAction<'' | 'AddHost' | 'AddRouter'>>;
+  runSimulation: () => void;
 }
 
 export function Controls(props: ControlsProps) {
-  const { addHost } = props;
+  const { setOpenDialog, runSimulation } = props;
   return (
     <div className="absolute top-0">
-      <ControlButton text="Add Host" onClick={addHost} />
-      <ControlButton text="Run Simulation" onClick={addHost} />
+      <ControlButton text="Add Host" onClick={() => setOpenDialog('AddHost')} />
+      <ControlButton text="Add Router" onClick={() => setOpenDialog('AddRouter')} />
+      <ControlButton text="Run Simulation" onClick={runSimulation} />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import HostNode from './HostNode';
+import RouterNode from './RouterNode';
 
 // import ImageNode from './diagram/ImageNode';
 // import MachineNode from './diagram/MachineNode';
@@ -29,14 +30,11 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
     strokeWidth: 2.5,
     stroke: '#D3DEE4',
   },
-  markerEnd: {
-    type: MarkerType.Arrow,
-    color: '#D3DEE4',
-  },
 };
 
 const nodeTypes: NodeTypes = {
   hostNode: HostNode,
+  routerNode: RouterNode,
 };
 
 interface DiagramProps {

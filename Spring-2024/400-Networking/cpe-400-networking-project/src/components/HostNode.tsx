@@ -6,8 +6,8 @@ interface NodeData {
   id: string;
 }
 export default function HostNode({ data }: NodeProps<NodeData>) {
-  id: return (
-    <div className="border-2 bg-gray-200 border-black p-1 w-28 h-28 flex flex-col items-center justify-center rounded-full">
+  return (
+    <div className="border-2 bg-blue-500 border-black p-1 w-36 h-16 flex flex-col items-center justify-center rounded-md">
       <Handle
         type="target"
         id={'top-target'}
@@ -24,9 +24,9 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
         onConnect={(params) => console.log('handle source onConnect', params)}
         isConnectable
       />
-      <div className="text-sm">{data.host.name}</div>
-      <div className="text-xs text-gray-400">{data.host.macAddress}</div>
-      {data.host.ipAddress && <div className="text-xs text-gray-400">{data.host.ipAddress}</div>}
+      <div className="text-sm text-white">{data.host.name}</div>
+      <div className="text-xs text-gray-300">{data.host.macAddress}</div>
+      {data.host.ipAddress && <div className="text-xs text-gray-300">{data.host.ipAddress}</div>}
     </div>
   );
 }
