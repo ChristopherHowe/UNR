@@ -8,7 +8,9 @@ import ReactFlow, {
   Background,
   MarkerType,
   BackgroundVariant,
-  } from 'reactflow';
+  EdgeChange,
+  NodeChange,
+} from 'reactflow';
 import 'reactflow/dist/style.css';
 import HostNode from './HostNode';
 
@@ -20,7 +22,7 @@ import HostNode from './HostNode';
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
 };
- 
+
 const defaultEdgeOptions: DefaultEdgeOptions = {
   animated: false,
   style: {
@@ -38,30 +40,37 @@ const nodeTypes: NodeTypes = {
 };
 
 interface DiagramProps {
-  nodes: Node[]
-  edges: Edge[]
+  nodes: Node[];
+  onNodesChange: any;
+  edges: Edge[];
+  onEdgesChange: any;
+  onConnect: any;
 }
 
-export default function Diagram(props: DiagramProps){
-  const {nodes, edges} = props
+export default function Diagram(props: DiagramProps) {
+  const { nodes, onNodesChange, edges, onEdgesChange, onConnect } = props;
+
+  useEffect(() => {
+    console.log('Edges');
+    console.log(edges);
+  }, [edges]);
 
   return (
     <div className="border border-solid border-gray-300 h-full rounded-lg">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          fitView
-          fitViewOptions={fitViewOptions}
-          defaultEdgeOptions={defaultEdgeOptions}
-          nodeTypes={nodeTypes}
-          nodesDraggable={false}
-        >
-          <Background 
-            gap={30}
-            color="#f1f1f1"
-            variant={BackgroundVariant.Lines}
-          />
-        </ReactFlow>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        fitView
+        fitViewOptions={fitViewOptions}
+        defaultEdgeOptions={defaultEdgeOptions}
+        nodeTypes={nodeTypes}
+        nodesDraggable={true}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+      >
+        <Background gap={30} color="#f1f1f1" variant={BackgroundVariant.Lines} />
+      </ReactFlow>
     </div>
   );
 }

@@ -8,14 +8,12 @@ export default function Textbox(props: TextboxProps) {
   const { label, value, setValue } = props;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setValue(e.target.value);
+    setValue(e.target.value);
   };
 
   return (
-    <div className='m-2'>
-      <label className="block text-sm font-medium leading-6 text-gray-900">
-        {label}
-      </label>
+    <div className="m-2">
+      <label className="block text-sm font-medium leading-6 text-gray-900">{label}</label>
       <div className="mt-2">
         <input
           name={label.toLowerCase()}

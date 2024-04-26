@@ -1,24 +1,24 @@
-import { useState } from 'react'
-import { Bars3Icon } from '@heroicons/react/24/outline'
+import { useState } from 'react';
+import { Bars3Icon } from '@heroicons/react/24/outline';
 import React, { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import MediumSidebarTransition from './SidebarTransition';
 import Seperator from './seperator';
 
 interface LayoutProps {
-    children: ReactNode
+  children: ReactNode;
 }
 export default function Layout(props: LayoutProps) {
-    const {children} = props
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { children } = props;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div>
-      <MediumSidebarTransition {...{sidebarOpen, setSidebarOpen}}>
-        <Sidebar/>
+      <MediumSidebarTransition {...{ sidebarOpen, setSidebarOpen }}>
+        <Sidebar />
       </MediumSidebarTransition>
-      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">                           
-        <Sidebar/>
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+        <Sidebar />
       </div>
       <div className="lg:pl-72 h-screen flex flex-col">
         {/* Header */}
@@ -27,15 +27,11 @@ export default function Layout(props: LayoutProps) {
             <span className="sr-only">Open sidebar</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
-          <Seperator/>
+          <Seperator />
           <h1 className="text-xl font-semibold">CPE 400 Networking Project</h1>
-          <div className='absolute right-0 p-10 text-right'>
-            <div className="text-md">
-            Created by Christopher Howe 
-            </div>
-            <div className="text-xs">
-            Styling from tailwind UI
-            </div>
+          <div className="absolute right-0 p-10 text-right">
+            <div className="text-md">Created by Christopher Howe</div>
+            <div className="text-xs">Styling from tailwind UI</div>
           </div>
         </div>
 
@@ -44,5 +40,5 @@ export default function Layout(props: LayoutProps) {
         </main>
       </div>
     </div>
-  )
+  );
 }

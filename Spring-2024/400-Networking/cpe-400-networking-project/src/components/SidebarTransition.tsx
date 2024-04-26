@@ -1,19 +1,17 @@
-import { Fragment } from 'react'
-import { Dialog, Transition } from '@headlessui/react'
-import {
-  XMarkIcon,
-} from '@heroicons/react/24/outline'
+import { Fragment } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import React, { ReactNode } from 'react';
 
-interface sidebarTransitionProps{
-  sidebarOpen: boolean
-  setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>
-  children: ReactNode
+interface sidebarTransitionProps {
+  sidebarOpen: boolean;
+  setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  children: ReactNode;
 }
 
-export default function MediumSidebarTransition(props: sidebarTransitionProps){
-  const {sidebarOpen, setSidebarOpen, children} = props
-  return(
+export default function MediumSidebarTransition(props: sidebarTransitionProps) {
+  const { sidebarOpen, setSidebarOpen, children } = props;
+  return (
     <Transition.Root show={sidebarOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50 lg:hidden" onClose={setSidebarOpen}>
         <Transition.Child

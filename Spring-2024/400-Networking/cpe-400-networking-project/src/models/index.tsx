@@ -1,5 +1,5 @@
 export interface Host {
-    name: string
-    macAddress: string
-    ipAddress?: string
+  name: string;
+  macAddress: string;
+  ipAddress?: string;
 }
