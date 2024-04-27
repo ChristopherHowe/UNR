@@ -1,5 +1,5 @@
 import * as ip from 'ip';
-import { Lease } from '@/models';
+import { Router } from '@/models';
 
 /**
  * Gets the first available ip address not contained in the leases array
@@ -7,8 +7,8 @@ import { Lease } from '@/models';
  * @param leases
  * @returns
  */
-export function findUnusedIP(cidr: string, leases: Lease[]) {
-  const subnet = ip.cidrSubnet(cidr);
+export function findUnusedIP(router: Router) {
+  const subnet = ip.cidrSubnet(router.subnet);
   const hostBits = 32 - subnet.subnetMaskLength;
   const min = subnet.firstAddress;
 
@@ -17,11 +17,13 @@ export function findUnusedIP(cidr: string, leases: Lease[]) {
     if (!subnet.contains(currentIP)) {
       throw new Error('Generated an ip not contained in the subnet');
     }
-    if (!leases.some((lease) => (lease.ipAddress = currentIP))) {
-      return currentIP;
+    if (!router.activeLeases.some((lease) => lease.ipAddress === currentIP)) {
+      if (!(router.ipAddress === currentIP)) {
+        return currentIP;
+      }
     }
   }
-  return null;
+  throw new Error(`Failed to find a valid IP for router ${router.macAddress}`);
 }
 
 export function isCIDRFormat(cidr: string): boolean {

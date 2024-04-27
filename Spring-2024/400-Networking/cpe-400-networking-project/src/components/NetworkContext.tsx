@@ -1,5 +1,6 @@
-import { createContext, useState, useCallback } from 'react';
-import { Router, Host } from '@/models';
+import { createContext, useState, useCallback, useEffect } from 'react';
+import { Router, Host, Simulation } from '@/models';
+import { Edge, Node } from 'reactflow';
 
 interface NetworkContextProps {
   getHost: (mac: string) => Host | undefined;
@@ -9,6 +10,7 @@ interface NetworkContextProps {
   addRouter: (router: Router) => void;
   editRouter: (updatedRouter: Router) => void;
   getDeviceType: (mac: string) => 'router' | 'host' | undefined;
+  saveSimulation: (nodes: Node[], edges: Edge[]) => void;
 }
 
 export const NetworkContext = createContext<NetworkContextProps>({
@@ -19,6 +21,7 @@ export const NetworkContext = createContext<NetworkContextProps>({
   addRouter: (router: Router) => {},
   editRouter: (updatedRouter: Router) => {},
   getDeviceType: (mac: string) => undefined,
+  saveSimulation: (nodes: Node[], edges: Edge[]) => '',
 });
 
 export function NetworkContextProvider({ children }: { children: any }) {
@@ -55,10 +58,12 @@ export function NetworkContextProvider({ children }: { children: any }) {
   }
 
   function editRouter(updatedRouter: Router) {
-    if (!getHost(updatedRouter.macAddress)) {
+    if (!getRouter(updatedRouter.macAddress)) {
       throw new Error(`Router with mac address ${updatedRouter.macAddress} does not exist`);
     }
-    setHosts((prev) => prev.map((router) => (router.macAddress !== updatedRouter.macAddress ? router : updatedRouter)));
+    setRouters((prev) =>
+      prev.map((router) => (router.macAddress !== updatedRouter.macAddress ? router : updatedRouter)),
+    );
   }
 
   function getDeviceType(mac: string): 'router' | 'host' | undefined {
@@ -70,8 +75,37 @@ export function NetworkContextProvider({ children }: { children: any }) {
     }
   }
 
+  function saveSimulation(nodes: Node[], edges: Edge[]) {
+    const simulation: Simulation = {
+      nodes: nodes,
+      edges: edges,
+      Hosts: hosts,
+      Routers: routers,
+    };
+    const blob = new Blob([JSON.stringify(simulation)], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'simulation.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  useEffect(() => {
+    console.log('updated routers');
+    console.log(routers);
+  }, [routers]);
+
+  useEffect(() => {
+    console.log('updated hosts');
+    console.log(hosts);
+  }, [hosts]);
+
   return (
-    <NetworkContext.Provider value={{ getHost, addHost, editHost, getRouter, addRouter, editRouter, getDeviceType }}>
+    <NetworkContext.Provider
+      value={{ getHost, addHost, editHost, getRouter, addRouter, editRouter, getDeviceType, saveSimulation }}
+    >
       {children}
     </NetworkContext.Provider>
   );

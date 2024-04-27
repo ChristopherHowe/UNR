@@ -20,7 +20,7 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
   const [subnet, setSubnet] = useState<string>('');
 
   function validateFields(): string {
-    if (hostName.length <= 1) {
+    if (hostName.length < 1) {
       return 'Please enter a hostname';
     }
     if (!ip.isV4Format(ipAddr)) {

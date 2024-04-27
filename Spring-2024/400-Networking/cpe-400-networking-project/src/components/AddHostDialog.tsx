@@ -18,7 +18,7 @@ export default function AddHostDialog(props: AddHostDialogProps) {
   const validationMsg = validateFields();
 
   function validateFields(): string {
-    if (hostName.length <= 1) {
+    if (hostName.length < 1) {
       return 'Please enter a hostname';
     }
     return '';

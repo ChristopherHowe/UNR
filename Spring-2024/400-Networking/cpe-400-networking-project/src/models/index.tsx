@@ -1,3 +1,5 @@
+import { Edge, Node } from 'reactflow';
+
 export interface Host {
   name: string;
   macAddress: string;
@@ -15,4 +17,11 @@ export interface Router {
 export interface Lease {
   macAddress: string;
   ipAddress: string;
+}
+
+export interface Simulation {
+  nodes: Node[];
+  edges: Edge[];
+  Hosts: Host[];
+  Routers: Router[];
 }
