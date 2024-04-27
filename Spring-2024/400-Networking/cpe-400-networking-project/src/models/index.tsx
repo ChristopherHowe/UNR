@@ -4,6 +4,12 @@ export interface Host {
   name: string;
   macAddress: string;
   ipAddress?: string;
+  packets: Packet[];
+}
+
+export interface Packet {
+  destIP: string;
+  data: string;
 }
 
 export interface Router {

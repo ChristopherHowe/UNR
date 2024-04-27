@@ -47,7 +47,7 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
   }
 
   return (
-    <SmoothDialog title="Add a New Host" {...{ open, onClose, onSubmit, validationMsg }}>
+    <SmoothDialog title="Add a New Router" {...{ open, onClose, onSubmit, validationMsg }}>
       <Textbox label="Host Name" value={hostName} setValue={setHostName} />
       <Textbox label="Ip Address" value={ipAddr} setValue={setIPAddr} />
       <Textbox label="Subnet (CIDR Form)" value={subnet} setValue={setSubnet} />

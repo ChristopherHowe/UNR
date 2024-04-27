@@ -8,6 +8,7 @@ import { Host, Router, Simulation } from '@/models';
 import AddRouterDialog from './AddRouterDialog';
 import { findUnusedIP } from '@/utils/network';
 import { NetworkContext } from './NetworkContext';
+import QueueHostPacketsDialog from './QueueHostPacketsDialog';
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -135,6 +136,7 @@ export default function App() {
       </Layout>
       <AddHostDialog open={openDialog === 'AddHost'} onClose={closeDialog} addHost={handleAddHost} />
       <AddRouterDialog open={openDialog === 'AddRouter'} onClose={closeDialog} addRouter={handleAddRouter} />
+      <QueueHostPacketsDialog open={true} onClose={closeDialog} />
     </>
   );
 }
