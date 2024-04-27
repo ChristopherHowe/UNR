@@ -1,0 +1,77 @@
+{
+    "nodes": [
+        {
+            "id": "9A:0C:6B:39:B0:01",
+            "position": {
+                "x": 1,
+                "y": -64
+            },
+            "data": {
+                "mac": "9A:0C:6B:39:B0:01"
+            },
+            "type": "routerNode",
+            "width": 112,
+            "height": 112,
+            "selected": true,
+            "positionAbsolute": {
+                "x": 1,
+                "y": -64
+            },
+            "dragging": false
+        },
+        {
+            "id": "87:C4:EE:61:AD:8F",
+            "position": {
+                "x": -165,
+                "y": 74.5
+            },
+            "data": {
+                "mac": "87:C4:EE:61:AD:8F"
+            },
+            "type": "hostNode",
+            "width": 144,
+            "height": 64,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -165,
+                "y": 74.5
+            },
+            "dragging": false
+        }
+    ],
+    "edges": [
+        {
+            "animated": false,
+            "style": {
+                "strokeWidth": 2.5,
+                "stroke": "#D3DEE4"
+            },
+            "source": "9A:0C:6B:39:B0:01",
+            "sourceHandle": "left-source",
+            "target": "87:C4:EE:61:AD:8F",
+            "targetHandle": "top-target",
+            "id": "reactflow__edge-9A:0C:6B:39:B0:01left-source-87:C4:EE:61:AD:8Ftop-target"
+        }
+    ],
+    "Hosts": [
+        {
+            "name": "A Host",
+            "macAddress": "87:C4:EE:61:AD:8F",
+            "ipAddress": "1.1.1.2"
+        }
+    ],
+    "Routers": [
+        {
+            "name": "A Router",
+            "macAddress": "9A:0C:6B:39:B0:01",
+            "ipAddress": "1.1.1.1",
+            "subnet": "1.1.1.0/24",
+            "activeLeases": [
+                {
+                    "ipAddress": "1.1.1.2",
+                    "macAddress": "87:C4:EE:61:AD:8F"
+                }
+            ]
+        }
+    ]
+}

@@ -4,7 +4,7 @@ import { Controls } from '@/components/Controls';
 import { useState, useEffect, useCallback, useContext } from 'react';
 import { addEdge, useNodesState, useEdgesState, Connection } from 'reactflow';
 import AddHostDialog from '@/components/AddHostDialog';
-import { Host, Router } from '@/models';
+import { Host, Router, Simulation } from '@/models';
 import AddRouterDialog from './AddRouterDialog';
 import { findUnusedIP } from '@/utils/network';
 import { NetworkContext } from './NetworkContext';
@@ -108,9 +108,20 @@ export default function App() {
     [setEdges, nodes, giveHostIP],
   );
 
+  function loadSimulation(sim: Simulation) {
+    setNodes(sim.nodes);
+    setEdges(sim.edges);
+    for (const router of sim.Routers) {
+      addRouter(router);
+    }
+    for (const host of sim.Hosts) {
+      addHost(host);
+    }
+  }
+
   return (
     <>
-      <Layout>
+      <Layout loadSimulation={loadSimulation}>
         <div className="relative h-full">
           <Diagram {...{ nodes, onNodesChange, edges, onEdgesChange, onConnect }} />
           <Controls

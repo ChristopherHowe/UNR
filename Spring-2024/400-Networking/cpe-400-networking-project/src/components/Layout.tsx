@@ -4,21 +4,23 @@ import React, { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import MediumSidebarTransition from './SidebarTransition';
 import Seperator from './seperator';
+import { Simulation } from '@/models';
 
 interface LayoutProps {
   children: ReactNode;
+  loadSimulation: (sim: Simulation) => void;
 }
 export default function Layout(props: LayoutProps) {
-  const { children } = props;
+  const { children, loadSimulation } = props;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div>
       <MediumSidebarTransition {...{ sidebarOpen, setSidebarOpen }}>
-        <Sidebar />
+        <Sidebar {...{ loadSimulation }} />
       </MediumSidebarTransition>
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-        <Sidebar />
+        <Sidebar {...{ loadSimulation }} />
       </div>
       <div className="lg:pl-72 h-screen flex flex-col">
         {/* Header */}
