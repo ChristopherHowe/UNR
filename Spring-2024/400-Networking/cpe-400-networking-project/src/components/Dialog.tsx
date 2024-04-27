@@ -8,12 +8,14 @@ interface DialogProps {
   title: string;
   open: boolean;
   children: ReactNode;
+  validationMsg: string;
   onSubmit: () => void;
   onClose: () => void;
 }
 
 export default function SmoothDialog(props: DialogProps) {
-  const { title, open, onSubmit, onClose, children } = props;
+  const { title, open, onSubmit, validationMsg, onClose, children } = props;
+  const isSubmitEnabled = validationMsg === '';
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -44,14 +46,29 @@ export default function SmoothDialog(props: DialogProps) {
                 <div className="font-semibold text-lg">{title}</div>
                 {children}
                 <div className="mt-5 sm:mt-6 flex justify-end">
-                  <button
-                    type="button"
-                    className="inline-flex w-1/3 justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    onClick={onSubmit}
-                  >
-                    Submit
-                  </button>
+                  {isSubmitEnabled ? (
+                    <button
+                      type="button"
+                      className="inline-flex w-1/3 justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      onClick={onSubmit}
+                    >
+                      Submit
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        data-tooltip-target="tooltip-default"
+                        type="button"
+                        className="inline-flex w-1/3 justify-center rounded-md bg-gray-200 px-3 py-2 text-sm font-semibold text-gray-600 shadow-sm"
+                        disabled
+                      >
+                        Submit
+                      </button>
+                    </>
+                  )}
                 </div>
+
+                <div className="text-red-600 min-h-6">{validationMsg}</div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

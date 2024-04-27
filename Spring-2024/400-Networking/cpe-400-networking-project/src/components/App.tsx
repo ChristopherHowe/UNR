@@ -1,53 +1,54 @@
 import Diagram from '@/components/Diagram';
 import Layout from '@/components/Layout';
 import { Controls } from '@/components/Controls';
-import { useState, useEffect, useCallback } from 'react';
-import { Node, Edge, addEdge, useNodesState, useEdgesState } from 'reactflow';
+import { useState, useEffect, useCallback, useContext } from 'react';
+import { addEdge, useNodesState, useEdgesState, Connection } from 'reactflow';
 import AddHostDialog from '@/components/AddHostDialog';
 import { Host, Router } from '@/models';
 import AddRouterDialog from './AddRouterDialog';
+import { findUnusedIP } from '@/utils/network';
+import { NetworkContext } from './NetworkContext';
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  const [hosts, setHosts] = useState<Host[]>([]);
-  const [routers, setRouters] = useState<Router[]>([]);
-
   const [openDialog, setOpenDialog] = useState<'' | 'AddHost' | 'AddRouter'>('');
 
-  function addHostNode(host: Host) {
+  const { addHost, addRouter } = useContext(NetworkContext);
+
+  function addHostNode(mac: string) {
     setNodes((prevNodes) => [
       ...prevNodes,
       {
-        id: host.macAddress,
+        id: mac,
         position: { x: 0, y: 0 },
-        data: { host: host },
+        data: { mac: mac },
         type: 'hostNode',
       },
     ]);
   }
 
-  function addRouterNode(router: Router) {
+  function addRouterNode(mac: string) {
     setNodes((prevNodes) => [
       ...prevNodes,
       {
-        id: router.macAddress,
+        id: mac,
         position: { x: 0, y: 0 },
-        data: { router: router },
+        data: { mac: mac },
         type: 'routerNode',
       },
     ]);
   }
 
-  async function addHost(host: Host) {
-    setHosts((prevHosts) => [...prevHosts, host]);
-    addHostNode(host);
+  async function handleAddHost(host: Host) {
+    addHost(host);
+    addHostNode(host.macAddress);
   }
 
-  async function addRouter(router: Router) {
-    setHosts((prevRouters) => [...prevRouters, router]);
-    addRouterNode(router);
+  async function handleAddRouter(router: Router) {
+    addRouter(router);
+    addRouterNode(router.macAddress);
   }
 
   function closeDialog() {
@@ -55,12 +56,22 @@ export default function App() {
   }
 
   const onConnect = useCallback(
-    (params: any) => {
-      console.log('Calling on connect with paras');
-      console.log(params);
-      setEdges((eds) => addEdge({ ...params }, eds));
+    (connection: Connection) => {
+      const srcNode = nodes.find((node) => node.id === connection.source);
+      const targetNode = nodes.find((node) => node.id === connection.target);
+      if (!srcNode) {
+        throw new Error(`Failed to find src node for id ${connection.source}`);
+      }
+      if (!targetNode) {
+        throw new Error(`Failed to find target node for id ${connection.target}`);
+      }
+      if (targetNode.type !== 'routerNode' || !targetNode.data.router) {
+        throw new Error('Target must be router');
+      }
+      const newIP = findUnusedIP(targetNode.data.subnet, targetNode.data.leases);
+      setEdges((eds) => addEdge({ ...connection }, eds));
     },
-    [setEdges],
+    [setEdges, nodes],
   );
 
   return (
@@ -76,8 +87,8 @@ export default function App() {
           />
         </div>
       </Layout>
-      <AddHostDialog open={openDialog === 'AddHost'} onClose={closeDialog} addHost={addHost} />
-      <AddRouterDialog open={openDialog === 'AddRouter'} onClose={closeDialog} addRouter={addRouter} />
+      <AddHostDialog open={openDialog === 'AddHost'} onClose={closeDialog} addHost={handleAddHost} />
+      <AddRouterDialog open={openDialog === 'AddRouter'} onClose={closeDialog} addRouter={handleAddRouter} />
     </>
   );
 }

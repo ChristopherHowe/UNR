@@ -10,15 +10,11 @@ import ReactFlow, {
   BackgroundVariant,
   EdgeChange,
   NodeChange,
+  Connection,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import HostNode from './HostNode';
 import RouterNode from './RouterNode';
-
-// import ImageNode from './diagram/ImageNode';
-// import MachineNode from './diagram/MachineNode';
-// import InterfaceNode from './diagram/interfaceNode';
-// import IconLabelNode from './diagram/IconLabelNode';
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
@@ -47,11 +43,6 @@ interface DiagramProps {
 
 export default function Diagram(props: DiagramProps) {
   const { nodes, onNodesChange, edges, onEdgesChange, onConnect } = props;
-
-  useEffect(() => {
-    console.log('Edges');
-    console.log(edges);
-  }, [edges]);
 
   return (
     <div className="border border-solid border-gray-300 h-full rounded-lg">

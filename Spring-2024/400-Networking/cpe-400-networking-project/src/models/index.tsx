@@ -9,4 +9,10 @@ export interface Router {
   macAddress: string;
   ipAddress: string;
   subnet: string;
+  activeLeases: Lease[];
+}
+
+export interface Lease {
+  macAddress: string;
+  ipAddress: string;
 }

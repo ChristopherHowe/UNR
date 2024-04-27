@@ -14,23 +14,29 @@ export default function AddHostDialog(props: AddHostDialogProps) {
   const { open, onClose, addHost } = props;
   const [hostName, setHostName] = useState<string>('');
   const [macAddr, setMacAddr] = useState<string>('');
-  const [ipAddr, setIPAddr] = useState<string>('');
+
+  const validationMsg = validateFields();
+
+  function validateFields(): string {
+    if (hostName.length <= 1) {
+      return 'Please enter a hostname';
+    }
+    return '';
+  }
 
   async function onSubmit() {
     const newMac = await generateUniqueMACAddress();
     addHost({
       name: hostName,
       macAddress: macAddr !== '' ? macAddr : newMac,
-      ipAddress: ipAddr !== '' ? ipAddr : '1.1.1.1',
     });
     onClose();
   }
 
   return (
-    <SmoothDialog title="Add a New Host" {...{ open, onClose, onSubmit }}>
+    <SmoothDialog title="Add a New Host" {...{ open, onClose, onSubmit, validationMsg }}>
       <Textbox label="Host Name" value={hostName} setValue={setHostName} />
       <Textbox label="Mac Address (optional)" value={macAddr} setValue={setMacAddr} />
-      <Textbox label="Ip Address (optional)" value={ipAddr} setValue={setIPAddr} />
     </SmoothDialog>
   );
 }

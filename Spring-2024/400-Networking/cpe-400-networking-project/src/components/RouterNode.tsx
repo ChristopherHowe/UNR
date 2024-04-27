@@ -1,11 +1,28 @@
 import { Handle, NodeProps, Position } from 'reactflow';
 import { Router } from '@/models';
+import { useContext, useState, useEffect } from 'react';
+import { NetworkContext } from './NetworkContext';
 
 interface NodeData {
-  router: Router;
-  id: string;
+  mac: string;
 }
 export default function RouterNode({ data }: NodeProps<NodeData>) {
+  const { getRouter } = useContext(NetworkContext);
+  const [router, setRouter] = useState<Router>({
+    macAddress: '',
+    name: '',
+    ipAddress: '',
+    subnet: '',
+    activeLeases: [],
+  });
+
+  useEffect(() => {
+    const newRouter = getRouter(data.mac);
+    if (newRouter) {
+      setRouter(newRouter);
+    }
+  }, [getRouter, data.mac]);
+
   return (
     <div className="host-node border-2 bg-gray-200 border-black p-1 w-28 h-28 flex flex-col items-center justify-center rounded-full">
       <Handle
@@ -40,10 +57,10 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
         onConnect={(params) => console.log('handle source onConnect', params)}
         isConnectable
       />
-      <div className="text-sm">{data.router.name}</div>
-      <div className="text-xs text-gray-400">{data.router.macAddress}</div>
-      <div className="text-xs text-gray-400">{data.router.ipAddress}</div>
-      <div className="text-xs text-gray-400">{data.router.subnet}</div>
+      <div className="text-sm">{router.name}</div>
+      <div className="text-xs text-gray-400">{router.macAddress}</div>
+      <div className="text-xs text-gray-400">{router.ipAddress}</div>
+      <div className="text-xs text-gray-400">{router.subnet}</div>
     </div>
   );
 }
