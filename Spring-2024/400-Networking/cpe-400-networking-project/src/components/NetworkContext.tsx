@@ -11,6 +11,8 @@ interface NetworkContextProps {
   editRouter: (updatedRouter: Router) => void;
   getDeviceType: (mac: string) => 'router' | 'host' | undefined;
   saveSimulation: (nodes: Node[], edges: Edge[]) => void;
+  editMac: string;
+  setEditMac: (mac: string) => void;
 }
 
 export const NetworkContext = createContext<NetworkContextProps>({
@@ -22,11 +24,14 @@ export const NetworkContext = createContext<NetworkContextProps>({
   editRouter: (updatedRouter: Router) => {},
   getDeviceType: (mac: string) => undefined,
   saveSimulation: (nodes: Node[], edges: Edge[]) => '',
+  editMac: '',
+  setEditMac: (mac: string) => {},
 });
 
 export function NetworkContextProvider({ children }: { children: any }) {
   const [hosts, setHosts] = useState<Host[]>([]);
   const [routers, setRouters] = useState<Router[]>([]);
+  const [editMac, setEditMac] = useState<string>('');
 
   const getHost = useCallback(
     (mac: string) => {
@@ -104,7 +109,18 @@ export function NetworkContextProvider({ children }: { children: any }) {
 
   return (
     <NetworkContext.Provider
-      value={{ getHost, addHost, editHost, getRouter, addRouter, editRouter, getDeviceType, saveSimulation }}
+      value={{
+        getHost,
+        addHost,
+        editHost,
+        getRouter,
+        addRouter,
+        editRouter,
+        getDeviceType,
+        saveSimulation,
+        editMac,
+        setEditMac,
+      }}
     >
       {children}
     </NetworkContext.Provider>

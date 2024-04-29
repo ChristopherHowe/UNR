@@ -16,8 +16,18 @@ export default function App() {
 
   const [openDialog, setOpenDialog] = useState<'' | 'AddHost' | 'AddRouter'>('');
 
-  const { addHost, addRouter, getDeviceType, getHost, getRouter, editHost, editRouter, saveSimulation } =
-    useContext(NetworkContext);
+  const {
+    addHost,
+    addRouter,
+    getDeviceType,
+    getHost,
+    getRouter,
+    editHost,
+    editRouter,
+    saveSimulation,
+    editMac,
+    setEditMac,
+  } = useContext(NetworkContext);
 
   function addHostNode(mac: string) {
     setNodes((prevNodes) => [
@@ -55,6 +65,7 @@ export default function App() {
 
   function closeDialog() {
     setOpenDialog('');
+    setEditMac('');
   }
 
   function giveHostIP(connection: Connection) {
@@ -136,7 +147,7 @@ export default function App() {
       </Layout>
       <AddHostDialog open={openDialog === 'AddHost'} onClose={closeDialog} addHost={handleAddHost} />
       <AddRouterDialog open={openDialog === 'AddRouter'} onClose={closeDialog} addRouter={handleAddRouter} />
-      <QueueHostPacketsDialog open={true} onClose={closeDialog} />
+      <QueueHostPacketsDialog open={editMac !== ''} onClose={closeDialog} />
     </>
   );
 }

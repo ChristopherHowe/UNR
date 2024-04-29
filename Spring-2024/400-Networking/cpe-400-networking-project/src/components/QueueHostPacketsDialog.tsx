@@ -1,15 +1,22 @@
 import SmoothDialog from './Dialog';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import Textbox from './Textbox';
 import { Packet } from '@/models';
 import Button from './Button';
+import { NetworkContext } from './NetworkContext';
 
-interface QueueHostPacketsDialogProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-function QueuedPacketsTable({ packets }: { packets: Packet[] }) {
+function QueuedPacketsTable({
+  packets,
+  setPackets,
+}: {
+  packets: Packet[];
+  setPackets: React.Dispatch<React.SetStateAction<Packet[]>>;
+}) {
+  function deletePacket(removing: Packet) {
+    setPackets((prev) =>
+      prev.filter((packet) => !(packet.data === removing.data && packet.destIP === removing.destIP)),
+    );
+  }
   return (
     <div className="mt-8 max-w-[35em] truncate">
       <div className="sm:flex sm:items-center">
@@ -38,7 +45,17 @@ function QueuedPacketsTable({ packets }: { packets: Packet[] }) {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         {packet.destIP}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{packet.data}</td>
+                      <td
+                        className="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+                        style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      >
+                        {packet.data}
+                      </td>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        <button onClick={() => deletePacket(packet)} className="text-indigo-600 hover:text-indigo-900">
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -51,6 +68,11 @@ function QueuedPacketsTable({ packets }: { packets: Packet[] }) {
   );
 }
 
+interface QueueHostPacketsDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
 export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProps) {
   const { open, onClose } = props;
   const [newData, setNewData] = useState<string>('');
@@ -58,11 +80,18 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
   const [packets, setPackets] = useState<Packet[]>([]);
   const validationMsg = '';
 
+  const { editHost, getHost, editMac } = useContext(NetworkContext);
+
   function addPacket() {
     setPackets((prev) => [...prev, { destIP: newDestIP, data: newData }]);
   }
 
   async function onSubmit() {
+    const host = getHost(editMac);
+    if (!host) {
+      throw new Error(`Failed to get host for mac ${host}`);
+    }
+    editHost({ ...host, packets: packets });
     onClose();
   }
 
@@ -71,9 +100,11 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
       <div className="flex flex-row items-end">
         <Textbox label="Packet Data" value={newData} setValue={setNewData} />
         <Textbox label="Destination IP" value={newDestIP} setValue={setNewDestIP} />
-        <Button className="h-10" label="add" onClick={addPacket} />
+        <div>
+          <Button label="add" onClick={addPacket} />
+        </div>
       </div>
-      <QueuedPacketsTable {...{ packets }} />
+      <QueuedPacketsTable {...{ packets, setPackets }} />
     </SmoothDialog>
   );
 }

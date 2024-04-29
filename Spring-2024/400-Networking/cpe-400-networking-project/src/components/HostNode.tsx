@@ -7,8 +7,8 @@ interface NodeData {
   mac: string;
 }
 export default function HostNode({ data }: NodeProps<NodeData>) {
-  const { getHost } = useContext(NetworkContext);
-  const [host, setHost] = useState<Host>({ macAddress: '', name: '' });
+  const { getHost, setEditMac } = useContext(NetworkContext);
+  const [host, setHost] = useState<Host>({ macAddress: '', name: '', packets: [] });
 
   useEffect(() => {
     const newHost = getHost(data.mac);
@@ -18,7 +18,7 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
   }, [getHost, data.mac]);
 
   return (
-    <div className="border-2 bg-blue-500 border-black p-1 w-36 h-16 flex flex-col items-center justify-center rounded-md">
+    <div className="border-2 bg-blue-500 border-black p-1 w-40 h-20 flex flex-col items-center justify-center rounded-md">
       <>
         <Handle
           type="target"
@@ -36,9 +36,13 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
           onConnect={(params) => console.log('handle source onConnect', params)}
           isConnectable
         />
+        <div className="rounded-full bg-red-600 h-5 w-5"></div>
         <div className="text-sm text-white">{host.name}</div>
         <div className="text-xs text-gray-300">{host.macAddress}</div>
         {host.ipAddress && <div className="text-xs text-gray-300">{host.ipAddress}</div>}
+        <button onClick={() => setEditMac(host.macAddress)} className="text-gray-300 hover:text-gray-50">
+          Edit
+        </button>
       </>
     </div>
   );

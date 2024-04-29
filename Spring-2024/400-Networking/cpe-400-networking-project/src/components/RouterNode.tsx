@@ -7,7 +7,7 @@ interface NodeData {
   mac: string;
 }
 export default function RouterNode({ data }: NodeProps<NodeData>) {
-  const { getRouter } = useContext(NetworkContext);
+  const { getRouter, setEditMac } = useContext(NetworkContext);
   const [router, setRouter] = useState<Router>({
     macAddress: '',
     name: '',
@@ -24,7 +24,7 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
   }, [getRouter, data.mac]);
 
   return (
-    <div className="host-node border-2 bg-gray-200 border-black p-1 w-28 h-28 flex flex-col items-center justify-center rounded-full">
+    <div className="host-node border-2 bg-gray-200 border-black p-1 w-28 h-28 flex flex-col items-center justify-center rounded-xl">
       <Handle
         type="target"
         id={'top-target'}
@@ -61,6 +61,7 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
       <div className="text-xs text-gray-400">{router.macAddress}</div>
       <div className="text-xs text-gray-400">{router.ipAddress}</div>
       <div className="text-xs text-gray-400">{router.subnet}</div>
+      
     </div>
   );
 }
