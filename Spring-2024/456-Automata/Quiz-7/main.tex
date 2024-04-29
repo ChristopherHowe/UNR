@@ -20,26 +20,26 @@ $L=\{a^{2n}b^n: n \ge 1 \}$
 To prove that L is a context-free language using an NPDA, it must be shown that an NPDA can be created for L.
 If an NPDA exists that accepts the same language as defined in L, then L must be context-free language.
 
-\subsection{A PDA that accepts L}
+\subsection{An NPDA that accepts L}
 A NPDA is defined by a tuple $M_{NPDA} = (Q,\Sigma,\Gamma,\delta,q_0,F)$
 Where $Q$ is the set of all possible states, $\Sigma$ is the alphabet of input symbols, $\Gamma$ is the set of stack symbols, $\delta$ is the transition function for a given input state, symbol, and stack symbol $q_0$ is the initial state, and $F$ is the set of all final/accepted states.
 
-A PDA $M_{NPDA}$ was designed to accept the same language as $L$
+A NPDA $M_{NPDA}$ was designed to accept the same language as $L$
 The general idea of how it works is it first reads all the a's in pairs of two,
 When it reads the first a in the pair, it adds a b to the stack.
 It ignores the second a.
 If a single a comes in, this results in a dead configuration.
 If a b comes in before any a's this also results in a dead configuration.
-After reading the pairs, the PDA looks for a b.
-Once a b is found, the PDA no longer can accept a's without resulting in a dead configuration.
+After reading the pairs, the NPDA looks for a b.
+Once a b is found, the NPDA no longer can accept a's without resulting in a dead configuration.
 For each b it reads in, it must find an equivalent b on the stack.
 Once the stack is empty it can take the lambda transition to the final state.
 It cannot read any more b's at this point otherwise it will result in a dead configuration.
 
-Below is the definition of such a PDA which is followed by a state diagram of the PDA.
+Below is the definition of such a NPDA which is followed by a state diagram of the NPDA.
 
 \begin{align*}
-    &M_{NPDA} = (\{q_0,q_a,q_b, q_f\},\{a,b\},\delta,q_0,\{q_f\}) \\ \\
+    &M_{NPDA} = (\{q_0,q_a,q_b, q_f\},\{a,b\},\{\$,b\},\delta,q_0,\{q_f\}) \\ \\
     &\delta:
     \left\{
     \begin{aligned}
@@ -56,12 +56,16 @@ Below is the definition of such a PDA which is followed by a state diagram of th
 \img{PDA}{State Diagram of $M_{NPDA}$ showing the various transitions used to accept $L$}[0.6\linewidth]
 
 \subsection{Verification}
-To check that the PDA accepts only strings that are in the language, some test strings were applied.
+To check that the PDA accepts only strings that are in the language, some test strings were applied. More tests were used but they are not shown here.
 \begin{align*}
-    &\textbf{ba: } q_0 \text{stack:[\$]}\ \textit{(Dead configuration)}\\
-    &\textbf{ab: } q_0 \rightarrow q_a\ \text{stack:[b\$]}\ \textit{(Dead configuration)}\\
-    &\textbf{aaaab: } q_0\ \text{stack:[\$]} \rightarrow q_a\ \text{stack:[b\$]} \rightarrow q_0\ \text{stack:[b\$]}\rightarrow q_a\ \text{stack:[bb\$]}\rightarrow q_0\ \text{stack:[bb\$]}\rightarrow q_b\ \text{stack:[b\$]}\ \textit{(Dead configuration)}\\
-    &\textbf{aab: } q_0\ \text{stack: [\$]} \rightarrow q_a\ \text{stack:[b\$]}  \rightarrow q_0\ \text{stack:[b\$]} \rightarrow q_b\ \text{stack:[\$]}  \rightarrow q_f \text{stack:[]}
+    &\textbf{ba: } q_0 \text{ stack:}[\$] \quad \textit{(Dead configuration)}\\
+    &\textbf{ab: } q_0 \rightarrow q_a \text{ stack:}[b\$] \quad \textit{(Dead configuration)}\\
+    &\textbf{aaaab: } q_0 \text{ stack:}[\$] \rightarrow q_a \text{ stack:}[b\$] \rightarrow q_0 \text{ stack:}[b\$] \rightarrow q_a \text{ stack:}[bb\$] \rightarrow q_0 \text{ stack:}[bb\$] \\
+    &\quad \rightarrow q_b \text{ stack:}[b\$] \quad \textit{(Dead configuration)}\\
+    &\textbf{aab: } q_0 \text{ stack:}[\$] \rightarrow q_a \text{ stack:}[b\$] \rightarrow q_0 \text{ stack:}[b\$] \rightarrow q_b \text{ stack:}[\$] \rightarrow q_f \text{ stack:}[] \textit{(Accepted)}
 \end{align*}
+
+\subsection{Conclusion}
+In conclusion, the language $L$ is a context-free language because an equivalent PDA can be constructed to accept the same language as $L$.
 
 \end{document}
