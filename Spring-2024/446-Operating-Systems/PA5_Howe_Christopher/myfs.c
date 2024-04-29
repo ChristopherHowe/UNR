@@ -1,3 +1,10 @@
+/***************************************************
+Author: Christopher Howe and CS 446 Teaching Team
+Assignment Name: CS 446 Programming assignment 5
+Date: 4/28/24
+***************************************************/
+
+// Preprocessor Directives
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -69,84 +76,37 @@ typedef struct _myfs_t {
   block_t imap;  // (free/used) inode bitmap
 } myfs_t;
 
+
+// Required Function prototypes
 myfs_t* my_mkfs(int size, int maxfiles);
 void my_dumpfs(myfs_t* myfs);
 void dump_dirinode(myfs_t* myfs, int inode_number, int level);
 void my_crawlfs(myfs_t* myfs);
 void my_creatdir(myfs_t* myfs, int cur_dir_inode_number, const char* new_dirname);
 
-void printInode(inode_t n){
-  printf("size %d, blocks %d, data[0] %p\n", n.size, n.blocks, n.data[0]);
-}
-
-void printDirentArray(dirent_t *array) {
-    for (int i = 0; array[i].file_type != 0; i++) {
-        printf("Entry %d: Inode: %d, File Type: %d, Name Length: %d, Name: %s\n",
-               i+1, array[i].inode, array[i].file_type, array[i].name_len, array[i].name);
-    }
-}
-
+// Helper Function Prototypes
+block_t* getBlock(block_t* src);
+void overwriteBlock(block_t* src, block_t* dst);
+int findZeroBit(char* arr, int size);
+int setBit(char* arr, int ind);
+inode_t mkNewDirInode(block_t* datablock);
+dirent_t create_dirent(int inode, char file_type, const char* name);
+void addDirEnt(dirent_t* direntArr, dirent_t newDirEnt);
 
 int roundup(int x, int y) {
   return x == 0 ? 0 : 1 + ((x - 1) / y);
 }
-
-int printBit(int bit, int ind){
-  printf("%d", bit);
-  if (ind >= 80){
-    printf("...");
-    return 1;
-  }
-  return 0;
-}
-
-// Iterates over all the bits in the char array. If the function returns a non zero value, stops iterating
-void iterateCharArrBits(const char* arr, int numChars, int func(int bit, int ind)){
-  for (int i = 0; i < numChars; ++i) {
-    for (int j = 0; j < 8; ++j) {
-      if(func((arr[i] >> j) & 1, i*8 + j) != 0){
-        return;
-      }
-    }
-  }
-}
-
-void printCharArrBits(const char* arr, int size){
-  iterateCharArrBits(arr, size, printBit);
-  printf("\n");
-}
-
 
 int main(int argc, char *argv[]){
     
   inode_t* cur_dir_inode = NULL;
 
   myfs_t* myfs = my_mkfs(100*BLKSIZE, 10);
-  printf("data blocks %p, inodeTable %p\n",
-   myfs->groupdescriptor.groupdescriptor_info.block_data,
-    myfs->groupdescriptor.groupdescriptor_info.inode_table
-  );
-  printf("Inodetable[0] in main\n");
-  // printInode(myfs->groupdescriptor.groupdescriptor_info.inode_table[0]);
-
-  printf("block 0 data\n");
-  printDirentArray((dirent_t*) myfs->groupdescriptor.groupdescriptor_info.block_data[0].data);
-    printf("block 1 data\n");
-  printDirentArray((dirent_t*) myfs->groupdescriptor.groupdescriptor_info.block_data[1].data);
 
   // create 2 dirs inside [/] (root dir)
   int cur_dir_inode_number = 2;  // root inode
-  printf("In Main\n");
   my_creatdir(myfs, cur_dir_inode_number, "mystuff");  // will be inode 3
 
-  printf("block 0 / data\n");
-  printDirentArray((dirent_t*) myfs->groupdescriptor.groupdescriptor_info.block_data[0].data);
-    printf("block 1 data\n");
-  printDirentArray((dirent_t*) myfs->groupdescriptor.groupdescriptor_info.block_data[1].data);
-  inode_t i2 = myfs->groupdescriptor.groupdescriptor_info.inode_table[2];
-  inode_t i3 = myfs->groupdescriptor.groupdescriptor_info.inode_table[3];
-
-  printf("myfs imap: %s\nbmap: %s\n", myfs->imap.data, myfs->bmap.data);
   my_creatdir(myfs, cur_dir_inode_number, "homework");  // will be inode 4
   
   // create 1 dir inside [/homework] dir
@@ -373,6 +333,48 @@ void my_crawlfs(myfs_t* myfs) {
 }
 
 
+
+
+void my_creatdir(myfs_t* myfs, int cur_dir_inode_number, const char* new_dirname) {
+  
+  // Find the first available inode and set it to used  
+  block_t* imap = getBlock(&(myfs->imap));
+  int availableInode = findZeroBit(imap->data,BLKSIZE);
+  setBit(imap->data, availableInode);
+  overwriteBlock(imap, &(myfs->imap));
+  free(imap);
+
+  // Find the first available data block and set it to used
+  block_t* bmap = getBlock(&(myfs->bmap));
+  int availableBlock = findZeroBit(bmap->data,BLKSIZE);
+  setBit(bmap->data, availableBlock);
+  overwriteBlock(bmap, &(myfs->bmap));
+  free(bmap);
+  
+  // Load the Inode table, create a newInode for the new directory, Increment the size of the parent directory
+  groupdescriptor_info_t* groupDesc = (groupdescriptor_info_t*) getBlock((block_t*)&(myfs->groupdescriptor));
+  block_t* inode_table_block = getBlock((block_t*)groupDesc->inode_table);
+  inode_t* inodeTable = (  inode_t*)inode_table_block;
+  
+  inode_t newInode = mkNewDirInode(&(groupDesc->block_data[availableBlock]));
+  inodeTable[availableInode] = newInode;
+  // increment parent inode size
+  inodeTable[cur_dir_inode_number].size += sizeof(dirent_t); 
+  overwriteBlock((block_t*)inodeTable, (block_t*)groupDesc->inode_table);
+  
+  // Create new directory data and write it to a new block
+  dirent_t *new_directory_data = (dirent_t*)calloc(sizeof(block_t), sizeof(char));
+  new_directory_data[0] = create_dirent(availableInode, 2,".");
+  new_directory_data[1] = create_dirent(cur_dir_inode_number, 2,"..");
+  overwriteBlock((block_t*) new_directory_data, newInode.data[0]);
+  
+  // Pull the parent data block into memory, add a new directory entry, and write it back out.
+  dirent_t* parentDirData = (dirent_t*) getBlock(inodeTable[cur_dir_inode_number].data[0]);
+  addDirEnt(parentDirData, create_dirent(availableInode,2,new_dirname)); 
+  overwriteBlock((block_t*)parentDirData, inodeTable[cur_dir_inode_number].data[0]);
+  free(inodeTable);
+}
+
 block_t* getBlock(block_t* src){
   block_t* cpy = (block_t*)malloc(sizeof(block_t));
   memcpy(cpy,src, sizeof(block_t));
@@ -383,27 +385,11 @@ void overwriteBlock(block_t* src, block_t* dst){
   memcpy(dst, src, sizeof(block_t));
 }
 
-void printAsBytes(const char *arr, size_t size) {
-  for (size_t i = 0; i < size && i < 30; i++) {
-      printf("%02x ", (unsigned char)arr[i]);
-  }
-  if (size >= 30){
-    printf("...");
-  }
-  printf("\n");
-}
-
-
-
-
-
-
 int findZeroBit(char* arr, int size){
   for (int i = 0; i < size; ++i) {
     for (int j = 0; j < 8; ++j) {
       int bit = (arr[i] >> j) & 1;
       int ind = i*8 + j;
-      printf("ind: %d bit %d\n", ind, bit);
       if (bit == 0){
         return ind;
       }
@@ -412,23 +398,18 @@ int findZeroBit(char* arr, int size){
   return -1;
 }
 
-int setBit(char* arr, int size, int ind){
-  if (ind >= size){
-    return -1; 
-  }
+int setBit(char* arr, int ind){
   int byte = ind / 8;
   int bit = ind % 8;
   arr[byte] |= 0x1<<(bit);
   return 0; 
 }
 
-
-
 inode_t mkNewDirInode(block_t* datablock){
   inode_t newInode;
   newInode.size = 2 * sizeof(dirent_t);  // will contain 2 direntries ('.' and '..') at initialization
   newInode.blocks = 1;  // will only take up 1 block (for just 2 direntries: '.' and '..') at initialization
-  for (uint i=1; i<15; ++i)  // initialize all data blocks to NULL (1 data block only needed at initialization)
+  for (int i=1; i<15; ++i)  // initialize all data blocks to NULL (1 data block only needed at initialization)
     newInode.data[i] = NULL;
   newInode.data[0]=datablock;
   return newInode;
@@ -453,52 +434,4 @@ void addDirEnt(dirent_t* direntArr, dirent_t newDirEnt){
   }
   direntArr[counter] = newDirEnt;
 }
-
-
-void my_creatdir(myfs_t* myfs, int cur_dir_inode_number, const char* new_dirname) {
-  
-  // Find the first available inode and set it to used  
-  block_t* imap = getBlock(&(myfs->imap));
-  printf("initial imap\n");
-  printCharArrBits(imap->data, BLKSIZE);
-  int availableInode = findZeroBit(imap->data,BLKSIZE);
-  setBit(imap->data,BLKSIZE, availableInode);
-  printf("modified imap\n");
-  printCharArrBits(imap->data, BLKSIZE);
-  overwriteBlock(imap, &(myfs->imap));
-
-  // Find the first available data block and set it to used
-  block_t* bmap = getBlock(&(myfs->bmap));
-  printf("initial bmap\n");
-  printCharArrBits(bmap->data, BLKSIZE);
-  int availableBlock = findZeroBit(bmap->data,BLKSIZE);
-  setBit(bmap->data,BLKSIZE, availableBlock);
-  printf("mdofied bmap\n");
-  printCharArrBits(bmap->data, BLKSIZE);
-  overwriteBlock(bmap, &(myfs->bmap));
-  
-  // Load the Inode table, create a newInode for the new directory, Increment the size of the parent directory
-  groupdescriptor_info_t* groupDesc = (groupdescriptor_info_t*) getBlock((block_t*)&(myfs->groupdescriptor));
-  block_t* inode_table_block = getBlock((block_t*)groupDesc->inode_table);
-  inode_t* inodeTable = (inode_t*)inode_table_block; // NEED TO ACCOUNT FOR TABLE BEING MULTIPLE BLOCKS
-  printf("Inodetable[0] in create\n ");
-  printInode(inodeTable[2]);
-  inode_t newInode = mkNewDirInode(&(groupDesc->block_data[availableBlock]));
-  inodeTable[availableInode] = newInode;
-  // increment parent inode size
-  inodeTable[cur_dir_inode_number].size += sizeof(dirent_t); 
-  overwriteBlock((block_t*)inodeTable, (block_t*)groupDesc->inode_table);
-  
-  // Create new directory data and write it to a new block
-  dirent_t *new_directory_data = (dirent_t*)calloc(sizeof(block_t), sizeof(char));
-  new_directory_data[0] = create_dirent(availableInode, 2,".");
-  new_directory_data[1] = create_dirent(cur_dir_inode_number, 2,"..");
-  overwriteBlock((block_t*) new_directory_data, newInode.data[0]);
-  
-  // Pull the parent data block into memory, add a new directory entry, and write it back out.
-  dirent_t* parentDirData = (dirent_t*) getBlock(inodeTable[cur_dir_inode_number].data[0]);
-  addDirEnt(parentDirData, create_dirent(availableInode,2,new_dirname)); 
-  overwriteBlock((block_t*)parentDirData, inodeTable[cur_dir_inode_number].data[0]);
-}
-
 
