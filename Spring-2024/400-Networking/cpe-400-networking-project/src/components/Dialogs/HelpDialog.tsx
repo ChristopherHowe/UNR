@@ -33,7 +33,7 @@ export default function HelpDialog(props: AddHostDialogProps) {
         <h1 className="text-xl mb-2 mt-3">Routing</h1>
         <p>
           All routers implement something similar to dynamic PAT. Hosts can send to other hosts in their same network or
-          in a public network that they are attached to. This means that hosts can't directly send requests to hosts
+          in a public network that they are attached to. This means that hosts can not directly send requests to hosts
           behind private networks.
         </p>
         <h1 className="text-xl mb-2 mt-3">IP Leasing</h1>

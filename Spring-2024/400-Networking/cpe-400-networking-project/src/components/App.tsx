@@ -154,7 +154,7 @@ export default function App() {
       }
       setEdges((eds) => addEdge({ ...connection }, eds));
     },
-    [setEdges, nodes, giveHostIP],
+    [setEdges, giveHostIP],
   );
 
   function loadSimulation(sim: Simulation) {
