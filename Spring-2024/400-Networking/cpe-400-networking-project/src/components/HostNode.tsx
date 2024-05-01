@@ -21,8 +21,8 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
   return (
     <>
       <Handle
-        type="target"
-        id={'top-target'}
+        type="source"
+        id={'top'}
         position={Position.Top}
         style={{ background: '#555' }}
         onConnect={(params) => console.log('handle target onConnect', params)}
@@ -30,9 +30,9 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
       />
       <Handle
         type="source"
-        id={'left-source'}
-        position={Position.Left}
-        style={{ background: '#f00' }}
+        id={'bottom'}
+        position={Position.Bottom}
+        style={{ background: '#555' }}
         onConnect={(params) => console.log('handle source onConnect', params)}
         isConnectable
       />
@@ -45,11 +45,11 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
             Edit
           </button>
           {host.packets.length >= 1 ? (
-            <div className="bg-yellow-300 border-yellow-400 border-2 rounded-full text-white px-1 text-xs h-5">
+            <div className="bg-yellow-300 border-yellow-400 border-2 rounded-full text-yellow-600 px-1 text-xs h-5">
               Waiting
             </div>
           ) : (
-            <div className="bg-green-300 border-green-400 border-2 rounded-full text-green-50 px-1 text-xs h-5">
+            <div className="bg-green-300 border-green-400 border-2 rounded-full text-green-600 px-1 text-xs h-5">
               Done
             </div>
           )}

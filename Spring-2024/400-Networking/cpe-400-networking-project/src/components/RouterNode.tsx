@@ -11,7 +11,8 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
   const [router, setRouter] = useState<Router>({
     macAddress: '',
     name: '',
-    ipAddress: '',
+    intIPAddress: '',
+    extIPAddress: '',
     subnet: '',
     activeLeases: [],
   });
@@ -27,41 +28,41 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
     <div className="host-node border-2 bg-gray-200 border-black p-1 w-28 h-28 flex flex-col items-center justify-center rounded-xl">
       <Handle
         type="target"
-        id={'top-target'}
+        id={'top-internal'}
         position={Position.Top}
-        style={{ background: '#555' }}
+        style={{ background: '#f00' }}
         onConnect={(params) => console.log('handle target onConnect', params)}
         isConnectable
       />
       <Handle
         type="source"
-        id={'left-source'}
+        id={'left-external'}
         position={Position.Left}
-        style={{ background: '#f00' }}
+        style={{ background: '#555' }}
         onConnect={(params) => console.log('handle source onConnect', params)}
         isConnectable
       />
       <Handle
         type="target"
-        id={'bottom-target'}
+        id={'bottom-internal'}
         position={Position.Bottom}
-        style={{ background: '#555' }}
+        style={{ background: '#f00' }}
         onConnect={(params) => console.log('handle target onConnect', params)}
         isConnectable
       />
       <Handle
         type="source"
-        id={'right-source'}
+        id={'right-external'}
         position={Position.Right}
-        style={{ background: '#f00' }}
+        style={{ background: '#555' }}
         onConnect={(params) => console.log('handle source onConnect', params)}
         isConnectable
       />
       <div className="text-sm">{router.name}</div>
       <div className="text-xs text-gray-400">{router.macAddress}</div>
-      <div className="text-xs text-gray-400">{router.ipAddress}</div>
+      <div className="text-xs text-gray-400">Internal: {router.intIPAddress}</div>
+      <div className="text-xs text-gray-400">External: {router.extIPAddress}</div>
       <div className="text-xs text-gray-400">{router.subnet}</div>
-      
     </div>
   );
 }

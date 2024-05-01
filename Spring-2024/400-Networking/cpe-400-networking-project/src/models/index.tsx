@@ -15,7 +15,8 @@ export interface Packet {
 export interface Router {
   name: string;
   macAddress: string;
-  ipAddress: string;
+  intIPAddress: string;
+  extIPAddress: string;
   subnet: string;
   activeLeases: Lease[];
 }

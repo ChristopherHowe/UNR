@@ -15,7 +15,7 @@ interface AddHostDialogProps {
 export default function AddRouterDialog(props: AddHostDialogProps) {
   const { open, onClose, addRouter } = props;
   const [hostName, setHostName] = useState<string>('');
-  const [ipAddr, setIPAddr] = useState<string>('');
+  const [intIPAddress, setIntIPAddress] = useState<string>('');
   const [macAddr, setMacAddr] = useState<string>('');
   const [subnet, setSubnet] = useState<string>('');
 
@@ -23,7 +23,7 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
     if (hostName.length < 1) {
       return 'Please enter a hostname';
     }
-    if (!ip.isV4Format(ipAddr)) {
+    if (!ip.isV4Format(intIPAddress)) {
       return 'Ip Address is invalid';
     }
     if (!isCIDRFormat(subnet)) {
@@ -39,7 +39,8 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
     addRouter({
       name: hostName,
       macAddress: macAddr !== '' ? macAddr : newMac,
-      ipAddress: ipAddr,
+      intIPAddress: intIPAddress,
+      extIPAddress: '',
       subnet: subnet,
       activeLeases: [],
     });
@@ -49,7 +50,7 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
   return (
     <SmoothDialog title="Add a New Router" {...{ open, onClose, onSubmit, validationMsg }}>
       <Textbox label="Host Name" value={hostName} setValue={setHostName} />
-      <Textbox label="Ip Address" value={ipAddr} setValue={setIPAddr} />
+      <Textbox label="Internal Ip Address" value={intIPAddress} setValue={setIntIPAddress} />
       <Textbox label="Subnet (CIDR Form)" value={subnet} setValue={setSubnet} />
       <Textbox label="Mac Address (optional)" value={macAddr} setValue={setMacAddr} />
     </SmoothDialog>

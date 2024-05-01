@@ -72,47 +72,37 @@ export default function App() {
   }
 
   function giveHostIP(connection: Connection) {
-    function giveIP(hostId: string, routerId: string) {
-      const host = getHost(hostId);
-      const router = getRouter(routerId);
-      console.log('Got host and router');
-      console.log(host);
-      console.log(router);
-      if (!host) {
-        throw new Error(`given host id ${hostId} is invalid`);
-      }
-      if (!router) {
-        throw new Error(`given router id ${routerId} is invalid`);
-      }
-      const newIP = findUnusedIP(router);
-      console.log(`got new IP ${newIP}`);
-
-      editHost({ ...host, ipAddress: newIP });
-      editRouter({ ...router, activeLeases: [...router.activeLeases, { ipAddress: newIP, macAddress: hostId }] });
-    }
-    console.log(`connection`);
-    console.log(connection);
-
-    if (!connection.source || !connection.target) {
+    const memberId = connection.source;
+    const routerId = connection.target;
+    if (!memberId || !routerId) {
       throw new Error('Connection source or target is null');
     }
-    const srcType = getDeviceType(connection.source);
-    const targetType = getDeviceType(connection.target);
-    console.log(`srcType: ${srcType}, targetType ${targetType}`);
+    let member: Router | Host | undefined = getHost(memberId);
+    let memberType: 'router' | 'host' = 'host';
+    if (!member) {
+      memberType = 'router';
+      member = getRouter(memberId);
+      if (!member) {
+        throw new Error(`given member id ${memberId} doesn't correspond to a host or a router`);
+      }
+    }
+    const router = getRouter(routerId);
+    if (!router) {
+      throw new Error(`given router id ${routerId} is invalid`);
+    }
+    console.log('Got member and router');
+    console.log(member);
+    console.log(router);
 
-    if (!srcType || !targetType) {
-      throw new Error('Source or target type is undefined');
-    }
-    if (srcType === 'host' && targetType === 'host') {
-      throw new Error('Connection source and router are both hosts');
-    }
-    if (srcType === 'router') {
-      console.log(`giving ip from ${connection.source} to ${connection.target}`);
-      giveIP(connection.target, connection.source);
+    const newIP = findUnusedIP(router);
+    console.log(`got new IP ${newIP}`);
+
+    if (memberType === 'host') {
+      editHost({ ...(member as Host), ipAddress: newIP });
     } else {
-      console.log(`giving ip from ${connection.target} to ${connection.source}`);
-      giveIP(connection.source, connection.target);
+      editRouter({ ...(member as Router), extIPAddress: newIP });
     }
+    editRouter({ ...router, activeLeases: [...router.activeLeases, { ipAddress: newIP, macAddress: memberId }] });
   }
 
   const onConnect = useCallback(

@@ -13,10 +13,6 @@ interface AddHostDialogProps {
 
 export default function HelpDialog(props: AddHostDialogProps) {
   const { open, onClose } = props;
-  const [hostName, setHostName] = useState<string>('');
-  const [ipAddr, setIPAddr] = useState<string>('');
-  const [macAddr, setMacAddr] = useState<string>('');
-  const [subnet, setSubnet] = useState<string>('');
 
   return (
     <SmoothDialog title="Help" {...{ open, onClose }} onSubmit={onClose} validationMsg="" submitLabel="Done">

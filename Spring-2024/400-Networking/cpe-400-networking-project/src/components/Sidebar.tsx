@@ -1,7 +1,7 @@
 import { Cog6ToothIcon, PlusIcon, ListBulletIcon, WifiIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import React, { useState } from 'react';
 import { Simulation } from '@/models';
-import data from '../../examples/example-2.json';
+import data from '../../examples/multi-router.json';
 import HelpDialog from './HelpDialog';
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
@@ -10,8 +10,6 @@ function classNames(...classes: (string | undefined | null | false)[]): string {
 
 export default function Sidebar({ loadSimulation }: { loadSimulation: (sim: Simulation) => void }) {
   const [helpDialogOpen, setHelpDialogOpen] = useState<boolean>(false);
-
-  function closeHelpDialog() {}
 
   const navigation = [
     { name: 'Create a New Simulation', onClick: () => {}, icon: PlusIcon, current: true },
