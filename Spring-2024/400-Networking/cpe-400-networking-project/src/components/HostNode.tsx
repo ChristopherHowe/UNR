@@ -8,7 +8,7 @@ interface NodeData {
 }
 export default function HostNode({ data }: NodeProps<NodeData>) {
   const { getHost, setEditMac } = useContext(NetworkContext);
-  const [host, setHost] = useState<Host>({ macAddress: '', name: '', packets: [] });
+  const [host, setHost] = useState<Host>({ macAddress: '', name: '', queuedPackets: [], recievedPackets: [] });
   console.log('host');
   console.log(host);
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
           <button onClick={() => setEditMac(host.macAddress)} className="text-gray-300 hover:text-gray-50">
             Edit
           </button>
-          {host.packets.length >= 1 ? (
+          {host.queuedPackets.length >= 1 ? (
             <div className="bg-yellow-300 border-yellow-400 border-2 rounded-full text-yellow-600 px-1 text-xs h-5">
               Waiting
             </div>

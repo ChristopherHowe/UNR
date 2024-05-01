@@ -43,6 +43,7 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
       extIPAddress: '',
       subnet: subnet,
       activeLeases: [],
+      queuedPackets: [],
     });
     onClose();
   }

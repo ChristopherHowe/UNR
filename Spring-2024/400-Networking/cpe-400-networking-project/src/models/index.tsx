@@ -4,10 +4,12 @@ export interface Host {
   name: string;
   macAddress: string;
   ipAddress?: string;
-  packets: Packet[];
+  queuedPackets: Packet[];
+  recievedPackets: Packet[];
 }
 
 export interface Packet {
+  srcIP: string;
   destIP: string;
   data: string;
 }
@@ -19,6 +21,7 @@ export interface Router {
   extIPAddress: string;
   subnet: string;
   activeLeases: Lease[];
+  queuedPackets: Packet[];
 }
 
 export interface Lease {

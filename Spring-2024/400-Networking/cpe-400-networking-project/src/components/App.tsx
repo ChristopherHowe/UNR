@@ -8,14 +8,23 @@ import { Host, Router, Simulation, Packet } from '@/models';
 import AddRouterDialog from './AddRouterDialog';
 import { findUnusedIP, getPath } from '@/utils/network';
 import { NetworkContext } from './NetworkContext';
-import QueueHostPacketsDialog from './QueueHostPacketsDialog';
+import QueueHostPacketsDialog from './HostPacketsDialog';
 import sleep from '@/utils';
+import CurrentEvent from './CurrentEvent';
+
+enum SimState {
+  Off,
+  Running,
+  SendingPacket,
+  TranslatingAddress,
+}
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const [openDialog, setOpenDialog] = useState<'' | 'AddHost' | 'AddRouter'>('');
+  const [simState, setSimState] = useState<SimState>(SimState.Off);
 
   const {
     hosts,
@@ -131,6 +140,8 @@ export default function App() {
     return { ...e, animated: false, style: { stroke: 'black' } };
   }
 
+  async function translateNetwork() {}
+
   async function runSimulation() {
     async function showPath(path: string[]) {
       const stack = path.reverse();
@@ -149,15 +160,8 @@ export default function App() {
       setEdges((prev) => prev.map((edge) => makeOfflineEdge(edge)));
     }
 
-    const allPackets: { [key: string]: Packet[] } = {};
     for (const host of hosts) {
-      allPackets[host.macAddress] = [...host.packets];
-    }
-    console.log('got all packets');
-    console.log(allPackets);
-
-    for (const host of hosts) {
-      for (const packet of host.packets) {
+      for (const packet of host.queuedPackets) {
         console.log('Simulating packet from ', host.macAddress);
         console.log(packet);
         const destHost = hosts.find((host) => host.ipAddress === packet.destIP); // WARNING THIS IS NOT IMPLEMENTING ROUTER PROTOCOL
@@ -171,7 +175,9 @@ export default function App() {
         console.log('Path');
         console.log(path);
         await showPath(path);
-        editHost({ ...host, packets: host.packets.filter((p) => p != packet) });
+        editHost({ ...host, queuedPackets: host.queuedPackets.filter((p) => p != packet) });
+        console.log('Added packet to received packets for ${dest}');
+        editHost({ ...destHost, recievedPackets: [...destHost.recievedPackets, packet] });
       }
     }
   }
@@ -186,6 +192,7 @@ export default function App() {
             runSimulation={runSimulation}
             saveSimulation={() => saveSimulation(nodes, edges)}
           />
+          <CurrentEvent heading="Heading" message="Wow this is a really low message" />
         </div>
       </Layout>
       <AddHostDialog open={openDialog === 'AddHost'} onClose={closeDialog} addHost={handleAddHost} />

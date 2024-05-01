@@ -1,7 +1,7 @@
 import { Cog6ToothIcon, PlusIcon, ListBulletIcon, WifiIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import React, { useState } from 'react';
 import { Simulation } from '@/models';
-import data from '../../examples/multi-router.json';
+import data from '../../examples/3-router-4-host.json';
 import HelpDialog from './HelpDialog';
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
