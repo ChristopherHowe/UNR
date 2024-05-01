@@ -42,6 +42,7 @@ export default function App() {
     saveSimulation,
     editMac,
     setEditMac,
+    clearNetwork,
   } = context;
 
   const getEditMacType: (editMac: string) => 'router' | 'host' | undefined = () => {
@@ -155,6 +156,7 @@ export default function App() {
   );
 
   function loadSimulation(sim: Simulation) {
+    clearNetwork();
     setNodes(sim.nodes);
     setEdges(sim.edges);
     for (const router of sim.Routers) {
@@ -163,6 +165,12 @@ export default function App() {
     for (const host of sim.Hosts) {
       addHost(host);
     }
+  }
+
+  function newSimulation() {
+    clearNetwork();
+    setNodes([]);
+    setEdges([]);
   }
 
   function setEdgeActive(active: boolean, src?: string, dest?: string) {
@@ -190,7 +198,7 @@ export default function App() {
 
   return (
     <>
-      <Layout loadSimulation={loadSimulation}>
+      <Layout {...{ loadSimulation, newSimulation }}>
         <div className="relative h-full">
           <Diagram {...{ nodes, onNodesChange, edges, onEdgesChange, onConnect }} />
           <Controls

@@ -32,7 +32,7 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
         <div className="text-xs text-gray-300">{host.macAddress}</div>
         {host.ipAddress && <div className="text-xs text-gray-300">{host.ipAddress}</div>}
         <div className="flex flex-row items-center gap-3">
-          <button onClick={() => setEditMac(host.macAddress)} className="text-gray-300 hover:text-gray-50">
+          <button onClick={() => setEditMac(host.macAddress)} className="text-gray-300 hover:text-gray-50 underline">
             Packets
           </button>
           {host.queuedPackets.length >= 1 ? (
@@ -41,7 +41,7 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
             </div>
           ) : (
             <div className="bg-green-300 border-green-400 border-2 rounded-full text-green-600 px-1 text-xs h-5">
-              Done
+              Ready
             </div>
           )}
         </div>

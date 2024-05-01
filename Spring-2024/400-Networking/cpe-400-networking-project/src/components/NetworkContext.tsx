@@ -15,6 +15,7 @@ export interface NetworkContextProps {
   saveSimulation: (nodes: Node[], edges: Edge[]) => void;
   editMac: string;
   setEditMac: (mac: string) => void;
+  clearNetwork: () => void;
 }
 
 export const NetworkContext = createContext<NetworkContextProps>({
@@ -30,6 +31,7 @@ export const NetworkContext = createContext<NetworkContextProps>({
   saveSimulation: (nodes: Node[], edges: Edge[]) => '',
   editMac: '',
   setEditMac: (mac: string) => {},
+  clearNetwork: () => {},
 });
 
 export function NetworkContextProvider({ children }: { children: any }) {
@@ -43,6 +45,12 @@ export function NetworkContextProvider({ children }: { children: any }) {
     },
     [hosts],
   );
+
+  function clearNetwork() {
+    setHosts([]);
+    setRouters([]);
+    setEditMac('');
+  }
 
   function addHost(host: Host) {
     setHosts((prev) => [...prev, host]);
@@ -116,6 +124,7 @@ export function NetworkContextProvider({ children }: { children: any }) {
         saveSimulation,
         editMac,
         setEditMac,
+        clearNetwork,
       }}
     >
       {children}

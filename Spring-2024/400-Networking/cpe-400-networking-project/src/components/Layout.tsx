@@ -9,18 +9,19 @@ import { Simulation } from '@/models/network';
 interface LayoutProps {
   children: ReactNode;
   loadSimulation: (sim: Simulation) => void;
+  newSimulation: () => void;
 }
 export default function Layout(props: LayoutProps) {
-  const { children, loadSimulation } = props;
+  const { children, loadSimulation, newSimulation } = props;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div>
       <MediumSidebarTransition {...{ sidebarOpen, setSidebarOpen }}>
-        <Sidebar {...{ loadSimulation }} />
+        <Sidebar {...{ loadSimulation, newSimulation }} />
       </MediumSidebarTransition>
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-        <Sidebar {...{ loadSimulation }} />
+        <Sidebar {...{ loadSimulation, newSimulation }} />
       </div>
       <div className="lg:pl-72 h-screen flex flex-col">
         {/* Header */}

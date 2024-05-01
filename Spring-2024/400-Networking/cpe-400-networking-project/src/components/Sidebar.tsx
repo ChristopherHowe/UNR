@@ -1,18 +1,25 @@
 import { Cog6ToothIcon, PlusIcon, ListBulletIcon, WifiIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Simulation } from '@/models/network';
 import data from '../../examples/datagrams.json';
 import HelpDialog from './Dialogs/HelpDialog';
+import { NetworkContext } from './NetworkContext';
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function Sidebar({ loadSimulation }: { loadSimulation: (sim: Simulation) => void }) {
+export default function Sidebar({
+  loadSimulation,
+  newSimulation,
+}: {
+  loadSimulation: (sim: Simulation) => void;
+  newSimulation: () => void;
+}) {
   const [helpDialogOpen, setHelpDialogOpen] = useState<boolean>(false);
 
   const navigation = [
-    { name: 'Create a New Environment', onClick: () => {}, icon: PlusIcon, current: true },
+    { name: 'Create a New Environment', onClick: newSimulation, icon: PlusIcon, current: false },
     {
       name: 'Example simulation',
       onClick: () => {
