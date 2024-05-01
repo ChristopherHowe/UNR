@@ -9,6 +9,7 @@ export interface NetworkContextProps {
   addHost: (host: Host) => void;
   editHost: (updatedHost: Host) => void;
   getRouter: (mac: string) => Router | undefined;
+  getGatewayRouter: (mac: string, gateway: string) => Router | undefined;
   addRouter: (router: Router) => void;
   editRouter: (updatedRouter: Router) => void;
   getDeviceType: (mac: string) => 'router' | 'host' | undefined;
@@ -16,6 +17,8 @@ export interface NetworkContextProps {
   editMac: string;
   setEditMac: (mac: string) => void;
   clearNetwork: () => void;
+  getNewPacketID: () => string;
+  freePacketID: (id: string) => void;
 }
 
 export const NetworkContext = createContext<NetworkContextProps>({
@@ -25,6 +28,7 @@ export const NetworkContext = createContext<NetworkContextProps>({
   addHost: (host: Host) => {},
   editHost: (updatedHost: Host) => {},
   getRouter: (mac: string) => undefined,
+  getGatewayRouter: (mac: string, gateway: string) => undefined,
   addRouter: (router: Router) => {},
   editRouter: (updatedRouter: Router) => {},
   getDeviceType: (mac: string) => undefined,
@@ -32,12 +36,15 @@ export const NetworkContext = createContext<NetworkContextProps>({
   editMac: '',
   setEditMac: (mac: string) => {},
   clearNetwork: () => {},
+  getNewPacketID: () => '',
+  freePacketID: () => {},
 });
 
 export function NetworkContextProvider({ children }: { children: any }) {
   const [hosts, setHosts] = useState<Host[]>([]);
   const [routers, setRouters] = useState<Router[]>([]);
   const [editMac, setEditMac] = useState<string>('');
+  const [packetIDs, setPacketIDs] = useState<string[]>([]);
 
   const getHost = useCallback(
     (mac: string) => {
@@ -66,6 +73,15 @@ export function NetworkContextProvider({ children }: { children: any }) {
   const getRouter = useCallback(
     (mac: string) => {
       return routers.find((host) => host.macAddress === mac);
+    },
+    [routers],
+  );
+
+  const getGatewayRouter = useCallback(
+    (mac: string, gateway: string) => {
+      return routers.find(
+        (router) => gateway === router.intIPAddress && router.activeLeases.some((lease) => lease.macAddress === mac),
+      );
     },
     [routers],
   );
@@ -109,6 +125,30 @@ export function NetworkContextProvider({ children }: { children: any }) {
     document.body.removeChild(link);
   }
 
+  function getNewPacketID() {
+    if (packetIDs.length === 0) return 'p-1'; // If array is empty, start with p-1
+    const lastID = packetIDs[packetIDs.length - 1];
+    const lastNumber = parseInt(lastID.split('-')[1]);
+    if (isNaN(lastNumber)) throw new Error(`Packet IDs are not following format ${packetIDs}`);
+    const newID = `p-${lastNumber + 1}`;
+    setPacketIDs((prev) => [...prev, newID]);
+    return newID;
+  }
+
+  function freePacketID(id: string) {
+    setPacketIDs((prev) => prev.filter((i) => i !== id));
+  }
+
+  useEffect(() => {
+    console.log('Routers');
+    console.log(routers);
+  }, [routers]);
+
+  useEffect(() => {
+    console.log('Hosts');
+    console.log(hosts);
+  }, [hosts]);
+
   return (
     <NetworkContext.Provider
       value={{
@@ -125,6 +165,9 @@ export function NetworkContextProvider({ children }: { children: any }) {
         editMac,
         setEditMac,
         clearNetwork,
+        getNewPacketID,
+        freePacketID,
+        getGatewayRouter,
       }}
     >
       {children}

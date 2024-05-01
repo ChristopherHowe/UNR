@@ -89,7 +89,6 @@ export default function App() {
   }
 
   function closeDialog() {
-    console.log('Calling close dialog');
     setOpenDialog('');
     setEditMac('');
   }

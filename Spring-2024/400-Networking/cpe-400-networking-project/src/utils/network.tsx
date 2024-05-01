@@ -103,8 +103,9 @@ export function getPath(destMac: string, srcMac: string, edges: Edge[]) {
   }
 }
 
-export function wrapHTTPData(data: any, destIP: string, srcIP: string, srcPort: number): Datagram {
+export function wrapHTTPData(packetID: string, data: any, destIP: string, srcIP: string, srcPort: number): Datagram {
   return {
+    id: packetID,
     destIP: destIP,
     srcIP: srcIP,
     segment: {

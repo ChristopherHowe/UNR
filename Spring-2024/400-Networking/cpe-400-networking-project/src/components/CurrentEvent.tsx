@@ -16,7 +16,7 @@ export default function CurrentEvent({
       <div className="m-4 p-3 bg-white shadow-lg ring-2 ring-gray-900/5 sm:rounded-xl">
         <div className="flex flex-row items-center">
           <div className="w-full flex flex-col items-center">
-            <div className="xl:w-1/3">
+            <div className="xl:w-2/3">
               <h1 className="text-2xl">{heading}</h1>
               <p className="text-md">{message}</p>
             </div>

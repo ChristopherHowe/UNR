@@ -87,7 +87,7 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
   const [newData, setNewData] = useState<string>('');
   const [newDestIP, setNewDestIP] = useState<string>('');
   const [packets, setPackets] = useState<Datagram[]>([]);
-  const { editHost, getHost, editMac } = useContext(NetworkContext);
+  const { editHost, getHost, editMac, getNewPacketID } = useContext(NetworkContext);
 
   const host = getHost(editMac);
 
@@ -105,7 +105,13 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
 
   function addPacket() {
     if (host) {
-      const newPacket = wrapHTTPData(newData, newDestIP, host.ipAddress || '', getRandomInRange(3000, 6000));
+      const newPacket = wrapHTTPData(
+        getNewPacketID(),
+        newData,
+        newDestIP,
+        host.ipAddress || '',
+        getRandomInRange(3000, 6000),
+      );
       setPackets((prev) => [...prev, newPacket]);
     }
   }
@@ -125,11 +131,7 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
   }
 
   return (
-    <SmoothDialog
-      title="Queue HTTP Packets"
-      submitLabel="Queue Packets"
-      {...{ open, onClose, onSubmit, validationMsg }}
-    >
+    <SmoothDialog title="Queue HTTP Packets" submitLabel="Save" validationMsg="" {...{ open, onClose, onSubmit }}>
       <div className="flex flex-row items-end">
         <Textbox label="Packet Data" value={newData} setValue={setNewData} />
         <Textbox label="Destination IP" value={newDestIP} setValue={setNewDestIP} />

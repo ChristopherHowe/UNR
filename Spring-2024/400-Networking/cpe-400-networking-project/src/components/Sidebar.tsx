@@ -1,9 +1,8 @@
 import { Cog6ToothIcon, PlusIcon, ListBulletIcon, WifiIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { Simulation } from '@/models/network';
-import data from '../../examples/datagrams.json';
+import data from '../../examples/multiPAT.json';
 import HelpDialog from './Dialogs/HelpDialog';
-import { NetworkContext } from './NetworkContext';
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');

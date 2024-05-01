@@ -10,6 +10,7 @@ export interface Host {
 }
 
 export interface Datagram {
+  id: string;
   srcIP: string;
   destIP: string;
   segment: Segment;
