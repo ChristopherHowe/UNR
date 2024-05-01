@@ -3,7 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { ReactNode } from 'react';
 import { title } from 'process';
-import Button from './Button';
+import Button from '../Button';
 
 interface DialogProps {
   title: string;
@@ -44,13 +44,14 @@ export default function SmoothDialog(props: DialogProps) {
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
               <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
-                <div className="font-semibold text-lg">{title}</div>
-                {children}
-                <div className="mt-5 sm:mt-6 flex justify-end">
-                  <Button label={submitLabel || 'submit'} disabled={validationMsg !== ''} onClick={onSubmit} />
+                <div>
+                  <div className="font-semibold text-lg">{title}</div>
+                  {children}
+                  <div className="flex flex-row justify-between mt-5 sm:mt-6">
+                    <div className="text-red-600">{validationMsg}</div>
+                    <Button label={submitLabel || 'submit'} disabled={validationMsg !== ''} onClick={onSubmit} />
+                  </div>
                 </div>
-
-                <div className="text-red-600 min-h-6">{validationMsg}</div>
               </Dialog.Panel>
             </Transition.Child>
           </div>

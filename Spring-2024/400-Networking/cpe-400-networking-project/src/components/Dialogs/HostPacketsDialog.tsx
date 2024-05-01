@@ -1,9 +1,9 @@
 import SmoothDialog from './Dialog';
 import { useContext, useState, useEffect } from 'react';
-import Textbox from './Textbox';
+import Textbox from '../Textbox';
 import { Datagram } from '@/models/network';
-import Button from './Button';
-import { NetworkContext } from './NetworkContext';
+import Button from '../Button';
+import { NetworkContext } from '../NetworkContext';
 import * as ip from 'ip';
 import { wrapHTTPData } from '@/utils/network';
 import { DatagramToString, getRandomInRange } from '@/utils';
@@ -125,7 +125,11 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
   }
 
   return (
-    <SmoothDialog title="Queue Packets" submitLabel="Queue Packets" {...{ open, onClose, onSubmit, validationMsg }}>
+    <SmoothDialog
+      title="Queue HTTP Packets"
+      submitLabel="Queue Packets"
+      {...{ open, onClose, onSubmit, validationMsg }}
+    >
       <div className="flex flex-row items-end">
         <Textbox label="Packet Data" value={newData} setValue={setNewData} />
         <Textbox label="Destination IP" value={newDestIP} setValue={setNewDestIP} />

@@ -1,4 +1,4 @@
-import SmoothDialog from './Dialog';
+import SmoothDialog from './Dialogs/Dialog';
 import { useState } from 'react';
 import Textbox from './Textbox';
 import { Router } from '@/models/network';

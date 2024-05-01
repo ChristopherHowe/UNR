@@ -1,6 +1,6 @@
 import SmoothDialog from './Dialog';
 import { useState } from 'react';
-import Textbox from './Textbox';
+import Textbox from '../Textbox';
 import { Router } from '@/models/network';
 import { generateUniqueMACAddress } from '@/utils';
 import * as ip from 'ip';
@@ -44,7 +44,7 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
       gateway: '',
       subnet: subnet,
       activeLeases: [],
-      queuedPackets: [],
+      PATTable: [],
     });
     onClose();
   }

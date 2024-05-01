@@ -2,7 +2,7 @@ import { createContext, useState, useCallback, useEffect } from 'react';
 import { Router, Host, Simulation } from '@/models/network';
 import { Edge, Node } from 'reactflow';
 
-interface NetworkContextProps {
+export interface NetworkContextProps {
   hosts: Host[];
   routers: Router[];
   getHost: (mac: string) => Host | undefined;

@@ -297,7 +297,7 @@
                     "macAddress": "06:FB:59:B9:03:8C"
                 }
             ],
-            "queuedPackets": []
+            "PATTable":[]
         },
         {
             "name": "Router 2",
@@ -312,7 +312,7 @@
                     "macAddress": "47:D3:33:ED:8D:B3"
                 }
             ],
-            "queuedPackets": []
+            "PATTable":[]
         },
         {
             "name": "Router 3",
@@ -331,7 +331,7 @@
                     "macAddress": "E4:EB:E3:58:F4:01"
                 }
             ],
-            "queuedPackets": []
+            "PATTable":[]
         }
     ]
 }

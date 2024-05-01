@@ -16,7 +16,7 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
     subnet: '',
     activeLeases: [],
     gateway: '',
-    queuedPackets: [],
+    PATTable: [],
   });
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
   }, [getRouter, data.mac]);
 
   return (
-    <div className="host-node border-2 bg-gray-200 border-black p-1 w-28 h-28 flex flex-col items-center justify-center rounded-xl">
+    <div className="host-node border-2 bg-gray-200 border-black p-3 flex flex-col items-center justify-center rounded-xl">
       <Handle type="target" id={'top-internal'} position={Position.Top} style={{ background: '#f00' }} isConnectable />
       <Handle
         type="source"
@@ -54,7 +54,10 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
       <div className="text-xs text-gray-400">{router.macAddress}</div>
       <div className="text-xs text-gray-400">Internal: {router.intIPAddress}</div>
       <div className="text-xs text-gray-400">External: {router.extIPAddress}</div>
-      <div className="text-xs text-gray-400">{router.subnet}</div>
+      <div className="text-xs text-gray-400">Subnet: {router.subnet}</div>
+      <button onClick={() => setEditMac(router.macAddress)} className="text-black underline hover:text-gray-700">
+        PAT Table
+      </button>
     </div>
   );
 }

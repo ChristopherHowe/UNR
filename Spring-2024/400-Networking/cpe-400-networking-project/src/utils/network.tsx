@@ -42,6 +42,21 @@ export function isCIDRFormat(cidr: string): boolean {
   return true;
 }
 
+export function IPAndPortFromString(ipWithPort: string): [string, number] {
+  const match = ipWithPort.split(':');
+  if (match.length !== 2) {
+    throw new Error(`Failed to split PAT Table entry internal ip ${ipWithPort} into a IP and a port`);
+  }
+  if (!ip.isV4Format(match[0])) {
+    throw new Error(`IP from ${ipWithPort} is not a valid IP`);
+  }
+  const port = parseInt(match[1]);
+  if (isNaN(port)) {
+    throw new Error(`Port ${match[1]} from ${ipWithPort} is not a number`);
+  }
+  return [match[0], port];
+}
+
 function getAdjList(nodeMac: string, edges: Edge[]) {
   const adjList: string[] = [];
   for (const edge of edges) {

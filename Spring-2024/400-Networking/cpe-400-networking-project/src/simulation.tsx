@@ -1,5 +1,9 @@
-import { Router, Host, Datagram } from './models/network';
+import { DataHTMLAttributes } from 'react';
+import { Router, Host, Datagram, RouterPATPortRange, PATEntry } from './models/network';
 import sleep from './utils';
+import * as ip from 'ip';
+import { IPAndPortFromString } from './utils/network';
+import { NetworkContext, NetworkContextProps } from './components/NetworkContext';
 
 const speed = 2000;
 
@@ -11,13 +15,14 @@ export class SimError extends Error {
 }
 
 export enum SimState {
-  Off = 'Sim is not running',
+  Off = 'Sim is not running.',
   Running = 'Running Simulation...',
-  SendingPacket = 'Sendng packet...',
+  Preparing = 'Preparing packet',
+  SendingPacket = 'Sending packet...',
   FinishedPacket = 'Successfully sent a packet',
   TranslatingAddress = 'Handling address translation...',
-  Error = 'Something went wrong',
-  Complete = 'Finished Simulation',
+  Error = 'Error:',
+  Complete = 'Finished Simulation.',
 }
 
 function getDestIPMacOnNet(router: Router, destIp: string): string | undefined {
@@ -41,53 +46,103 @@ function getHostRouter(hostMac: string, hostGateway: string, routers: Router[]) 
   }
 }
 
+function getUnusedPATPort(PATTable: PATEntry[]) {
+  function portIsUsedInPATTable(PATTable: PATEntry[], port: number) {
+    return PATTable.some((entry) => {
+      const [ip, p] = IPAndPortFromString(entry.extIP);
+      return p === port;
+    });
+  }
+  for (let i = RouterPATPortRange.min; i < RouterPATPortRange.max, i++; ) {
+    if (!portIsUsedInPATTable(PATTable, i)) {
+      return i;
+    }
+  }
+  throw new SimError('All ports used in PAT table');
+}
+
+function addPATEntryAndChangeSrcIP(
+  packet: Datagram,
+  router: Router,
+  editRouter: (updatedRouter: Router) => void,
+): Datagram {
+  const unusedPort = getUnusedPATPort(router.PATTable);
+  const newPatEntry = {
+    intIP: `${packet.srcIP}:${packet.segment.srcPort}`,
+    extIP: `${router.extIPAddress}:${unusedPort}`,
+  };
+  editRouter({ ...router, PATTable: [...router.PATTable, newPatEntry] });
+  return {
+    destIP: packet.destIP,
+    srcIP: router.extIPAddress,
+    segment: {
+      destPort: packet.segment.destPort,
+      srcPort: unusedPort,
+      data: packet.segment.data,
+    },
+  };
+}
+
+async function travelWire(
+  setSimState: React.Dispatch<React.SetStateAction<SimState>>,
+  setSimMsg: React.Dispatch<React.SetStateAction<string>>,
+  setEdgeActive: (active: boolean, src?: string, dest?: string) => void,
+  src: string,
+  dest: string,
+) {
+  setSimState(SimState.SendingPacket);
+  setSimMsg(`Sending packet from ${src} to ${dest}`);
+  setEdgeActive(true, src, dest);
+  await sleep(speed);
+}
+
 async function simulatePacket(
   packet: Datagram,
-  routers: Router[],
   srcHost: Host,
-  editHost: (updatedHost: Host) => void,
-  getHost: (mac: string) => Host | undefined,
-  setEdgeActive: (src: string, dest: string, active: boolean) => void,
+  context: NetworkContextProps,
+  setEdgeActive: (active: boolean, src?: string, dest?: string) => void,
   setSimState: React.Dispatch<React.SetStateAction<SimState>>,
   setSimMsg: React.Dispatch<React.SetStateAction<string>>,
 ) {
   console.log('Simulating Packet', JSON.stringify(packet));
   let current: { macAddress: string; gateway: string } = srcHost;
+  let currentPacket = packet;
+
   while (true) {
-    const hostRouter = getHostRouter(current.macAddress, current.gateway, routers);
+    const hostRouter = getHostRouter(current.macAddress, current.gateway, context.routers);
     if (!hostRouter) {
       throw new SimError(`Host/Router with mac ${current.macAddress} is not connected to a router`);
     }
-    console.log(`activating edge from ${current.macAddress} to ${hostRouter.macAddress}`);
-    setEdgeActive(current.macAddress, hostRouter.macAddress, true);
-    await sleep(speed);
+    await travelWire(setSimState, setSimMsg, setEdgeActive, current.macAddress, hostRouter.macAddress);
 
-    const destMac = getDestIPMacOnNet(hostRouter, packet.destIP);
+    const destMac = getDestIPMacOnNet(hostRouter, currentPacket.destIP);
     // Case 1: Destination is in network
     if (destMac) {
       console.log('handling case 1');
-      const destHost = getHost(destMac);
+      const destHost = context.getHost(destMac);
       if (!destHost) {
         throw new Error(`Got destination mac addr ${destMac} but no corresponding host`);
       }
 
-      console.log(`activating edge from ${hostRouter.macAddress} to ${destMac}`);
-      setEdgeActive(hostRouter.macAddress, destMac, true);
-      await sleep(speed);
-      console.log(`disabling edge from ${hostRouter.macAddress} to ${destMac}`);
-
-      setEdgeActive(hostRouter.macAddress, destMac, false);
-
-      receivePacket(destHost, editHost, packet);
+      await travelWire(setSimState, setSimMsg, setEdgeActive, hostRouter.macAddress, destMac);
+      setEdgeActive(false);
+      receivePacket(destHost, context.editHost, currentPacket);
       return;
     }
     // Case 2: Destination is not in network
     else {
       console.log('Handling case 2');
-      console.log('host router ', JSON.stringify(hostRouter));
+
       if (hostRouter.gateway !== '') {
-        setEdgeActive(current.macAddress, hostRouter.macAddress, true);
-        sleep(speed);
+        setEdgeActive(false);
+
+        currentPacket = addPATEntryAndChangeSrcIP(currentPacket, hostRouter, context.editRouter);
+        setSimState(SimState.TranslatingAddress);
+        setSimMsg(
+          `Adding PAT Table Entry to router (${hostRouter.macAddress}). Packet now has source IP ${currentPacket.srcIP}:${currentPacket.segment.srcPort}`,
+        );
+        await sleep(speed);
+
         current = hostRouter;
       } else {
         throw new SimError(
@@ -99,24 +154,21 @@ async function simulatePacket(
 }
 
 export default async function runSimulation(
-  routers: Router[],
-  hosts: Host[],
-  editHost: (updatedHost: Host) => void,
-  getHost: (mac: string) => Host | undefined,
-  setEdgeActive: (src: string, dest: string, active: boolean) => void,
+  context: NetworkContextProps,
+  setEdgeActive: (active: boolean, src?: string, dest?: string) => void,
   setSimState: React.Dispatch<React.SetStateAction<SimState>>,
   setSimMsg: React.Dispatch<React.SetStateAction<string>>,
 ) {
   setSimState(SimState.Running);
   try {
-    for (const host of hosts) {
+    for (const host of context.hosts) {
       for (const packet of host.queuedPackets) {
-        setSimState(SimState.SendingPacket);
-        setSimMsg(`Handling new packet with destination ${packet.destIP} and source ${packet.srcIP}`);
+        setSimState(SimState.Preparing);
+        setSimMsg(`Getting ready to send packet with destination ${packet.destIP} and source ${packet.srcIP}`);
         await sleep(speed);
 
-        await simulatePacket(packet, routers, host, editHost, getHost, setEdgeActive, setSimState, setSimMsg);
-        dropPacketFromQueueWhenDone(host, packet, editHost);
+        await simulatePacket(packet, host, context, setEdgeActive, setSimState, setSimMsg);
+        dropPacketFromQueueWhenDone(host, packet, context.editHost);
 
         setSimState(SimState.FinishedPacket);
         setSimMsg('Finished sending packet');

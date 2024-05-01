@@ -29,7 +29,18 @@ export interface Router {
   gateway: string;
   subnet: string;
   activeLeases: Lease[];
-  queuedPackets: Datagram[];
+  queuedPacket?: Datagram;
+  PATTable: PATEntry[];
+}
+
+export const RouterPATPortRange = {
+  min: 6000,
+  max: 12000,
+};
+
+export interface PATEntry {
+  intIP: string;
+  extIP: string;
 }
 
 export interface Lease {

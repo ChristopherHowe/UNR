@@ -1,17 +1,17 @@
 import Diagram from '@/components/Diagram';
 import Layout from '@/components/Layout';
 import { Controls } from '@/components/Controls';
-import { useState, useEffect, useCallback, useContext } from 'react';
-import { addEdge, useNodesState, useEdgesState, Connection, Edge, updateEdge } from 'reactflow';
-import AddHostDialog from '@/components/AddHostDialog';
+import { useState, useCallback, useContext } from 'react';
+import { addEdge, useNodesState, useEdgesState, Connection, Edge } from 'reactflow';
+import AddHostDialog from './Dialogs/AddHostDialog';
 import { Host, Router, Simulation } from '@/models/network';
-import AddRouterDialog from './AddRouterDialog';
-import { findUnusedIP, getPath } from '@/utils/network';
+import AddRouterDialog from './Dialogs/AddRouterDialog';
+import { findUnusedIP } from '@/utils/network';
 import { NetworkContext } from './NetworkContext';
-import QueueHostPacketsDialog from './HostPacketsDialog';
-import sleep from '@/utils';
+import QueueHostPacketsDialog from './Dialogs/HostPacketsDialog';
 import CurrentEvent from './CurrentEvent';
-import runSimulation, { SimError, SimState } from '@/simulation';
+import runSimulation, { SimState } from '@/simulation';
+import ViewPatDialog from './Dialogs/ViewPATDialog';
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -21,12 +21,13 @@ export default function App() {
   const [simState, setSimState] = useState<SimState>(SimState.Off);
   const [simMsg, setSimMsg] = useState<string>('');
 
+  const context = useContext(NetworkContext);
+
   const {
     hosts,
     routers,
     addHost,
     addRouter,
-    getDeviceType,
     getHost,
     getRouter,
     editHost,
@@ -34,7 +35,16 @@ export default function App() {
     saveSimulation,
     editMac,
     setEditMac,
-  } = useContext(NetworkContext);
+  } = context;
+
+  const getEditMacType: (editMac: string) => 'router' | 'host' | undefined = () => {
+    if (hosts.some((host) => host.macAddress === editMac)) {
+      return 'host';
+    } else if (routers.some((router) => router.macAddress === editMac)) {
+      return 'router';
+    }
+  };
+  const editMacType = getEditMacType(editMac);
 
   function addHostNode(mac: string) {
     setNodes((prevNodes) => [
@@ -71,6 +81,7 @@ export default function App() {
   }
 
   function closeDialog() {
+    console.log('Calling close dialog');
     setOpenDialog('');
     setEditMac('');
   }
@@ -124,21 +135,17 @@ export default function App() {
     }
   }
 
-  function setEdgeActive(src: string, dest: string, active: boolean) {
+  function setEdgeActive(active: boolean, src?: string, dest?: string) {
     function makeActiveEdge(e: Edge): Edge {
       return { ...e, animated: true, style: { stroke: 'red' } };
     }
     function makeOfflineEdge(e: Edge): Edge {
       return { ...e, animated: false, style: { stroke: 'black' } };
     }
-    if (
-      !edges.some(
-        (edge) => (edge.source === src && edge.target === dest) || (edge.source === dest && edge.target === src),
-      )
-    ) {
-      throw new Error(`Failed to set edge with src ${src} and dst ${dest} as active`);
-    }
     if (active) {
+      if (!src || !dest) {
+        throw new Error('while attempting to set edge as active src or dest was not specified');
+      }
       setEdges((prev) =>
         prev.map((edge) =>
           (edge.source === src && edge.target === dest) || (edge.source === dest && edge.target === src)
@@ -147,13 +154,7 @@ export default function App() {
         ),
       );
     } else {
-      setEdges((prev) =>
-        prev.map((edge) =>
-          (edge.source === src && edge.target === dest) || (edge.source === dest && edge.target === src)
-            ? makeOfflineEdge(edge)
-            : edge,
-        ),
-      );
+      setEdges((prev) => prev.map((edge) => makeOfflineEdge(edge)));
     }
   }
 
@@ -164,16 +165,14 @@ export default function App() {
           <Diagram {...{ nodes, onNodesChange, edges, onEdgesChange, onConnect }} />
           <Controls
             setOpenDialog={setOpenDialog}
-            runSimulation={() =>
-              runSimulation(routers, hosts, editHost, getHost, setEdgeActive, setSimState, setSimMsg)
-            }
+            runSimulation={() => runSimulation(context, setEdgeActive, setSimState, setSimMsg)}
             saveSimulation={() => saveSimulation(nodes, edges)}
           />
           {simState !== SimState.Off && (
             <CurrentEvent
               heading={simState}
               message={simMsg}
-              dismissable={simState === SimState.Complete}
+              dismissable={simState === SimState.Complete || simState === SimState.Error}
               onDismiss={() => setSimState(SimState.Off)}
             />
           )}
@@ -181,7 +180,8 @@ export default function App() {
       </Layout>
       <AddHostDialog open={openDialog === 'AddHost'} onClose={closeDialog} addHost={handleAddHost} />
       <AddRouterDialog open={openDialog === 'AddRouter'} onClose={closeDialog} addRouter={handleAddRouter} />
-      <QueueHostPacketsDialog open={editMac !== ''} onClose={closeDialog} />
+      <QueueHostPacketsDialog open={editMacType === 'host'} onClose={closeDialog} />
+      <ViewPatDialog open={editMacType === 'router'} onClose={closeDialog} />
     </>
   );
 }
