@@ -129,11 +129,14 @@ export default function App() {
     const newIP = findUnusedIP(router);
 
     if (memberType === 'host') {
-      editHost({ ...(member as Host), ipAddress: newIP, gateway: router.intIPAddress });
+      editHost(member.macAddress, { ...(member as Host), ipAddress: newIP, gateway: router.intIPAddress });
     } else {
-      editRouter({ ...(member as Router), extIPAddress: newIP, gateway: router.intIPAddress });
+      editRouter(member.macAddress, { ...(member as Router), extIPAddress: newIP, gateway: router.intIPAddress });
     }
-    editRouter({ ...router, activeLeases: [...router.activeLeases, { ipAddress: newIP, macAddress: memberId }] });
+    editRouter(member.macAddress, {
+      ...router,
+      activeLeases: [...router.activeLeases, { ipAddress: newIP, macAddress: memberId }],
+    });
   }
 
   const onConnect = useCallback(

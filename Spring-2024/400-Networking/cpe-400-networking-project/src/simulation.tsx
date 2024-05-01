@@ -29,12 +29,14 @@ function getDestIPMacOnNet(router: Router, destIp: string): string | undefined {
   return router.activeLeases.find((lease) => lease.ipAddress === destIp)?.macAddress;
 }
 
-function dropPacketFromQueueWhenDone(h: Host, completedPacket: Datagram, editHost: (updatedHost: Host) => void) {
-  editHost({ ...h, queuedPackets: h.queuedPackets.filter((p) => p !== completedPacket) });
-}
-
-function receivePacket(h: Host, editHost: (updatedHost: Host) => void, p: Datagram) {
-  editHost({ ...h, recievedPackets: [...h.recievedPackets, p] });
+function dropPacketFromQueueWhenDone(
+  h: Host,
+  completedPacketID: string,
+  editHost: (id: string, updater: Host | ((prev: Host) => Host)) => void,
+) {
+  editHost(h.macAddress, (prev) => {
+    return { ...prev, queuedPackets: prev.queuedPackets.filter((p) => p.id !== completedPacketID) };
+  });
 }
 
 function getHostRouter(hostMac: string, hostGateway: string, routers: Router[]) {
@@ -60,24 +62,38 @@ function getUnusedPATPort(PATTable: PATEntry[]) {
   }
   throw new SimError('All ports used in PAT table');
 }
-
-function addPATEntryAndChangeSrcIP(
+async function addPATEntryAndChangeSrcIP(
   packet: Datagram,
-  router: Router,
-  editRouter: (updatedRouter: Router) => void,
-): Datagram {
-  const unusedPort = getUnusedPATPort(router.PATTable);
-  const newPatEntry = {
-    intIP: `${packet.srcIP}:${packet.segment.srcPort}`,
-    extIP: `${router.extIPAddress}:${unusedPort}`,
-  };
-  editRouter({ ...router, PATTable: [...router.PATTable, newPatEntry] });
+  routeMAC: string,
+  context: NetworkContextProps,
+): Promise<Datagram> {
+  let hackStruct: { packetPort: number; routerExtIP: string } = { packetPort: -1, routerExtIP: '' };
+
+  context.editRouter(routeMAC, (prev) => {
+    const unusedPort = getUnusedPATPort(prev.PATTable);
+    const newPatEntry = {
+      intIP: `${packet.srcIP}:${packet.segment.srcPort}`,
+      extIP: `${prev.extIPAddress}:${unusedPort}`,
+    };
+    hackStruct = { packetPort: unusedPort, routerExtIP: prev.extIPAddress };
+    return { ...prev, PATTable: [...prev.PATTable, newPatEntry] };
+  });
+  let counter = 0;
+  while (hackStruct.routerExtIP === '') {
+    counter++;
+    if (counter >= 100) {
+      throw new Error('Failed to wait for hackstruct to be complete');
+    }
+    await sleep(50);
+  }
+
   return {
+    id: packet.id,
     destIP: packet.destIP,
-    srcIP: router.extIPAddress,
+    srcIP: hackStruct.routerExtIP,
     segment: {
       destPort: packet.segment.destPort,
-      srcPort: unusedPort,
+      srcPort: hackStruct.packetPort,
       data: packet.segment.data,
     },
   };
@@ -126,7 +142,10 @@ async function simulatePacket(
 
       await travelWire(setSimState, setSimMsg, setEdgeActive, hostRouter.macAddress, destMac);
       setEdgeActive(false);
-      receivePacket(destHost, context.editHost, currentPacket);
+      context.editHost(destHost.macAddress, (h) => {
+        return { ...h, recievedPackets: [...h.recievedPackets, currentPacket] };
+      });
+
       return;
     }
     // Case 2: Destination is not in network
@@ -136,7 +155,7 @@ async function simulatePacket(
       if (hostRouter.gateway !== '') {
         setEdgeActive(false);
 
-        currentPacket = addPATEntryAndChangeSrcIP(currentPacket, hostRouter, context.editRouter);
+        currentPacket = await addPATEntryAndChangeSrcIP(currentPacket, hostRouter.macAddress, context);
         setSimState(SimState.TranslatingAddress);
         setSimMsg(
           `Adding PAT Table Entry to router (${hostRouter.macAddress}). Packet now has source IP ${currentPacket.srcIP}:${currentPacket.segment.srcPort}`,
@@ -168,7 +187,7 @@ export default async function runSimulation(
         await sleep(speed);
 
         await simulatePacket(packet, host, context, setEdgeActive, setSimState, setSimMsg);
-        dropPacketFromQueueWhenDone(host, packet, context.editHost);
+        dropPacketFromQueueWhenDone(host, packet.id, context.editHost);
 
         setSimState(SimState.FinishedPacket);
         setSimMsg('Finished sending packet');

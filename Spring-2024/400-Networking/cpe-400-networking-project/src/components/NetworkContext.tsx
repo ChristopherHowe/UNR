@@ -1,17 +1,18 @@
 import { createContext, useState, useCallback, useEffect } from 'react';
 import { Router, Host, Simulation } from '@/models/network';
 import { Edge, Node } from 'reactflow';
+import { isFunction } from 'util';
 
 export interface NetworkContextProps {
   hosts: Host[];
   routers: Router[];
   getHost: (mac: string) => Host | undefined;
   addHost: (host: Host) => void;
-  editHost: (updatedHost: Host) => void;
+  editHost: (id: string, updater: Host | ((prev: Host) => Host)) => void;
   getRouter: (mac: string) => Router | undefined;
   getGatewayRouter: (mac: string, gateway: string) => Router | undefined;
   addRouter: (router: Router) => void;
-  editRouter: (updatedRouter: Router) => void;
+  editRouter: (id: string, updater: Router | ((prev: Router) => Router)) => void;
   getDeviceType: (mac: string) => 'router' | 'host' | undefined;
   saveSimulation: (nodes: Node[], edges: Edge[]) => void;
   editMac: string;
@@ -26,11 +27,11 @@ export const NetworkContext = createContext<NetworkContextProps>({
   routers: [],
   getHost: (mac: string) => undefined,
   addHost: (host: Host) => {},
-  editHost: (updatedHost: Host) => {},
+  editHost: (id: string, updater: Host | ((prev: Host) => Host)) => {},
   getRouter: (mac: string) => undefined,
   getGatewayRouter: (mac: string, gateway: string) => undefined,
   addRouter: (router: Router) => {},
-  editRouter: (updatedRouter: Router) => {},
+  editRouter: (id: string, updater: Router | ((prev: Router) => Router)) => {},
   getDeviceType: (mac: string) => undefined,
   saveSimulation: (nodes: Node[], edges: Edge[]) => '',
   editMac: '',
@@ -63,11 +64,13 @@ export function NetworkContextProvider({ children }: { children: any }) {
     setHosts((prev) => [...prev, host]);
   }
 
-  function editHost(updatedHost: Host) {
-    if (!getHost(updatedHost.macAddress)) {
-      throw new Error(`Host with mac address ${updatedHost.macAddress} does not exist`);
+  function editHost(id: string, updater: Host | ((prev: Host) => Host)): void {
+    if (!getHost(id)) {
+      throw new Error(`Host with mac address ${id} does not exist`);
     }
-    setHosts((prev) => prev.map((host) => (host.macAddress !== updatedHost.macAddress ? host : updatedHost)));
+    setHosts((prev) =>
+      prev.map((host) => (host.macAddress !== id ? host : typeof updater === 'function' ? updater(host) : updater)),
+    );
   }
 
   const getRouter = useCallback(
@@ -90,12 +93,14 @@ export function NetworkContextProvider({ children }: { children: any }) {
     setRouters((prev) => [...prev, router]);
   }
 
-  function editRouter(updatedRouter: Router) {
-    if (!getRouter(updatedRouter.macAddress)) {
-      throw new Error(`Router with mac address ${updatedRouter.macAddress} does not exist`);
+  function editRouter(id: string, updater: Router | ((prev: Router) => Router)) {
+    if (!getRouter(id)) {
+      throw new Error(`Router with mac address ${id} does not exist`);
     }
     setRouters((prev) =>
-      prev.map((router) => (router.macAddress !== updatedRouter.macAddress ? router : updatedRouter)),
+      prev.map((router) =>
+        router.macAddress !== id ? router : typeof updater === 'function' ? updater(router) : updater,
+      ),
     );
   }
 

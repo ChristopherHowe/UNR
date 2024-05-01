@@ -126,7 +126,7 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
     if (!host) {
       throw new Error(`Failed to get host for mac ${host}`);
     }
-    editHost({ ...host, queuedPackets: packets });
+    editHost(host.macAddress, { ...host, queuedPackets: packets });
     onClose();
   }
 
