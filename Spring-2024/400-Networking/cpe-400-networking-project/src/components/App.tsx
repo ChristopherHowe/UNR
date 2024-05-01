@@ -169,7 +169,14 @@ export default function App() {
             }
             saveSimulation={() => saveSimulation(nodes, edges)}
           />
-          {simState !== SimState.Off && <CurrentEvent heading={simState} message={simMsg} />}
+          {simState !== SimState.Off && (
+            <CurrentEvent
+              heading={simState}
+              message={simMsg}
+              dismissable={simState === SimState.Complete}
+              onDismiss={() => setSimState(SimState.Off)}
+            />
+          )}
         </div>
       </Layout>
       <AddHostDialog open={openDialog === 'AddHost'} onClose={closeDialog} addHost={handleAddHost} />
