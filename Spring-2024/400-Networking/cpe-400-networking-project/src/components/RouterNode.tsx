@@ -1,5 +1,5 @@
 import { Handle, NodeProps, Position } from 'reactflow';
-import { Router } from '@/models';
+import { Router } from '@/models/network';
 import { useContext, useState, useEffect } from 'react';
 import { NetworkContext } from './NetworkContext';
 

@@ -1,5 +1,5 @@
 import { Handle, NodeProps, Position } from 'reactflow';
-import { Host } from '@/models';
+import { Host } from '@/models/network';
 import { useContext, useState, useEffect } from 'react';
 import { NetworkContext } from './NetworkContext';
 
@@ -25,20 +25,8 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
 
   return (
     <>
-      <Handle
-        type="source"
-        id={'top'}
-        position={Position.Top}
-        style={{ background: '#555' }}
-        isConnectable
-      />
-      <Handle
-        type="source"
-        id={'bottom'}
-        position={Position.Bottom}
-        style={{ background: '#555' }}
-        isConnectable
-      />
+      <Handle type="source" id={'top'} position={Position.Top} style={{ background: '#555' }} isConnectable />
+      <Handle type="source" id={'bottom'} position={Position.Bottom} style={{ background: '#555' }} isConnectable />
       <div className="border-2 bg-blue-500 border-black p-1 w-40 h-20 flex flex-col items-center justify-center rounded-md">
         <div className="text-sm text-white">{host.name}</div>
         <div className="text-xs text-gray-300">{host.macAddress}</div>

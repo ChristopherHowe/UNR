@@ -5,14 +5,20 @@ export interface Host {
   macAddress: string;
   gateway: string;
   ipAddress?: string;
-  queuedPackets: Packet[];
-  recievedPackets: Packet[];
+  queuedPackets: Datagram[];
+  recievedPackets: Datagram[];
 }
 
-export interface Packet {
+export interface Datagram {
   srcIP: string;
   destIP: string;
-  data: string;
+  segment: Segment;
+}
+
+export interface Segment {
+  srcPort: number;
+  destPort: number;
+  data: any;
 }
 
 export interface Router {
@@ -23,7 +29,7 @@ export interface Router {
   gateway: string;
   subnet: string;
   activeLeases: Lease[];
-  queuedPackets: Packet[];
+  queuedPackets: Datagram[];
 }
 
 export interface Lease {

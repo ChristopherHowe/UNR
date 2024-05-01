@@ -1,7 +1,7 @@
 import SmoothDialog from './Dialog';
 import { useState } from 'react';
 import Textbox from './Textbox';
-import { Router } from '@/models';
+import { Router } from '@/models/network';
 import { generateUniqueMACAddress } from '@/utils';
 import * as ip from 'ip';
 import { isCIDRFormat } from '@/utils/network';

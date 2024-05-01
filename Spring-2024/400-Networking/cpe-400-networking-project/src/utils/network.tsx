@@ -1,5 +1,5 @@
 import * as ip from 'ip';
-import { Router } from '@/models';
+import { Datagram, Router } from '@/models/network';
 import { Edge } from 'reactflow';
 
 /**
@@ -41,39 +41,6 @@ export function isCIDRFormat(cidr: string): boolean {
 
   return true;
 }
-
-// dfs(start: number, destination: number): number[] | null {
-//   const visited: Set<number> = new Set();
-//   const path: number[] = [];
-
-//   const dfsRecursive = (vertex: number): boolean => {
-//       if (vertex === destination) {
-//           path.push(vertex);
-//           return true;
-//       }
-
-//       visited.add(vertex);
-//       path.push(vertex);
-
-//       const neighbors = this.adjacencyList.get(vertex);
-
-//       if (neighbors) {
-//           for (const neighbor of neighbors) {
-//               if (!visited.has(neighbor)) {
-//                   if (dfsRecursive(neighbor)) {
-//                       return true;
-//                   }
-//               }
-//           }
-//       }
-
-//       path.pop();
-//       return false;
-//   };
-
-//   dfsRecursive(start);
-//   return path.length > 0 ? path : null;
-// }
 
 function getAdjList(nodeMac: string, edges: Edge[]) {
   const adjList: string[] = [];
@@ -119,4 +86,16 @@ export function getPath(destMac: string, srcMac: string, edges: Edge[]) {
   } else {
     return null;
   }
+}
+
+export function wrapHTTPData(data: any, destIP: string, srcIP: string, srcPort: number): Datagram {
+  return {
+    destIP: destIP,
+    srcIP: srcIP,
+    segment: {
+      destPort: 80,
+      srcPort: srcPort,
+      data: data,
+    },
+  };
 }

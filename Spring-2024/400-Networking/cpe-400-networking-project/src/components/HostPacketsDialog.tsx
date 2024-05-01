@@ -1,28 +1,28 @@
 import SmoothDialog from './Dialog';
 import { useContext, useState, useEffect } from 'react';
 import Textbox from './Textbox';
-import { Packet } from '@/models';
+import { Datagram } from '@/models/network';
 import Button from './Button';
 import { NetworkContext } from './NetworkContext';
 import * as ip from 'ip';
+import { wrapHTTPData } from '@/utils/network';
+import { DatagramToString, getRandomInRange } from '@/utils';
 
 function PacketsTable({
   packets,
   setPackets,
   queuedNRecieved,
 }: {
-  packets: Packet[];
-  setPackets?: React.Dispatch<React.SetStateAction<Packet[]>>;
+  packets: Datagram[];
+  setPackets?: React.Dispatch<React.SetStateAction<Datagram[]>>;
   canEdit: boolean;
   queuedNRecieved?: boolean;
 }) {
-  function deletePacket(removing: Packet) {
+  function deletePacket(removing: Datagram) {
     if (!setPackets) {
       throw new Error('Tried to delete a packet when set packets was not passed');
     }
-    setPackets((prev) =>
-      prev.filter((packet) => !(packet.data === removing.data && packet.destIP === removing.destIP)),
-    );
+    setPackets((prev) => prev.filter((packet) => packet !== removing));
   }
   return (
     <div className="mt-8 max-w-[35em] truncate">
@@ -50,16 +50,11 @@ function PacketsTable({
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {packets.map((packet) => (
-                    <tr key={packet.data + packet.destIP}>
+                    <tr key={packet.segment.data + packet.destIP}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         {queuedNRecieved ? packet.destIP : packet.srcIP}
                       </td>
-                      <td
-                        className="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
-                        style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                      >
-                        {packet.data}
-                      </td>
+                      <td className="px-3 py-4 text-sm text-gray-500 w-5">{DatagramToString(packet)}</td>
                       {queuedNRecieved && (
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <button
@@ -91,7 +86,7 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
   const { open, onClose } = props;
   const [newData, setNewData] = useState<string>('');
   const [newDestIP, setNewDestIP] = useState<string>('');
-  const [packets, setPackets] = useState<Packet[]>([]);
+  const [packets, setPackets] = useState<Datagram[]>([]);
   const { editHost, getHost, editMac } = useContext(NetworkContext);
 
   const host = getHost(editMac);
@@ -110,7 +105,8 @@ export default function QueueHostPacketsDialog(props: QueueHostPacketsDialogProp
 
   function addPacket() {
     if (host) {
-      setPackets((prev) => [...prev, { destIP: newDestIP, srcIP: host.ipAddress || '', data: newData }]);
+      const newPacket = wrapHTTPData(newData, newDestIP, host.ipAddress || '', getRandomInRange(3000, 6000));
+      setPackets((prev) => [...prev, newPacket]);
     }
   }
 

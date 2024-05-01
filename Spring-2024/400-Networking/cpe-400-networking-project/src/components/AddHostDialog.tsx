@@ -1,7 +1,7 @@
 import SmoothDialog from './Dialog';
 import { useState } from 'react';
 import Textbox from './Textbox';
-import { Host } from '@/models';
+import { Host } from '@/models/network';
 import { generateUniqueMACAddress } from '@/utils';
 
 interface AddHostDialogProps {

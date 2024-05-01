@@ -1,4 +1,4 @@
-import { Router, Host, Packet } from './models';
+import { Router, Host, Datagram } from './models/network';
 import sleep from './utils';
 
 const speed = 2000;
@@ -24,11 +24,11 @@ function getDestIPMacOnNet(router: Router, destIp: string): string | undefined {
   return router.activeLeases.find((lease) => lease.ipAddress === destIp)?.macAddress;
 }
 
-function dropPacketFromQueueWhenDone(h: Host, completedPacket: Packet, editHost: (updatedHost: Host) => void) {
+function dropPacketFromQueueWhenDone(h: Host, completedPacket: Datagram, editHost: (updatedHost: Host) => void) {
   editHost({ ...h, queuedPackets: h.queuedPackets.filter((p) => p !== completedPacket) });
 }
 
-function receivePacket(h: Host, editHost: (updatedHost: Host) => void, p: Packet) {
+function receivePacket(h: Host, editHost: (updatedHost: Host) => void, p: Datagram) {
   editHost({ ...h, recievedPackets: [...h.recievedPackets, p] });
 }
 
@@ -42,7 +42,7 @@ function getHostRouter(hostMac: string, hostGateway: string, routers: Router[]) 
 }
 
 async function simulatePacket(
-  packet: Packet,
+  packet: Datagram,
   routers: Router[],
   srcHost: Host,
   editHost: (updatedHost: Host) => void,

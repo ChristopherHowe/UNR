@@ -1,5 +1,5 @@
 import { createContext, useState, useCallback, useEffect } from 'react';
-import { Router, Host, Simulation } from '@/models';
+import { Router, Host, Simulation } from '@/models/network';
 import { Edge, Node } from 'reactflow';
 
 interface NetworkContextProps {

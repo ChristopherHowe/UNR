@@ -4,7 +4,7 @@ import React, { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import MediumSidebarTransition from './SidebarTransition';
 import Seperator from './seperator';
-import { Simulation } from '@/models';
+import { Simulation } from '@/models/network';
 import HelpDialog from './HelpDialog';
 
 interface LayoutProps {
@@ -14,7 +14,6 @@ interface LayoutProps {
 export default function Layout(props: LayoutProps) {
   const { children, loadSimulation } = props;
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
 
   return (
     <div>

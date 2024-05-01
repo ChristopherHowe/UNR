@@ -4,7 +4,7 @@ import { Controls } from '@/components/Controls';
 import { useState, useEffect, useCallback, useContext } from 'react';
 import { addEdge, useNodesState, useEdgesState, Connection, Edge, updateEdge } from 'reactflow';
 import AddHostDialog from '@/components/AddHostDialog';
-import { Host, Router, Simulation, Packet } from '@/models';
+import { Host, Router, Simulation } from '@/models/network';
 import AddRouterDialog from './AddRouterDialog';
 import { findUnusedIP, getPath } from '@/utils/network';
 import { NetworkContext } from './NetworkContext';

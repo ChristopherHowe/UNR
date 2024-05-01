@@ -1,3 +1,5 @@
+import { Datagram } from '@/models/network';
+
 const usedMACAddresses: Set<string> = new Set();
 
 function randomMacAddress(): string {
@@ -17,4 +19,12 @@ export async function generateUniqueMACAddress(): Promise<string> {
 
 export default function sleep(ms: number): Promise<void> {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+export function getRandomInRange(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function DatagramToString(d: Datagram): string {
+  return `{{data: ${d.segment.data}}, srcPort: ${d.segment.srcPort}, destPort:${d.segment.destPort}}, srcIP: ${d.srcIP}, destIP: ${d.destIP}}`;
 }
