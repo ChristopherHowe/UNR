@@ -13,6 +13,13 @@ import CurrentEvent from './CurrentEvent';
 import runSimulation, { SimState } from '@/simulation';
 import ViewPatDialog from './Dialogs/ViewPATDialog';
 
+class UserError extends Error {
+  constructor(message: string) {
+    super(message);
+    Object.setPrototypeOf(this, UserError.prototype);
+  }
+}
+
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -94,6 +101,8 @@ export default function App() {
     }
     let member: Router | Host | undefined = getHost(memberId);
     let memberType: 'router' | 'host' = 'host';
+
+    // Get the member
     if (!member) {
       memberType = 'router';
       member = getRouter(memberId);
@@ -101,6 +110,17 @@ export default function App() {
         throw new Error(`given member id ${memberId} doesn't correspond to a host or a router`);
       }
     }
+    // Make sure the member is not already connected to a network
+    if (memberType === 'host') {
+      if ((member as Host).ipAddress) {
+        throw new UserError('Connecting hosts to more than one network is not supported');
+      }
+    } else {
+      if ((member as Router).extIPAddress) {
+        throw new UserError('Connecting routers to more than one other network is not supported');
+      }
+    }
+
     const router = getRouter(routerId);
     if (!router) {
       throw new Error(`given router id ${routerId} is invalid`);
@@ -118,7 +138,17 @@ export default function App() {
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      giveHostIP(connection);
+      try {
+        giveHostIP(connection);
+      } catch (e) {
+        setSimState(SimState.Error);
+        if (e instanceof UserError) {
+          setSimMsg(e.message);
+        } else {
+          setSimMsg(`Something went wrong while trying to connect ${connection.source} ${connection.target}`);
+        }
+        return;
+      }
       setEdges((eds) => addEdge({ ...connection }, eds));
     },
     [setEdges, nodes, giveHostIP],

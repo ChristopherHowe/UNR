@@ -1,6 +1,6 @@
-import SmoothDialog from './Dialogs/Dialog';
+import SmoothDialog from './Dialog';
 import { useState } from 'react';
-import Textbox from './Textbox';
+import Textbox from '../Textbox';
 import { Router } from '@/models/network';
 import { generateUniqueMACAddress } from '@/utils';
 import * as ip from 'ip';
@@ -16,7 +16,7 @@ export default function HelpDialog(props: AddHostDialogProps) {
 
   return (
     <SmoothDialog title="Help" {...{ open, onClose }} onSubmit={onClose} validationMsg="" submitLabel="Done">
-      <div className="text-md">
+      <div className="text-md w-[40rem]">
         <h1 className="text-xl mb-2 mt-3">Connecting components</h1>
         <div className="flex flex-row gap-2">
           <div className="bg-black rounded-full h-5 w-5 flex justify-center items-center">
@@ -31,9 +31,16 @@ export default function HelpDialog(props: AddHostDialogProps) {
           <p>Signifies external connection</p>
         </div>
         <h1 className="text-xl mb-2 mt-3">Routing</h1>
-        <p>All routers implement something similar to dynamic PAT</p>
-        <p>Hosts can send to other hosts in their same network or in a public network that they are attached to.</p>
-        <p>This means that hosts can't directly send requests to hosts behind private networks.</p>
+        <p>
+          All routers implement something similar to dynamic PAT. Hosts can send to other hosts in their same network or
+          in a public network that they are attached to. This means that hosts can't directly send requests to hosts
+          behind private networks.
+        </p>
+        <h1 className="text-xl mb-2 mt-3">IP Leasing</h1>
+        <p>
+          No explicit DHCP Protocol is implemented to give IP addresses to devices in a network. Instead, each device is
+          given the next available IP in the router it connected to. Currently, hosts can only connect to one router.
+        </p>
       </div>
     </SmoothDialog>
   );

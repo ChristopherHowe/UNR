@@ -5,7 +5,6 @@ import Sidebar from './Sidebar';
 import MediumSidebarTransition from './SidebarTransition';
 import Seperator from './seperator';
 import { Simulation } from '@/models/network';
-import HelpDialog from './HelpDialog';
 
 interface LayoutProps {
   children: ReactNode;

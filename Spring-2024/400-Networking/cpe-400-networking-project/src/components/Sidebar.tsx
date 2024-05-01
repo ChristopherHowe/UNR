@@ -2,7 +2,7 @@ import { Cog6ToothIcon, PlusIcon, ListBulletIcon, WifiIcon, QuestionMarkCircleIc
 import React, { useState } from 'react';
 import { Simulation } from '@/models/network';
 import data from '../../examples/datagrams.json';
-import HelpDialog from './HelpDialog';
+import HelpDialog from './Dialogs/HelpDialog';
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
