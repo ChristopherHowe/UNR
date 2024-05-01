@@ -15,6 +15,8 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
     extIPAddress: '',
     subnet: '',
     activeLeases: [],
+    gateway: '',
+    queuedPackets: [],
   });
 
   useEffect(() => {
@@ -26,20 +28,12 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
 
   return (
     <div className="host-node border-2 bg-gray-200 border-black p-1 w-28 h-28 flex flex-col items-center justify-center rounded-xl">
-      <Handle
-        type="target"
-        id={'top-internal'}
-        position={Position.Top}
-        style={{ background: '#f00' }}
-        onConnect={(params) => console.log('handle target onConnect', params)}
-        isConnectable
-      />
+      <Handle type="target" id={'top-internal'} position={Position.Top} style={{ background: '#f00' }} isConnectable />
       <Handle
         type="source"
         id={'left-external'}
         position={Position.Left}
         style={{ background: '#555' }}
-        onConnect={(params) => console.log('handle source onConnect', params)}
         isConnectable
       />
       <Handle
@@ -47,7 +41,6 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
         id={'bottom-internal'}
         position={Position.Bottom}
         style={{ background: '#f00' }}
-        onConnect={(params) => console.log('handle target onConnect', params)}
         isConnectable
       />
       <Handle
@@ -55,7 +48,6 @@ export default function RouterNode({ data }: NodeProps<NodeData>) {
         id={'right-external'}
         position={Position.Right}
         style={{ background: '#555' }}
-        onConnect={(params) => console.log('handle source onConnect', params)}
         isConnectable
       />
       <div className="text-sm">{router.name}</div>

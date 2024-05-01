@@ -1,7 +1,7 @@
 import { Cog6ToothIcon, PlusIcon, ListBulletIcon, WifiIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import React, { useState } from 'react';
 import { Simulation } from '@/models';
-import data from '../../examples/3-router-4-host.json';
+import data from '../../examples/layered_routing_solution.json';
 import HelpDialog from './HelpDialog';
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
@@ -12,7 +12,7 @@ export default function Sidebar({ loadSimulation }: { loadSimulation: (sim: Simu
   const [helpDialogOpen, setHelpDialogOpen] = useState<boolean>(false);
 
   const navigation = [
-    { name: 'Create a New Simulation', onClick: () => {}, icon: PlusIcon, current: true },
+    { name: 'Create a New Environment', onClick: () => {}, icon: PlusIcon, current: true },
     {
       name: 'Example simulation',
       onClick: () => {

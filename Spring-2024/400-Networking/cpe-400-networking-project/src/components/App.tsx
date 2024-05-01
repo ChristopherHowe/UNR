@@ -11,13 +11,7 @@ import { NetworkContext } from './NetworkContext';
 import QueueHostPacketsDialog from './HostPacketsDialog';
 import sleep from '@/utils';
 import CurrentEvent from './CurrentEvent';
-
-enum SimState {
-  Off,
-  Running,
-  SendingPacket,
-  TranslatingAddress,
-}
+import runSimulation, { SimError, SimState } from '@/simulation';
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -25,6 +19,7 @@ export default function App() {
 
   const [openDialog, setOpenDialog] = useState<'' | 'AddHost' | 'AddRouter'>('');
   const [simState, setSimState] = useState<SimState>(SimState.Off);
+  const [simMsg, setSimMsg] = useState<string>('');
 
   const {
     hosts,
@@ -99,17 +94,13 @@ export default function App() {
     if (!router) {
       throw new Error(`given router id ${routerId} is invalid`);
     }
-    console.log('Got member and router');
-    console.log(member);
-    console.log(router);
 
     const newIP = findUnusedIP(router);
-    console.log(`got new IP ${newIP}`);
 
     if (memberType === 'host') {
-      editHost({ ...(member as Host), ipAddress: newIP });
+      editHost({ ...(member as Host), ipAddress: newIP, gateway: router.intIPAddress });
     } else {
-      editRouter({ ...(member as Router), extIPAddress: newIP });
+      editRouter({ ...(member as Router), extIPAddress: newIP, gateway: router.intIPAddress });
     }
     editRouter({ ...router, activeLeases: [...router.activeLeases, { ipAddress: newIP, macAddress: memberId }] });
   }
@@ -133,52 +124,36 @@ export default function App() {
     }
   }
 
-  function makeActiveEdge(e: Edge): Edge {
-    return { ...e, animated: true, style: { stroke: 'red' } };
-  }
-  function makeOfflineEdge(e: Edge): Edge {
-    return { ...e, animated: false, style: { stroke: 'black' } };
-  }
-
-  async function translateNetwork() {}
-
-  async function runSimulation() {
-    async function showPath(path: string[]) {
-      const stack = path.reverse();
-      let current = stack.pop();
-      while (stack.length >= 1) {
-        let next = stack.pop();
-        const newEdges = edges.map((edge) =>
-          (edge.source === current && edge.target === next) || (edge.source === next && edge.target === current)
+  function setEdgeActive(src: string, dest: string, active: boolean) {
+    function makeActiveEdge(e: Edge): Edge {
+      return { ...e, animated: true, style: { stroke: 'red' } };
+    }
+    function makeOfflineEdge(e: Edge): Edge {
+      return { ...e, animated: false, style: { stroke: 'black' } };
+    }
+    if (
+      !edges.some(
+        (edge) => (edge.source === src && edge.target === dest) || (edge.source === dest && edge.target === src),
+      )
+    ) {
+      throw new Error(`Failed to set edge with src ${src} and dst ${dest} as active`);
+    }
+    if (active) {
+      setEdges((prev) =>
+        prev.map((edge) =>
+          (edge.source === src && edge.target === dest) || (edge.source === dest && edge.target === src)
             ? makeActiveEdge(edge)
             : makeOfflineEdge(edge),
-        );
-        setEdges(newEdges);
-        await sleep(1000);
-        current = next;
-      }
-      setEdges((prev) => prev.map((edge) => makeOfflineEdge(edge)));
-    }
-
-    for (const host of hosts) {
-      for (const packet of host.queuedPackets) {
-        console.log('Simulating packet from ', host.macAddress);
-        console.log(packet);
-        const destHost = hosts.find((host) => host.ipAddress === packet.destIP); // WARNING THIS IS NOT IMPLEMENTING ROUTER PROTOCOL
-        if (!destHost) {
-          throw new Error('Failed to find destination host');
-        }
-        const path = getPath(host.macAddress, destHost.macAddress, edges);
-        if (!path) {
-          throw new Error(`Failed to get path from ${host.macAddress} to ${destHost.macAddress}`);
-        }
-        console.log('Path');
-        console.log(path);
-        await showPath(path);
-        editHost({ ...host, queuedPackets: host.queuedPackets.filter((p) => p != packet) });
-        console.log('Added packet to received packets for ${dest}');
-        editHost({ ...destHost, recievedPackets: [...destHost.recievedPackets, packet] });
-      }
+        ),
+      );
+    } else {
+      setEdges((prev) =>
+        prev.map((edge) =>
+          (edge.source === src && edge.target === dest) || (edge.source === dest && edge.target === src)
+            ? makeOfflineEdge(edge)
+            : edge,
+        ),
+      );
     }
   }
 
@@ -189,10 +164,12 @@ export default function App() {
           <Diagram {...{ nodes, onNodesChange, edges, onEdgesChange, onConnect }} />
           <Controls
             setOpenDialog={setOpenDialog}
-            runSimulation={runSimulation}
+            runSimulation={() =>
+              runSimulation(routers, hosts, editHost, getHost, setEdgeActive, setSimState, setSimMsg)
+            }
             saveSimulation={() => saveSimulation(nodes, edges)}
           />
-          <CurrentEvent heading="Heading" message="Wow this is a really low message" />
+          {simState !== SimState.Off && <CurrentEvent heading={simState} message={simMsg} />}
         </div>
       </Layout>
       <AddHostDialog open={openDialog === 'AddHost'} onClose={closeDialog} addHost={handleAddHost} />

@@ -101,16 +101,6 @@ export function NetworkContextProvider({ children }: { children: any }) {
     document.body.removeChild(link);
   }
 
-  useEffect(() => {
-    console.log('updated routers');
-    console.log(routers);
-  }, [routers]);
-
-  useEffect(() => {
-    console.log('updated hosts');
-    console.log(hosts);
-  }, [hosts]);
-
   return (
     <NetworkContext.Provider
       value={{

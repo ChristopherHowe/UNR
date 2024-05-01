@@ -19,7 +19,7 @@ export function findUnusedIP(router: Router) {
       throw new Error('Generated an ip not contained in the subnet');
     }
     if (!router.activeLeases.some((lease) => lease.ipAddress === currentIP)) {
-      if (!(router.ipAddress === currentIP)) {
+      if (!(router.intIPAddress === currentIP)) {
         return currentIP;
       }
     }

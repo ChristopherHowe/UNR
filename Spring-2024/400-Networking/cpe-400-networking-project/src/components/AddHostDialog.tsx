@@ -31,6 +31,7 @@ export default function AddHostDialog(props: AddHostDialogProps) {
       macAddress: macAddr !== '' ? macAddr : newMac,
       queuedPackets: [],
       recievedPackets: [],
+      gateway: '',
     });
     onClose();
   }

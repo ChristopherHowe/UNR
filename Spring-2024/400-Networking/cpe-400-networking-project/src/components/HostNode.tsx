@@ -8,9 +8,14 @@ interface NodeData {
 }
 export default function HostNode({ data }: NodeProps<NodeData>) {
   const { getHost, setEditMac } = useContext(NetworkContext);
-  const [host, setHost] = useState<Host>({ macAddress: '', name: '', queuedPackets: [], recievedPackets: [] });
-  console.log('host');
-  console.log(host);
+  const [host, setHost] = useState<Host>({
+    macAddress: '',
+    name: '',
+    queuedPackets: [],
+    recievedPackets: [],
+    gateway: '',
+  });
+
   useEffect(() => {
     const newHost = getHost(data.mac);
     if (newHost) {
@@ -25,7 +30,6 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
         id={'top'}
         position={Position.Top}
         style={{ background: '#555' }}
-        onConnect={(params) => console.log('handle target onConnect', params)}
         isConnectable
       />
       <Handle
@@ -33,7 +37,6 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
         id={'bottom'}
         position={Position.Bottom}
         style={{ background: '#555' }}
-        onConnect={(params) => console.log('handle source onConnect', params)}
         isConnectable
       />
       <div className="border-2 bg-blue-500 border-black p-1 w-40 h-20 flex flex-col items-center justify-center rounded-md">

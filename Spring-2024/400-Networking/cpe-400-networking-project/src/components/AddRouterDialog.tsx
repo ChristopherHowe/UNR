@@ -41,6 +41,7 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
       macAddress: macAddr !== '' ? macAddr : newMac,
       intIPAddress: intIPAddress,
       extIPAddress: '',
+      gateway: '',
       subnet: subnet,
       activeLeases: [],
       queuedPackets: [],
@@ -50,6 +51,7 @@ export default function AddRouterDialog(props: AddHostDialogProps) {
 
   return (
     <SmoothDialog title="Add a New Router" {...{ open, onClose, onSubmit, validationMsg }}>
+      <p>Adding a Dynamic PAT Router...</p>
       <Textbox label="Host Name" value={hostName} setValue={setHostName} />
       <Textbox label="Internal Ip Address" value={intIPAddress} setValue={setIntIPAddress} />
       <Textbox label="Subnet (CIDR Form)" value={subnet} setValue={setSubnet} />

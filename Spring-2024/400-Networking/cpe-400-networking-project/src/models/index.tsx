@@ -3,6 +3,7 @@ import { Edge, Node } from 'reactflow';
 export interface Host {
   name: string;
   macAddress: string;
+  gateway: string;
   ipAddress?: string;
   queuedPackets: Packet[];
   recievedPackets: Packet[];
@@ -19,6 +20,7 @@ export interface Router {
   macAddress: string;
   intIPAddress: string;
   extIPAddress: string;
+  gateway: string;
   subnet: string;
   activeLeases: Lease[];
   queuedPackets: Packet[];

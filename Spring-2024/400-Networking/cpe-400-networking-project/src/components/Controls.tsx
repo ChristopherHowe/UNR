@@ -29,7 +29,7 @@ export function Controls(props: ControlsProps) {
       <ControlButton text="Add Host" onClick={() => setOpenDialog('AddHost')} />
       <ControlButton text="Add Router" onClick={() => setOpenDialog('AddRouter')} />
       <ControlButton text="Run Simulation" onClick={runSimulation} />
-      <ControlButton text="Save Simulation" onClick={saveSimulation} />
+      <ControlButton text="Save Environment" onClick={saveSimulation} />
     </div>
   );
 }
