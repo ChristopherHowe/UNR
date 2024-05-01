@@ -2,13 +2,14 @@ import Diagram from '@/components/Diagram';
 import Layout from '@/components/Layout';
 import { Controls } from '@/components/Controls';
 import { useState, useEffect, useCallback, useContext } from 'react';
-import { addEdge, useNodesState, useEdgesState, Connection } from 'reactflow';
+import { addEdge, useNodesState, useEdgesState, Connection, Edge, updateEdge } from 'reactflow';
 import AddHostDialog from '@/components/AddHostDialog';
-import { Host, Router, Simulation } from '@/models';
+import { Host, Router, Simulation, Packet } from '@/models';
 import AddRouterDialog from './AddRouterDialog';
-import { findUnusedIP } from '@/utils/network';
+import { findUnusedIP, getPath } from '@/utils/network';
 import { NetworkContext } from './NetworkContext';
 import QueueHostPacketsDialog from './QueueHostPacketsDialog';
+import sleep from '@/utils';
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -17,6 +18,8 @@ export default function App() {
   const [openDialog, setOpenDialog] = useState<'' | 'AddHost' | 'AddRouter'>('');
 
   const {
+    hosts,
+    routers,
     addHost,
     addRouter,
     getDeviceType,
@@ -131,6 +134,58 @@ export default function App() {
     }
   }
 
+  function makeActiveEdge(e: Edge): Edge {
+    return { ...e, animated: true, style: { stroke: 'red' } };
+  }
+  function makeOfflineEdge(e: Edge): Edge {
+    return { ...e, animated: false, style: { stroke: 'black' } };
+  }
+
+  async function runSimulation() {
+    async function showPath(path: string[]) {
+      const stack = path.reverse();
+      let current = stack.pop();
+      while (stack.length >= 1) {
+        let next = stack.pop();
+        const newEdges = edges.map((edge) =>
+          (edge.source === current && edge.target === next) || (edge.source === next && edge.target === current)
+            ? makeActiveEdge(edge)
+            : makeOfflineEdge(edge),
+        );
+        setEdges(newEdges);
+        await sleep(1000);
+        current = next;
+      }
+      setEdges((prev) => prev.map((edge) => makeOfflineEdge(edge)));
+    }
+
+    const allPackets: { [key: string]: Packet[] } = {};
+    for (const host of hosts) {
+      allPackets[host.macAddress] = [...host.packets];
+    }
+    console.log('got all packets');
+    console.log(allPackets);
+
+    for (const host of hosts) {
+      for (const packet of host.packets) {
+        console.log('Simulating packet from ', host.macAddress);
+        console.log(packet);
+        const destHost = hosts.find((host) => host.ipAddress === packet.destIP); // WARNING THIS IS NOT IMPLEMENTING ROUTER PROTOCOL
+        if (!destHost) {
+          throw new Error('Failed to find destination host');
+        }
+        const path = getPath(host.macAddress, destHost.macAddress, edges);
+        if (!path) {
+          throw new Error(`Failed to get path from ${host.macAddress} to ${destHost.macAddress}`);
+        }
+        console.log('Path');
+        console.log(path);
+        await showPath(path);
+        editHost({ ...host, packets: host.packets.filter((p) => p != packet) });
+      }
+    }
+  }
+
   return (
     <>
       <Layout loadSimulation={loadSimulation}>
@@ -138,9 +193,7 @@ export default function App() {
           <Diagram {...{ nodes, onNodesChange, edges, onEdgesChange, onConnect }} />
           <Controls
             setOpenDialog={setOpenDialog}
-            runSimulation={() => {
-              console.log('Running Sim');
-            }}
+            runSimulation={runSimulation}
             saveSimulation={() => saveSimulation(nodes, edges)}
           />
         </div>

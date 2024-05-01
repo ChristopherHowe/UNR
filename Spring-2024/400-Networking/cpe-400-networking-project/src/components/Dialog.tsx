@@ -8,6 +8,7 @@ import Button from './Button';
 interface DialogProps {
   title: string;
   open: boolean;
+  submitLabel?: string;
   children: ReactNode;
   validationMsg: string;
   onSubmit: () => void;
@@ -15,8 +16,7 @@ interface DialogProps {
 }
 
 export default function SmoothDialog(props: DialogProps) {
-  const { title, open, onSubmit, validationMsg, onClose, children } = props;
-  const isSubmitEnabled = validationMsg === '';
+  const { title, open, onSubmit, submitLabel, validationMsg, onClose, children } = props;
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -47,7 +47,7 @@ export default function SmoothDialog(props: DialogProps) {
                 <div className="font-semibold text-lg">{title}</div>
                 {children}
                 <div className="mt-5 sm:mt-6 flex justify-end">
-                  <Button label="submit" disabled={validationMsg !== ''} onClick={onSubmit} />
+                  <Button label={submitLabel || 'submit'} disabled={validationMsg !== ''} onClick={onSubmit} />
                 </div>
 
                 <div className="text-red-600 min-h-6">{validationMsg}</div>

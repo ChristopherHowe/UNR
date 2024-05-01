@@ -9,7 +9,8 @@ interface NodeData {
 export default function HostNode({ data }: NodeProps<NodeData>) {
   const { getHost, setEditMac } = useContext(NetworkContext);
   const [host, setHost] = useState<Host>({ macAddress: '', name: '', packets: [] });
-
+  console.log('host');
+  console.log(host);
   useEffect(() => {
     const newHost = getHost(data.mac);
     if (newHost) {
@@ -18,32 +19,42 @@ export default function HostNode({ data }: NodeProps<NodeData>) {
   }, [getHost, data.mac]);
 
   return (
-    <div className="border-2 bg-blue-500 border-black p-1 w-40 h-20 flex flex-col items-center justify-center rounded-md">
-      <>
-        <Handle
-          type="target"
-          id={'top-target'}
-          position={Position.Top}
-          style={{ background: '#555' }}
-          onConnect={(params) => console.log('handle target onConnect', params)}
-          isConnectable
-        />
-        <Handle
-          type="source"
-          id={'left-source'}
-          position={Position.Left}
-          style={{ background: '#f00' }}
-          onConnect={(params) => console.log('handle source onConnect', params)}
-          isConnectable
-        />
-        <div className="rounded-full bg-red-600 h-5 w-5"></div>
+    <>
+      <Handle
+        type="target"
+        id={'top-target'}
+        position={Position.Top}
+        style={{ background: '#555' }}
+        onConnect={(params) => console.log('handle target onConnect', params)}
+        isConnectable
+      />
+      <Handle
+        type="source"
+        id={'left-source'}
+        position={Position.Left}
+        style={{ background: '#f00' }}
+        onConnect={(params) => console.log('handle source onConnect', params)}
+        isConnectable
+      />
+      <div className="border-2 bg-blue-500 border-black p-1 w-40 h-20 flex flex-col items-center justify-center rounded-md">
         <div className="text-sm text-white">{host.name}</div>
         <div className="text-xs text-gray-300">{host.macAddress}</div>
         {host.ipAddress && <div className="text-xs text-gray-300">{host.ipAddress}</div>}
-        <button onClick={() => setEditMac(host.macAddress)} className="text-gray-300 hover:text-gray-50">
-          Edit
-        </button>
-      </>
-    </div>
+        <div className="flex flex-row items-center gap-3">
+          <button onClick={() => setEditMac(host.macAddress)} className="text-gray-300 hover:text-gray-50">
+            Edit
+          </button>
+          {host.packets.length >= 1 ? (
+            <div className="bg-yellow-300 border-yellow-400 border-2 rounded-full text-white px-1 text-xs h-5">
+              Waiting
+            </div>
+          ) : (
+            <div className="bg-green-300 border-green-400 border-2 rounded-full text-green-50 px-1 text-xs h-5">
+              Done
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

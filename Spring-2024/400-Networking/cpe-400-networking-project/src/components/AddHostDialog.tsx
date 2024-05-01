@@ -29,6 +29,7 @@ export default function AddHostDialog(props: AddHostDialogProps) {
     addHost({
       name: hostName,
       macAddress: macAddr !== '' ? macAddr : newMac,
+      packets: [],
     });
     onClose();
   }

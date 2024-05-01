@@ -5,7 +5,6 @@ const config: Config = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-    './node_modules/flowbite/**/*.js',
   ],
   theme: {
     extend: {
@@ -15,6 +14,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('flowbite/plugin'), require('@tailwindcss/forms')],
+  plugins: [require('@tailwindcss/forms')],
 };
 export default config;

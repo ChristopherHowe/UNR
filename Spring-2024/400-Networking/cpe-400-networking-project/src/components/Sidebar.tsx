@@ -1,24 +1,38 @@
-import { Cog6ToothIcon, HomeIcon, UsersIcon, WifiIcon } from '@heroicons/react/24/outline';
-import React from 'react';
+import { Cog6ToothIcon, PlusIcon, ListBulletIcon, WifiIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
 import { Simulation } from '@/models';
-import data from '../../examples/example-1.json';
+import data from '../../examples/example-2.json';
+import HelpDialog from './HelpDialog';
 
 function classNames(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
 export default function Sidebar({ loadSimulation }: { loadSimulation: (sim: Simulation) => void }) {
+  const [helpDialogOpen, setHelpDialogOpen] = useState<boolean>(false);
+
+  function closeHelpDialog() {}
+
   const navigation = [
-    { name: 'Create a New Simulation', onClick: () => {}, icon: HomeIcon, current: true },
+    { name: 'Create a New Simulation', onClick: () => {}, icon: PlusIcon, current: true },
     {
       name: 'Example simulation',
       onClick: () => {
         loadSimulation(data);
       },
-      icon: UsersIcon,
+      icon: ListBulletIcon,
+      current: false,
+    },
+    {
+      name: 'Help',
+      onClick: () => {
+        setHelpDialogOpen(true);
+      },
+      icon: QuestionMarkCircleIcon,
       current: false,
     },
   ];
+
   return (
     <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gray-900 px-6 pb-4">
       <div className="flex h-16 shrink-0 items-center">
@@ -55,6 +69,7 @@ export default function Sidebar({ loadSimulation }: { loadSimulation: (sim: Simu
           </li>
         </ul>
       </nav>
+      <HelpDialog open={helpDialogOpen} onClose={() => setHelpDialogOpen(false)} />
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { Router, Host, Simulation } from '@/models';
 import { Edge, Node } from 'reactflow';
 
 interface NetworkContextProps {
+  hosts: Host[];
+  routers: Router[];
   getHost: (mac: string) => Host | undefined;
   addHost: (host: Host) => void;
   editHost: (updatedHost: Host) => void;
@@ -16,6 +18,8 @@ interface NetworkContextProps {
 }
 
 export const NetworkContext = createContext<NetworkContextProps>({
+  hosts: [],
+  routers: [],
   getHost: (mac: string) => undefined,
   addHost: (host: Host) => {},
   editHost: (updatedHost: Host) => {},
@@ -110,6 +114,8 @@ export function NetworkContextProvider({ children }: { children: any }) {
   return (
     <NetworkContext.Provider
       value={{
+        hosts,
+        routers,
         getHost,
         addHost,
         editHost,

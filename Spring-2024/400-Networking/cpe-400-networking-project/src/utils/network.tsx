@@ -1,5 +1,6 @@
 import * as ip from 'ip';
 import { Router } from '@/models';
+import { Edge } from 'reactflow';
 
 /**
  * Gets the first available ip address not contained in the leases array
@@ -39,4 +40,83 @@ export function isCIDRFormat(cidr: string): boolean {
   }
 
   return true;
+}
+
+// dfs(start: number, destination: number): number[] | null {
+//   const visited: Set<number> = new Set();
+//   const path: number[] = [];
+
+//   const dfsRecursive = (vertex: number): boolean => {
+//       if (vertex === destination) {
+//           path.push(vertex);
+//           return true;
+//       }
+
+//       visited.add(vertex);
+//       path.push(vertex);
+
+//       const neighbors = this.adjacencyList.get(vertex);
+
+//       if (neighbors) {
+//           for (const neighbor of neighbors) {
+//               if (!visited.has(neighbor)) {
+//                   if (dfsRecursive(neighbor)) {
+//                       return true;
+//                   }
+//               }
+//           }
+//       }
+
+//       path.pop();
+//       return false;
+//   };
+
+//   dfsRecursive(start);
+//   return path.length > 0 ? path : null;
+// }
+
+function getAdjList(nodeMac: string, edges: Edge[]) {
+  const adjList: string[] = [];
+  for (const edge of edges) {
+    if (edge.source === nodeMac) {
+      adjList.push(edge.target);
+    } else if (edge.target === nodeMac) {
+      adjList.push(edge.source);
+    }
+  }
+  return adjList;
+}
+
+export function getPath(destMac: string, srcMac: string, edges: Edge[]) {
+  const visitedMacs: Set<string> = new Set();
+  const path: string[] = [];
+
+  const dfs = (start: string): boolean => {
+    if (start === destMac) {
+      path.push(start);
+      return true;
+    }
+    visitedMacs.add(start);
+    path.push(start);
+    const adjList = getAdjList(start, edges);
+    if (adjList) {
+      for (const neighbor of adjList) {
+        if (!visitedMacs.has(neighbor)) {
+          if (dfs(neighbor)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    path.pop();
+    return false;
+  };
+
+  dfs(srcMac);
+  if (path.length > 0) {
+    return path.reverse(); // Reverse the path before returning
+  } else {
+    return null;
+  }
 }
