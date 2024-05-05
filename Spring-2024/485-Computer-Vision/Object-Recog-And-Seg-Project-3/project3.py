@@ -16,6 +16,7 @@ def display_img(image: np.ndarray):
 
 ## Remove Helpers ##
 
+
 def aspect_scale(img: np.ndarray, height):
     ratio = img.shape[0] / img.shape[1]
     return cv2.resize(img, (height, int(height * ratio)))
@@ -35,15 +36,23 @@ def display_img_normalized(image: np.ndarray, name: str):
     k = cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-# This function takes a list of training images in txt format. An example is provided with the test script. This function
-# should return a set of visual vocabulary “words” in the form of vectors. Each of these vectors will be used as a bin
-# in our histogram of features.
+
 def generate_vocabulary(train_data_file: str):
-    pass
+    # Reading file line by line
+    try:
+        with open(train_data_file, "r") as file:
+            for image_name in file:
+                display_img(load_img(image_name))
+    except FileNotFoundError:
+        print(f"The file '{train_data_file}' does not exist.")
+    except IOError:
+        print(f"An error occurred while reading the file '{train_data_file}'.")
+
 
 # This function takes an image and the vocabulary as input and extracts features, generating a BOW count vector.
 def extract_features(image, vocabulary):
     pass
+
 
 # This function takes the training data file and the vocabulary, extracts the features from each training image, and
 # trains a classifier (perceptron, KNN, SVM) on the data. You can choose which classifier you’d like to use. You can use
@@ -51,25 +60,30 @@ def extract_features(image, vocabulary):
 def train_classifier(train_data_file: str, vocab):
     pass
 
+
 # This function takes the trained classifier, a test image and the vocabulary as inputs. It generates the feature vector
 # for the test image using the vocabulary and runs it through the classifier, returning the output classification.
 def classify_image(classifier, test_img, vocabulary):
     pass
+
 
 # This function will take an image and two thresholds and perform hysteresis thresholding, producing a black and
 # white image.
 def threshold_image(image, low_thresh, high_thresh):
     pass
 
+
 # This function will take an image as input. Use one of the techniques from class to perform region growing,
 # returning the output region map.
 def grow_regions(image):
     pass
 
+
 # This function will take an image as input. Use one of the techniques from class to perform region splitting,
 # returning the output region map.
 def split_regions(image):
     pass
+
 
 # This function will take an image as input. Use one of the techniques from class to perform region merging,
 # returning the output region map
@@ -82,11 +96,9 @@ def merge_regions(image):
 def segment_image(image):
     pass
 
+
 # Use Kmeans to perform image segmentation. You’re free to do this however you’d like. Do not assume the number
 # of classes is 2. So you’ll want to implement a method for determining what k should be. Provide details in your
 # README.txt.
 def kmeans_segment(image):
     pass
-
-
-
