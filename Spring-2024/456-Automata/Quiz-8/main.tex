@@ -1,0 +1,68 @@
+\documentclass{assignment-x}
+
+\hmwkClass{CS 456}
+\hmwkTitle{Quiz 8}
+\hmwkDueDate{May 2, 2024}
+\hmwkClassTime{Section 1001}
+\hmwkClassInstructor{Nancy LaTorrette}
+\hmwkAuthorName{Christopher Howe}
+
+\begin{document}
+\maketitle
+\pagebreak
+
+\section{Problem}
+Using the pumping lemma for context-free languages, prove the following language is not context-free.
+$$L=\{n_a(w) = n_b(w) <n_c(w): w \in \{a,b,c\}^*\}$$
+
+\section{Solution, Proof by Contradiction}
+
+\subsection{Assumption (Pumping Lemma for Context-free languages)}
+If $L$ is a context-free language, for all strings $s$ in $L$ with length greater than or equal to $P$, $s$ can be broken down into $uvxyz$ where the length of $vxy \ge P$ and the length of $vy \ge 1$. $L$ is a context free language if the string $s_i = uv^ixy^Iz$ must also be in the language for all $i \ge 0$.
+
+\subsection{Counter example}
+If $L$ is a context-free language, then all strings must adhere to the pumping lemma. Therefore if any string that does not adhere to the pumping lemma is found, $L$ is not a context-free language. One string that can be used to show $L$ is not context-free is $a^Pb^Pc^{P+1}$. This string is valid since its length is greater than or equal to $P$. $s$ is in the language since $n_a(w) = n_b(w) <n_c(w)$
+
+\subsection{Cases}
+For the string to be impossible to "pump" it must be shown that no partitioning of $s$ can be pumped up or down and stay in the language. There are 5 possible cases where this may be true for the test string.
+
+\subsubsection{Case 1: $vy$ contains only $a$s}
+\begin{align*}
+    vy      & =a^k;\quad 1 \le k \le P \\
+    not(vy) & = a^{P-k}b^Pc^{P+1}      \\
+    s_0     & = a^{P-k}b^Pc^{P+1}      \\
+\end{align*}
+In $s_0$, the number of $a$s is less than the number of $b$s. Therefore, $s_0$ is not in the language and this partitioning of $s$ is invalid.
+\subsubsection{Case 2: $vy$ contains only $b$s}
+\begin{align*}
+    vy      & =b^k;\quad 1 \le k \le P \\
+    not(vy) & = a^Pb^{P-k}c^{P+1}      \\
+    s_0     & = a^Pb^{P-k}c^{P+1}      \\
+\end{align*}
+In $s_0$, the number of $a$s is greater than the number of $b$s. Therefore, $s_0$ is not in the language and this partitioning of $s$ is invalid.
+\subsubsection{Case 3: $vy$ contains only $c$s}
+\begin{align*}
+    vy      & =c^k;\quad 1 \le k \le P \\
+    not(vy) & = a^Pb^Pc^{P+1-k}        \\
+    s_0     & = a^Pb^Pc^{P+1-k}        \\
+\end{align*}
+In $s_0$, the number of $c$s is not greater than the number of $b$s since $k \ge 1$. Therefore, $s_0$ is not in the language and this partitioning of $s$ is invalid.
+\subsubsection{Case 4: $vy$ contains only $a$s and $b$s}
+\begin{align*}
+    vy      & =a^ib^j; i+j \ge 1; 0 \le i \le P; 0 \le j \le P \\
+    not(vy) & = a^{P-i}b^{P-j}c^{P+1}                          \\
+    s_3     & = a^{P+2i}b^{P+2j}c^{P+1}
+\end{align*}
+In $s_3$, the number of $c$s is not greater than the number of $a$s and the number of $b$s since $i+j \ge 1$. This means that either $i$ or $j$ must be 1 or greater. If this is the case, then the number of $a$s or the number of $b$s is guaranteed to be greater than the number of $c$s. Therefore, $s_0$ is not in the language and this partitioning of $s$ is invalid.
+\subsubsection{Case 5: $vy$ contains only $b$s and $c$s}
+\begin{align*}
+    vy      & =b^ic^j; i+j \ge 1; 0 \le i \le P; 0 \le j \le P \\
+    not(vy) & = a^Pb^{P-i}c^{P+1-j}                            \\
+    s_0     & = a^Pb^{P-i}c^{P+1-j}
+\end{align*}
+In $s_0$, either the number of $a$s is not equal to the number of $b$s, or the number of $c$s is not greater than the number of $a$s since $i+j \ge 1$. This means that either $i$ or $j$ must be 1 or greater. If $i \ge 1$, then $n_a(s_0) \ne n_b(s_0)$ if $j \ge 1$, then $n_c(s_0) le P+1-1$ and $n_c(s_0) \le n_a(s_0)$. Therefore, $s_0$ is not in the language and this partitioning of $s$ is invalid.
+
+
+\section{Conclusion}
+By proof by contradiction, the language $L$ is not a regular language because it does not adhere to the pumping lemma. For a language to be regular, it must be possible to "pump" any string in the language. A counter example string $s$ was found that for all partitioning of $s$ into $uvxyz$, pumping $s$ either up or down resulted in a string that was not contained in the language.
+\end{document}
