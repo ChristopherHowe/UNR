@@ -1,0 +1,8 @@
+./test-data/cat-1.jpg 1
+./test-data/cat-2.jpg 1
+./test-data/cat-3.jpg 1
+./test-data/dog-1.jpeg 0
+./test-data/dog-2.jpg 0
+./test-data/dog-3.jpg 0
+./test-data/dog.jpg 0
+./test-data/test_img.jpg 1

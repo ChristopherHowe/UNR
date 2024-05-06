@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Test Script",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "p3_test_script.py",
+            "console": "integratedTerminal",
+            "env": { "PYTHONPATH": "#{workspaceFolder}/venv-project-3/bin/python3"}
+        }
+    ]
+}

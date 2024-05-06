@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import math
 from typing import List
+from sklearn.linear_model import Perceptron
+import matplotlib.pyplot as plt
 
 
 def load_img(file_name):
@@ -39,44 +41,154 @@ def display_img_normalized(image: np.ndarray, name: str):
 
 def generate_vocabulary(train_data_file: str):
     # Reading file line by line
-    try:
-        with open(train_data_file, "r") as file:
-            for image_name in file:
-                display_img(load_img(image_name))
-    except FileNotFoundError:
-        print(f"The file '{train_data_file}' does not exist.")
-    except IOError:
-        print(f"An error occurred while reading the file '{train_data_file}'.")
+    vocabulary = np.zeros((0, 128))
+    with open(train_data_file, "r") as file:
+        sift = cv2.SIFT_create()
+        sift.setNFeatures(100)
+
+        for line in file:
+            img_name = line.split()[0]
+            img = load_img(img_name)
+            # display_img(img)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            _, des = sift.detectAndCompute(gray, None)
+            vocabulary = np.concatenate((vocabulary, des))
+    return vocabulary
 
 
-# This function takes an image and the vocabulary as input and extracts features, generating a BOW count vector.
-def extract_features(image, vocabulary):
-    pass
+def extract_features(image: np.ndarray, vocabulary: np.ndarray):
+    sift = cv2.SIFT_create()
+    sift.setNFeatures(100)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, descriptors = sift.detectAndCompute(gray, None)
+    bowVect = np.zeros(vocabulary.shape[0])
+    descriptorInd = 0
+    for descriptor in descriptors:
+        differences = np.sum((vocabulary - descriptor) ** 2, axis=1)
+        closestWordInd = np.argmin(differences)
+        bowVect[closestWordInd] += 1
+
+        descriptorInd += 1
+    # print(f"extracting length of bow vect: {np.sum(bowVect)}")
+
+    return bowVect
 
 
-# This function takes the training data file and the vocabulary, extracts the features from each training image, and
-# trains a classifier (perceptron, KNN, SVM) on the data. You can choose which classifier you’d like to use. You can use
-# scikit learn for this.
-def train_classifier(train_data_file: str, vocab):
-    pass
+image_num = 0
+
+
+def train_classifier(train_data_file: str, vocab: np.ndarray):
+    with open(train_data_file, "r") as file:
+        sift = cv2.SIFT_create()
+        sift.setNFeatures(100)
+
+        # Perceptron setup
+        # - Setting random state seed to zero makes every run the same.
+        # - eta0 is the initial learning rate of the model.
+        # - max iterations is set to prevent the model from running indefinitely or overfitting to the data.
+        p = Perceptron(max_iter=100, eta0=0.1, random_state=0)
+
+        training_bow_vectors = np.zeros((0, vocab.shape[0]))
+        training_classifications = np.array([])
+
+        for line in file:
+            global image_num
+
+            line_parts = line.split()
+            img_name = line_parts[0]
+            img_classification = int(line_parts[1])
+            img = load_img(img_name)
+            bowVect = extract_features(img, vocab)
+            training_bow_vectors = np.concatenate((training_bow_vectors, bowVect[np.newaxis, :]))
+
+            training_classifications = np.append(training_classifications, img_classification)
+            image_num += 1
+
+        print("Fitting training data")
+        p.fit(training_bow_vectors, training_classifications)
+        return p
 
 
 # This function takes the trained classifier, a test image and the vocabulary as inputs. It generates the feature vector
 # for the test image using the vocabulary and runs it through the classifier, returning the output classification.
-def classify_image(classifier, test_img, vocabulary):
-    pass
+def classify_image(classifier: Perceptron, test_img: np.ndarray, vocabulary: np.ndarray):
+    bow_vect = extract_features(test_img, vocabulary)
+    prediction = classifier.predict(bow_vect.reshape(1, -1))
+    if prediction.ndim != 1 or prediction.size != 1:
+        raise ValueError(f"Classifier prediction is not in the expected shape (shape:{prediction.shape})")
+    return prediction
+
+
+def euclidean_distance(point1, point2):
+    x1, y1 = point1
+    x2, y2 = point2
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
 # This function will take an image and two thresholds and perform hysteresis thresholding, producing a black and
 # white image.
 def threshold_image(image, low_thresh, high_thresh):
-    pass
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    img_w = image.shape[0]
+    img_h = image.shape[1]
+
+    def threshold(img: np.ndarray, threshold: int):
+        new_img = np.where(img < threshold, 0, 1)
+        return new_img
+
+    def neighbor_not_zero(img_x, img_y):
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if 0 <= img_x + i < img_w and 0 <= img_y + j < img_h and high_t_img[img_x + i][img_y + j] != 0:
+                    return 1
+        return 0
+
+    low_t_img = threshold(gray, low_thresh)
+    high_t_img = threshold(gray, high_thresh)
+
+    result = np.copy(high_t_img)
+
+    for img_x in range(img_w):
+        for img_y in range(img_h):
+            if low_t_img[img_x][img_y] != 0:
+                result[img_x][img_y] = neighbor_not_zero(img_x, img_y)
+    return np.uint8(result)
 
 
 # This function will take an image as input. Use one of the techniques from class to perform region growing,
 # returning the output region map.
-def grow_regions(image):
-    pass
+def grow_regions(image: np.ndarray):
+    def getSeedValues(image: np.ndarray):
+        # get a histogram showing the frequencies for each possible pixel value.
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        flat_img = gray.flatten()
+        hist, bins = np.histogram(flat_img, bins=range(256))
+        # sort the pixel values by the most common.
+        plt.bar(bins[:-1], hist, width=1)
+        plt.show()
+        peaks = np.where((hist[:-2] < hist[1:-1]) & (hist[1:-1] > hist[2:]))[0] + 1
+        seeds = []
+
+        def nearAnotherSeed(newSeed, threshold):
+            for seed in seeds:
+                if euclidean_distance(seed, newSeed) < threshold:
+                    return True
+            return False
+
+        for peak in peaks:
+            for index, value in np.ndenumerate(gray):
+                if value == peak and not nearAnotherSeed(index, image.shape[1] / 15):
+                    seeds.append(index)
+                    break
+
+        debug_img = np.copy(image)
+        for seed in seeds:
+            debug_img[seed] = [255, 0, 0]
+        display_img(debug_img)
+
+        return seeds
+
+    seeds = getSeedValues(image)
 
 
 # This function will take an image as input. Use one of the techniques from class to perform region splitting,
@@ -94,7 +206,7 @@ def merge_regions(image):
 # This function will take an image as input. Using different combinations of the above methods, extract three
 # segmentation maps with labels to indicate the approach.
 def segment_image(image):
-    pass
+    return
 
 
 # Use Kmeans to perform image segmentation. You’re free to do this however you’d like. Do not assume the number
