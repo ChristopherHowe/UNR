@@ -4,6 +4,7 @@ import math
 from typing import List
 from sklearn.linear_model import Perceptron
 import matplotlib.pyplot as plt
+from queue import Queue
 
 
 def load_img(file_name):
@@ -155,6 +156,14 @@ def threshold_image(image, low_thresh, high_thresh):
     return np.uint8(result)
 
 
+class Region:
+    def __init__(self, seed, color):
+        self.points = set()
+        self.points.add(seed)
+        self.grow_queue = [seed]
+        self.color = color
+
+
 # This function will take an image as input. Use one of the techniques from class to perform region growing,
 # returning the output region map.
 def grow_regions(image: np.ndarray):
@@ -164,8 +173,8 @@ def grow_regions(image: np.ndarray):
         flat_img = gray.flatten()
         hist, bins = np.histogram(flat_img, bins=range(256))
         # sort the pixel values by the most common.
-        plt.bar(bins[:-1], hist, width=1)
-        plt.show()
+        # plt.bar(bins[:-1], hist, width=1)
+        # plt.show()
         peaks = np.where((hist[:-2] < hist[1:-1]) & (hist[1:-1] > hist[2:]))[0] + 1
         seeds = []
 
@@ -181,14 +190,66 @@ def grow_regions(image: np.ndarray):
                     seeds.append(index)
                     break
 
-        debug_img = np.copy(image)
-        for seed in seeds:
-            debug_img[seed] = [255, 0, 0]
-        display_img(debug_img)
+        # debug_img = np.copy(image)
+        # for seed in seeds:
+        #     debug_img[seed] = [255, 0, 0]
+        # display_img(debug_img)
 
         return seeds
 
+    def areSimilar(p1, p2):
+        return np.sum(abs(subtractable_image[p1[0], p1[1]] - subtractable_image[p2[0], p2[1]])) < 60
+
     seeds = getSeedValues(image)
+    regions: List[Region] = []
+    assigned = set()
+
+    def displayRegions(image: np.ndarray, regions: List[Region]):
+        newImg = np.copy(image)
+        for region in regions:
+            for point in region.points:
+                newImg[point] = (newImg[point] + region.color)/2
+        display_img(newImg)
+
+    for seed in seeds:
+        regions.append(Region(seed, np.random.randint(0, 256, size=3, dtype=np.uint8)))
+        assigned.add(seed)
+
+    img_w = image.shape[0]
+    img_h = image.shape[1]
+    subtractable_image = np.int16(image)
+
+    converged = False
+    while not converged:
+        print("Not Converged")
+        converged = True
+        for region in regions:
+            print(f"Handling Region {region}")
+            new_grow_queue = []
+            for point in region.grow_queue:
+                for dir in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    newPoint = (point[0] + dir[0], point[1] + dir[1])
+                    print(f"checking newPoint={newPoint}")
+                    if newPoint not in assigned and 0 < newPoint[0] < img_w and 0 < newPoint[1] < img_h:
+                        print("newPoint is not in assigned")
+                        converged = False
+                        areSim = areSimilar(point, newPoint)
+                        if areSim:
+                            print(
+                                f"newpoint:{newPoint},val:{image[newPoint[0], newPoint[1]]} is similar to point:{point},val:{image[point[0], point[1]]}"
+                            )
+                            region.points.add(newPoint)
+                            assigned.add(newPoint)
+                            new_grow_queue.append(newPoint)
+                        else:
+                            print(
+                                f"newpoint:{newPoint},val:{image[newPoint[0], newPoint[1]]} is NOT similar to point:{point},val:{image[point[0], point[1]]}"
+                            )
+
+            print(f"new grow queue {new_grow_queue}")
+            region.grow_queue = new_grow_queue
+
+    displayRegions(image, regions)
 
 
 # This function will take an image as input. Use one of the techniques from class to perform region splitting,
