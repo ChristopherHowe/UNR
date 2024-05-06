@@ -164,6 +164,14 @@ class Region:
         self.color = color
 
 
+def getRegionMap(regions: List[Region], shape):
+    newImg = np.zeros(shape)
+    for region in regions:
+        for point in region.points:
+            newImg[point] = region.color
+    return newImg
+
+
 # This function will take an image as input. Use one of the techniques from class to perform region growing,
 # returning the output region map.
 def grow_regions(image: np.ndarray):
@@ -171,13 +179,12 @@ def grow_regions(image: np.ndarray):
         # get a histogram showing the frequencies for each possible pixel value.
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         flat_img = gray.flatten()
-        hist, bins = np.histogram(flat_img, bins=range(256))
-        # sort the pixel values by the most common.
-        # plt.bar(bins[:-1], hist, width=1)
-        # plt.show()
+        hist, _ = np.histogram(flat_img, bins=range(256))
+        # Generate a list of peaks of the histogram by finding all values that are higher than either of their neighbors
         peaks = np.where((hist[:-2] < hist[1:-1]) & (hist[1:-1] > hist[2:]))[0] + 1
         seeds = []
 
+        # only consider seeds that are not near any of the other seeds
         def nearAnotherSeed(newSeed, threshold):
             for seed in seeds:
                 if euclidean_distance(seed, newSeed) < threshold:
@@ -190,11 +197,6 @@ def grow_regions(image: np.ndarray):
                     seeds.append(index)
                     break
 
-        # debug_img = np.copy(image)
-        # for seed in seeds:
-        #     debug_img[seed] = [255, 0, 0]
-        # display_img(debug_img)
-
         return seeds
 
     def areSimilar(p1, p2):
@@ -204,13 +206,6 @@ def grow_regions(image: np.ndarray):
     regions: List[Region] = []
     assigned = set()
 
-    def displayRegions(image: np.ndarray, regions: List[Region]):
-        newImg = np.copy(image)
-        for region in regions:
-            for point in region.points:
-                newImg[point] = (newImg[point] + region.color)/2
-        display_img(newImg)
-
     for seed in seeds:
         regions.append(Region(seed, np.random.randint(0, 256, size=3, dtype=np.uint8)))
         assigned.add(seed)
@@ -219,55 +214,68 @@ def grow_regions(image: np.ndarray):
     img_h = image.shape[1]
     subtractable_image = np.int16(image)
 
+    # Actual region growing implementation
+    # Inspired by this stack overflow question https://stackoverflow.com/a/5851382
     converged = False
     while not converged:
-        print("Not Converged")
         converged = True
         for region in regions:
-            print(f"Handling Region {region}")
             new_grow_queue = []
             for point in region.grow_queue:
                 for dir in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     newPoint = (point[0] + dir[0], point[1] + dir[1])
-                    print(f"checking newPoint={newPoint}")
                     if newPoint not in assigned and 0 < newPoint[0] < img_w and 0 < newPoint[1] < img_h:
-                        print("newPoint is not in assigned")
                         converged = False
                         areSim = areSimilar(point, newPoint)
                         if areSim:
-                            print(
-                                f"newpoint:{newPoint},val:{image[newPoint[0], newPoint[1]]} is similar to point:{point},val:{image[point[0], point[1]]}"
-                            )
                             region.points.add(newPoint)
                             assigned.add(newPoint)
                             new_grow_queue.append(newPoint)
-                        else:
-                            print(
-                                f"newpoint:{newPoint},val:{image[newPoint[0], newPoint[1]]} is NOT similar to point:{point},val:{image[point[0], point[1]]}"
-                            )
-
-            print(f"new grow queue {new_grow_queue}")
             region.grow_queue = new_grow_queue
 
-    displayRegions(image, regions)
+    return getRegionMap(regions, image.shape)
 
 
 # This function will take an image as input. Use one of the techniques from class to perform region splitting,
 # returning the output region map.
-def split_regions(image):
-    pass
+def split_regions(image: np.ndarray):
+    def split_recursive(block: np.ndarray, depth):
+        def isBlockUniform(b):
+            std = (np.std(b[:, :, 0]) + np.std(b[:, :, 1]) + np.std(b[:, :, 2])) / 3
+            return std < 15
+
+        rows, cols, _ = block.shape
+        if not isBlockUniform(block) and block.shape[0] >= 2 and block.shape[1] >= 2:
+            # Uses integer division to ensure valid splitting operations
+            block[: rows // 2, : cols // 2] = split_recursive(block[: rows // 2, : cols // 2], depth + 1)  # Top left
+            block[: rows // 2, cols // 2 :] = split_recursive(block[: rows // 2, cols // 2 :], depth + 1)  # top right
+            block[rows // 2 :, : cols // 2] = split_recursive(block[rows // 2 :, : cols // 2], depth + 1)  # Bottom Left
+            block[rows // 2 :, cols // 2 :] = split_recursive(block[rows // 2 :, cols // 2 :], depth + 1)  # Bottom Right
+        else:
+            block = np.array([np.mean(block[:, :, 0]), np.mean(block[:, :, 1]), np.mean(block[:, :, 2])])
+        return block
+
+    return split_recursive(np.copy(image), 1)
 
 
 # This function will take an image as input. Use one of the techniques from class to perform region merging,
 # returning the output region map
 def merge_regions(image):
-    pass
+    regions = List[set] = List(set())
+    for (point)
 
 
 # This function will take an image as input. Using different combinations of the above methods, extract three
 # segmentation maps with labels to indicate the approach.
 def segment_image(image):
-    return
+    # thresheld = threshold_image(image, 40, 100)
+    # grown = grow_regions(image)
+    # This page was used for learning about splitting and merging
+    # https://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/MARBLE/medium/segment/split.htm
+    split = split_regions(image)
+    display_img(split)
+    exit()
+    # return thresheld, grown, split
 
 
 # Use Kmeans to perform image segmentation. You’re free to do this however you’d like. Do not assume the number

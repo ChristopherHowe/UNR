@@ -28,9 +28,6 @@ import project3 as p3
 
 # Segment an Image
 img = p3.load_img("./test-data/test_img.jpg")
-segmented = p3.grow_regions(img)
-exit()
-
 im1, im2, im3 = p3.segment_image(img)
 p3.display_img(im1)
 p3.display_img(im2)
