@@ -4,6 +4,7 @@ import math
 from typing import List, Dict
 from sklearn.linear_model import Perceptron
 from queue import Queue
+from random import randint
 
 
 def load_img(file_name):
@@ -16,9 +17,52 @@ def display_img(image: np.ndarray):
     cv2.destroyAllWindows()
 
 
+def k_means(points: np.ndarray, k: int):
+    # assumes each points has n points each of with length m so points.shape = (n,m)
+    max_center_movement = 0.01  # How much each center can move and still be considered stable
+
+    def distance(p1: np.ndarray, p2: np.ndarray):
+        return np.sum((np.float64(p1) - np.float64(p2)) ** 2)
+
+    def getClosestPoint(p1, points):
+        closest_point_ind = 0
+        closest_point_val = distance(p1, points[0])
+        for point_ind in range(1, len(points)):
+            d = distance(p1, points[point_ind])
+            if d < closest_point_val:
+                closest_point_ind = point_ind
+                closest_point_val = d
+        return closest_point_ind
+
+    # Get some random centers at the beggining
+    rng = np.random.default_rng()
+    centers = rng.choice(points, size=k, replace=False)
+
+    converged = False
+    while not converged:
+        # Set up the clusters
+        clusters: List[List[np.ndarray]] = []
+        for _ in centers:
+            clusters.append([])
+        # assign each datapoint to a cluster
+        for point in points:
+            closest_center_ind = getClosestPoint(point, centers)
+            clusters[closest_center_ind].append(point)
+        new_centers = np.zeros(shape=centers.shape)
+        # recalculate the cluster centers, simultaneously check for convergence.
+        converged = True
+        for cluster_ind, cluster in enumerate(clusters):
+            new_center: np.ndarray = np.average(np.array(cluster), axis=0)
+            new_centers[cluster_ind] = new_center
+            if distance(new_center, centers[cluster_ind]) >= max_center_movement:
+                converged = False
+        centers = new_centers
+    return centers
+
+
 def generate_vocabulary(train_data_file: str):
     print("Calling generate vocabulary")
-    vocabulary = np.zeros((0, 128))
+    all_features = np.zeros((0, 128))
     with open(train_data_file, "r") as file:
         sift = cv2.SIFT_create()
         sift.setNFeatures(100)
@@ -28,7 +72,10 @@ def generate_vocabulary(train_data_file: str):
             img = load_img(img_name)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             _, des = sift.detectAndCompute(gray, None)
-            vocabulary = np.concatenate((vocabulary, des))
+            all_features = np.concatenate((all_features, des))
+
+    print("running k means on vocab")
+    vocabulary = k_means(all_features, 120)
     return vocabulary
 
 

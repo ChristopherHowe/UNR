@@ -9,5 +9,13 @@
             "console": "integratedTerminal",
             "env": { "PYTHONPATH": "#{workspaceFolder}/venv-project-3/bin/python3"}
         }
+        {
+            "name": "Python Debugger: Unit Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "unit_tests.py",
+            "console": "integratedTerminal",
+            "env": { "PYTHONPATH": "#{workspaceFolder}/venv-project-3/bin/python3"}
+        }
     ]
 }
