@@ -4,7 +4,7 @@ import math
 from typing import List, Dict
 from sklearn.linear_model import Perceptron
 from queue import Queue
-from random import randint
+import time
 
 
 def load_img(file_name):
@@ -62,17 +62,14 @@ def k_means(points: np.ndarray, k: int):
 
 def generate_vocabulary(train_data_file: str):
     print("Calling generate vocabulary")
-    all_features = np.zeros((0, 128))
+    all_features = np.zeros((0, 9))  # HOG features with bins of size 40 degrees of gradient orientation
     with open(train_data_file, "r") as file:
-        sift = cv2.SIFT_create()
-        sift.setNFeatures(100)
-
         for line in file:
             img_name = line.split()[0]
             img = load_img(img_name)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            _, des = sift.detectAndCompute(gray, None)
-            all_features = np.concatenate((all_features, des))
+            img_feat_descriptors = getAllDescriptors(gray)
+            all_features = np.concatenate((all_features, img_feat_descriptors))
 
     print("running k means on vocab")
     vocabulary = k_means(all_features, 120)
@@ -81,48 +78,33 @@ def generate_vocabulary(train_data_file: str):
 
 def extract_features(image: np.ndarray, vocabulary: np.ndarray):
     print("Calling extract_features")
-    sift = cv2.SIFT_create()
-    sift.setNFeatures(100)
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, descriptors = sift.detectAndCompute(gray, None)
     bowVect = np.zeros(vocabulary.shape[0])
-    descriptorInd = 0
-    for descriptor in descriptors:
+    for descriptor in getAllDescriptors(gray):
         differences = np.sum((vocabulary - descriptor) ** 2, axis=1)
         closestWordInd = np.argmin(differences)
         bowVect[closestWordInd] += 1
-
-        descriptorInd += 1
-
     return bowVect
-
-
-image_num = 0
 
 
 def train_classifier(train_data_file: str, vocab: np.ndarray):
     print("Calling train_classifier")
     with open(train_data_file, "r") as file:
-        sift = cv2.SIFT_create()
-        sift.setNFeatures(100)
-
         p = Perceptron(max_iter=100, eta0=0.1, random_state=0)
 
         training_bow_vectors = np.zeros((0, vocab.shape[0]))
         training_classifications = np.array([])
 
         for line in file:
-            global image_num
-
             line_parts = line.split()
             img_name = line_parts[0]
             img_classification = int(line_parts[1])
             img = load_img(img_name)
             bowVect = extract_features(img, vocab)
-            training_bow_vectors = np.concatenate((training_bow_vectors, bowVect[np.newaxis, :]))
 
+            training_bow_vectors = np.concatenate((training_bow_vectors, bowVect[np.newaxis, :]))
             training_classifications = np.append(training_classifications, img_classification)
-            image_num += 1
 
         print("Fitting training data")
         p.fit(training_bow_vectors, training_classifications)
@@ -132,10 +114,7 @@ def train_classifier(train_data_file: str, vocab: np.ndarray):
 def classify_image(classifier: Perceptron, test_img: np.ndarray, vocabulary: np.ndarray):
     print("Calling classify_image")
     bow_vect = extract_features(test_img, vocabulary)
-    prediction = classifier.predict(bow_vect.reshape(1, -1))
-    if prediction.ndim != 1 or prediction.size != 1:
-        raise ValueError(f"Classifier prediction is not in the expected shape (shape:{prediction.shape})")
-    return prediction
+    return classifier.predict(bow_vect.reshape(1, -1))
 
 
 def euclidean_distance(point1, point2):
@@ -394,3 +373,316 @@ def segment_image(image):
     grown = grow_regions(image)
     merged = merge_regions(split_regions(merge_regions(split_regions(image))))
     return thresheld, grown, merged
+
+
+#######################################
+## Feature Extraction From Project 2 ##
+#######################################
+
+
+def getAllDescriptors(img: np.ndarray):
+    print("calling getAllDescriptors")
+    descriptors = []
+    print("Getting keypoints")
+    detected_keypoints = harris_detector(img)
+    print("Extracting HOG features")
+    for keypoint in detected_keypoints:
+        descriptors.append(extract_HOG(img, keypoint))
+    return descriptors
+
+
+def harris_detector(image: np.ndarray):
+    WINDOW_SIZE = 3
+    THTRESHOLD_PERCENT = 80
+    K_VAL = 0.005
+
+    img_w = image.shape[0]
+    img_h = image.shape[1]
+    padding_size: int = math.floor(WINDOW_SIZE / 2)
+
+    new_img: np.ndarray
+    if image.ndim == 3:
+        new_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        new_img = np.copy(image)
+    padded_src, pad_vals = pad_img(new_img, padding_size, 0)
+
+    sobel_kernel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+    sobel_kernel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+
+    Mx = apply_filter(padded_src, sobel_kernel_x, 1, 1)
+    My = apply_filter(padded_src, sobel_kernel_y, 1, 1)
+    Mxx = apply_filter(Mx, sobel_kernel_x, 1, 1)
+    Myy = apply_filter(My, sobel_kernel_y, 1, 1)
+    Mxy = apply_filter(Mx, sobel_kernel_y, 1, 1)
+
+    start_time = time.time()
+    Aw = np.stack((Mxx, Mxy, Mxy, Myy), axis=2).reshape(Mx.shape[0], Mx.shape[1], 2, 2)
+    R_new = np.linalg.det(Aw) - K_VAL * np.trace(Aw, axis1=-2, axis2=-1)
+    detected_new = np.copy(R_new)
+    detected_new[detected_new < 0] = 0
+    end_time = time.time()
+    duration = end_time - start_time
+    print("took", duration, "seconds with numpy implementation")
+
+    start_time = time.time()
+    detected = np.zeros_like(Mx)
+    for img_x in range(padding_size, img_w - padding_size):
+        for img_y in range(padding_size, img_h - padding_size):
+            Aw_xy = Aw[img_x][img_y]
+            R = np.linalg.det(Aw_xy) - K_VAL * (np.trace(Aw_xy) ** 2)
+            # if R < 0 edge, if R ~ small -> flat, if R > 0 and big -> corner
+            #### dropping flats is handled by thresholding, dropping edges handled by max func
+            detected[img_x][img_y] = max(0, R)
+    end_time = time.time()
+    duration = end_time - start_time
+    print("took", duration, "seconds with looped implementation")
+
+    unpadded = unpad_img(detected, pad_vals)
+    suppressed = non_maxima_suppression(unpadded)
+    thresheld = normalizedThreshold(suppressed, THTRESHOLD_PERCENT)
+    return binary_img_to_point_arr(thresheld)
+
+
+def extract_HOG(image: np.ndarray, keypoint):
+    WINDOW_SIZE = 16
+    BIN_DEG_RANGE = 40
+    if 360 % BIN_DEG_RANGE != 0:
+        raise ValueError("BIN_DEG_RANGE does not evenly divide 360")
+
+    def rad_to_bin(rad) -> int:
+        return math.floor(((math.degrees(rad) + 180) % 360) / BIN_DEG_RANGE)
+
+    num_bins = int(360 / BIN_DEG_RANGE)
+    offset = math.floor(WINDOW_SIZE / 2)
+    histogram = np.zeros(num_bins)
+    gradient = make_gradiant(safe_slice(image, keypoint.x - offset, keypoint.x + offset + 1, keypoint.y - offset, keypoint.y + offset + 1), 3)
+
+    magnitude = gradient[:, :, 0]
+    orientation = gradient[:, :, 1]
+
+    for wx in range(0, WINDOW_SIZE):
+        for wy in range(0, WINDOW_SIZE):
+            assigned_bin = rad_to_bin(orientation[wx, wy])
+            histogram[assigned_bin] += magnitude[wx, wy]
+    return histogram
+
+
+# assumes that the src has single value data (not rgb)
+def non_maxima_suppression(src: np.ndarray):
+    TILE_SIZE = 15
+    TOO_CLOSE_RADIUS = TILE_SIZE / 2
+    NUM_IPOINTS_PER_TILE = TILE_SIZE
+
+    # Found the idea for this implementation here https://www.ipol.im/pub/art/2018/229/article_lr.pdf
+    def suppress_tile_non_maxima(tile: np.ndarray) -> np.ndarray:
+        def distanceFromPoint(p1, p2):
+            return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
+        def too_close_to_others(p1, others, r) -> bool:
+            for other in others:
+                if distanceFromPoint(p1, other) < r:
+                    return True
+            return False
+
+        tile_sorted_inds = np.argsort(tile.flatten())
+        sortedInds = []
+        for ind in tile_sorted_inds:
+            pos = np.unravel_index(ind, tile.shape)
+            sortedInds.append(pos)
+        filtered_sorted_inds = []
+        for ind in reversed(sortedInds):
+            if tile[ind[0]][ind[1]] != 0:
+                filtered_sorted_inds.append(ind)
+            else:
+                break
+        accepted_corners = []
+        resulting_tile = np.zeros(tile.shape, dtype=tile.dtype)
+        for ind in filtered_sorted_inds:
+            if too_close_to_others(ind, accepted_corners, TOO_CLOSE_RADIUS):
+                continue
+            accepted_corners.append(ind)
+            resulting_tile[ind[0]][ind[1]] = tile[ind[0]][ind[1]]
+            if len(accepted_corners) >= NUM_IPOINTS_PER_TILE:
+                break
+        return resulting_tile
+
+    src_w = src.shape[0]
+    src_h = src.shape[1]
+
+    # Check that src has intensity data (not rgb)
+    if src.ndim != 2:
+        raise ValueError("src does not have two dimensions, make sure you are not passing it intensity data")
+    # tiles can be any size less than the tile size (edges can be less if corners size is not evenly divided by tile size)
+    result = np.zeros(src.shape, dtype=src.dtype)
+
+    def get_num_tiles(length, tile_size) -> int:
+        if length % tile_size == 0:
+            return int(length / tile_size)
+        else:
+            return math.floor(src_w / tile_size) + 1
+
+    num_tiles_wide = get_num_tiles(src_w, TILE_SIZE)
+    num_tiles_tall = get_num_tiles(src_h, TILE_SIZE)
+
+    for tile_x in range(0, num_tiles_wide):
+        tile_x_start = tile_x * TILE_SIZE
+        tile_x_end = min((tile_x + 1) * TILE_SIZE, src_w)
+        for tile_y in range(0, num_tiles_tall):
+            tile_y_start = tile_y * TILE_SIZE
+            tile_y_end = min((tile_y + 1) * TILE_SIZE, src_h)
+            src_tile = src[tile_x_start:tile_x_end, tile_y_start:tile_y_end]
+            result_tile = suppress_tile_non_maxima(src_tile)
+            result[tile_x_start:tile_x_end, tile_y_start:tile_y_end] = result_tile
+
+    return result
+
+
+def pad_img(image, size, val):
+    pad_values = ()
+    if image.ndim == 3:
+        pad_values = ((size, size), (size, size), (0, 0))
+    elif image.ndim == 2:
+        pad_values = ((size, size), (size, size))
+    new_img = np.zeros(image.shape, dtype=np.uint8)
+    if val == 0:
+        new_img = np.pad(image, pad_values, mode="constant", constant_values=0)
+    else:
+        new_img = np.pad(image, pad_values, mode="edge")
+    return new_img, pad_values
+
+
+def unpad_img(src, padded_vals):
+    slices = []
+    for c in padded_vals:
+        e = None if c[1] == 0 else -c[1]
+        slices.append(slice(c[0], e))
+    return src[tuple(slices)]
+
+
+def threshold(img: np.ndarray, threshold: int):
+    new_img = np.where(img < threshold, 0, 1)
+    return new_img
+
+
+def normalizedThreshold(img: np.ndarray, percent):
+    sorted_minvals = np.sort(img[img != 0].flatten())
+    normalized_t = sorted_minvals[int(len(sorted_minvals) * (percent / 100))]
+    return threshold(img, normalized_t)
+
+
+def safe_slice(arr: np.ndarray, x1, x2, y1, y2):
+    arr_w = arr.shape[0]
+    arr_h = arr.shape[1]
+    if x1 < 0 or x2 > arr_w or y1 < 0 or y2 > arr_h:
+        l_pad = max(0 - x1, 0)
+        r_pad = max(x2 - arr_w, 0)
+        t_pad = max(0 - y1, 0)
+        b_pad = max(y2 - arr_h, 0)
+        padding = ((l_pad, r_pad), (t_pad, b_pad))
+        if arr.ndim == 3:
+            padding = ((l_pad, r_pad), (t_pad, b_pad), (0, 0))
+        padded_arr = np.pad(arr, padding, mode="edge")
+        return padded_arr[x1 + l_pad : x2 + l_pad, y1 + t_pad : y2 + t_pad]
+    return arr[x1:x2, y1:y2]
+
+
+def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value: int):
+    def correlation(image: np.ndarray, mask: np.ndarray, img_x: int, img_y: int):
+        val: int = 0
+        for mask_x in range(mask_w):
+            for mask_y in range(mask_h):
+                x_diff = int(mask_x - (mask_w / 2) + 0.5)
+                y_diff = int(mask_y - (mask_h / 2) + 0.5)
+                src_val = np.mean(image[img_x + x_diff][img_y + y_diff])
+                step = src_val * mask[mask_x][mask_y]
+                val += step
+        return val
+
+    def handle_mask_check(mask: np.ndarray):
+        if mask.ndim == 1:  # make 1D arrays into 2D with width 1
+            mask = mask.reshape(1, -1)
+        if mask.ndim > 2:
+            raise ValueError("Does not support masks with a higher dimension than 2")
+        return mask
+
+    mask = handle_mask_check(mask)
+    mask_w = mask.shape[0]
+    mask_h = mask.shape[1] if mask.ndim == 2 else 0
+    req_w_space = math.floor(mask_w / 2)
+    req_h_space = math.floor(mask_h / 2)
+
+    src, pad_values = pad_img(image, pad_pixels, pad_value)
+    src_w = src.shape[0]
+    src_h = src.shape[1]
+
+    new_img = np.zeros(src.shape, dtype=np.float64)
+    for img_x in range(req_w_space, src_w - req_w_space):
+        for img_y in range(req_h_space, src_h - req_h_space):
+            v = correlation(src, mask, img_x, img_y)
+            new_img[img_x][img_y] = v
+
+    new_img = unpad_img(new_img, pad_values)
+    return new_img
+
+
+def generate_gaussian(sigma, filter_w, filter_h):
+    def gaussian_func_2d(x, y, sigma):
+        base = 1 / (2 * math.pi * sigma * sigma)
+        exponent = -1 * ((x * x + y * y) / (2 * sigma * sigma))
+        result = base * math.exp(exponent)
+        return result
+
+    if filter_w < 1 or filter_h < 1:
+        raise ValueError("filter height and width must be 1 or greater")
+
+    mask = np.zeros((filter_w, filter_h))
+    for x in range(0, filter_w):
+        for y in range(0, filter_h):
+            x_val = x - (filter_w / 2) + 0.5
+            y_val = y - (filter_h / 2) + 0.5
+            v = gaussian_func_2d(x_val, y_val, sigma)
+            mask[x][y] = v
+    normalized_mask = mask / np.sum(mask)
+    return normalized_mask
+
+
+def make_gradiant(img: np.ndarray, gaussian_size: int):
+    img_w = img.shape[0]
+    img_h = img.shape[1]
+    sigma = gaussian_size / 5
+    gaussian = generate_gaussian(sigma, gaussian_size, gaussian_size)
+    horizontal_kernel = np.array([[-1, 0, 1]])
+    vertical_kernel = np.array([[-1], [0], [1]])
+    x_deriv_gaussian = apply_filter(gaussian, horizontal_kernel, 1, 1)
+    y_deriv_gaussian = apply_filter(gaussian, vertical_kernel, 1, 1)
+
+    new_img: np.ndarray
+    if img.ndim == 3:
+        new_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    else:
+        new_img = np.copy(img)
+    Mx = apply_filter(new_img, x_deriv_gaussian, math.floor(gaussian_size / 2), 1)
+    My = apply_filter(new_img, y_deriv_gaussian, math.floor(gaussian_size / 2), 1)
+    gradient = np.zeros((img_w, img_h, 2), dtype=np.float64)
+    for img_x in range(img_w):
+        for img_y in range(img_h):
+            magnitude = math.sqrt(math.pow(Mx[img_x][img_y], 2) + math.pow(My[img_x][img_y], 2))
+            angle = math.atan2(Mx[img_x][img_y], My[img_x][img_y])
+            gradient[img_x][img_y] = [magnitude, angle]
+    return gradient
+
+
+class point:
+    def __init__(self, x, y):
+        self.x: int = x
+        self.y: int = y
+
+
+def binary_img_to_point_arr(image: np.ndarray) -> List[point]:
+    points: List[point] = []
+    for x in range(0, image.shape[0]):
+        for y in range(0, image.shape[1]):
+            if image[x][y] == 1:
+                points.append(point(x, y))
+    return points
