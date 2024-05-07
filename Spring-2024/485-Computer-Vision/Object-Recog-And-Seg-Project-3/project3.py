@@ -391,21 +391,39 @@ def getAllDescriptors(img: np.ndarray):
     return descriptors
 
 
+def aspect_scale(img: np.ndarray, height):
+    ratio = img.shape[0] / img.shape[1]
+    return cv2.resize(img, (height, int(height * ratio)))
+
+
+def display_img_normalized(image: np.ndarray, name: str):
+    normImg = np.copy(image)
+    newName = name
+    # cv2.normalize(image, normImg, 0,255,cv2.NORM_MINMAX)
+    if not (np.min(image) == 0 and np.max(image) == 255):
+        normImg = np.uint8((normImg - np.min(normImg)) / (np.max(normImg) - np.min(normImg)) * 255)
+        newName += ", Normalized"
+    if normImg.shape[0] <= 50 or normImg.shape[1] <= 50:
+        aspect_scale(normImg, 200)
+        newName += ", Scaled"
+    cv2.imshow(newName, normImg)
+    k = cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
 def harris_detector(image: np.ndarray):
     WINDOW_SIZE = 3
     THTRESHOLD_PERCENT = 80
     K_VAL = 0.005
 
-    img_w = image.shape[0]
-    img_h = image.shape[1]
     padding_size: int = math.floor(WINDOW_SIZE / 2)
 
-    new_img: np.ndarray
+    gray: np.ndarray
     if image.ndim == 3:
-        new_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
-        new_img = np.copy(image)
-    padded_src, pad_vals = pad_img(new_img, padding_size, 0)
+        gray = np.copy(image)
+    padded_src, pad_vals = pad_img(gray, padding_size, 0)
 
     sobel_kernel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
     sobel_kernel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
@@ -416,27 +434,12 @@ def harris_detector(image: np.ndarray):
     Myy = apply_filter(My, sobel_kernel_y, 1, 1)
     Mxy = apply_filter(Mx, sobel_kernel_y, 1, 1)
 
-    start_time = time.time()
     Aw = np.stack((Mxx, Mxy, Mxy, Myy), axis=2).reshape(Mx.shape[0], Mx.shape[1], 2, 2)
-    R_new = np.linalg.det(Aw) - K_VAL * np.trace(Aw, axis1=-2, axis2=-1)
-    detected_new = np.copy(R_new)
-    detected_new[detected_new < 0] = 0
-    end_time = time.time()
-    duration = end_time - start_time
-    print("took", duration, "seconds with numpy implementation")
-
-    start_time = time.time()
-    detected = np.zeros_like(Mx)
-    for img_x in range(padding_size, img_w - padding_size):
-        for img_y in range(padding_size, img_h - padding_size):
-            Aw_xy = Aw[img_x][img_y]
-            R = np.linalg.det(Aw_xy) - K_VAL * (np.trace(Aw_xy) ** 2)
-            # if R < 0 edge, if R ~ small -> flat, if R > 0 and big -> corner
-            #### dropping flats is handled by thresholding, dropping edges handled by max func
-            detected[img_x][img_y] = max(0, R)
-    end_time = time.time()
-    duration = end_time - start_time
-    print("took", duration, "seconds with looped implementation")
+    R = np.linalg.det(Aw) - K_VAL * np.trace(Aw, axis1=-2, axis2=-1) ** 2
+    # if R < 0 edge, if R ~ small -> flat, if R > 0 and big -> corner
+    #### dropping flats is handled by thresholding, dropping edges handled by max func
+    detected = np.copy(R)
+    detected[detected < 0] = 0
 
     unpadded = unpad_img(detected, pad_vals)
     suppressed = non_maxima_suppression(unpadded)
@@ -588,17 +591,6 @@ def safe_slice(arr: np.ndarray, x1, x2, y1, y2):
 
 
 def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value: int):
-    def correlation(image: np.ndarray, mask: np.ndarray, img_x: int, img_y: int):
-        val: int = 0
-        for mask_x in range(mask_w):
-            for mask_y in range(mask_h):
-                x_diff = int(mask_x - (mask_w / 2) + 0.5)
-                y_diff = int(mask_y - (mask_h / 2) + 0.5)
-                src_val = np.mean(image[img_x + x_diff][img_y + y_diff])
-                step = src_val * mask[mask_x][mask_y]
-                val += step
-        return val
-
     def handle_mask_check(mask: np.ndarray):
         if mask.ndim == 1:  # make 1D arrays into 2D with width 1
             mask = mask.reshape(1, -1)
@@ -612,16 +604,24 @@ def apply_filter(image: np.ndarray, mask: np.ndarray, pad_pixels: int, pad_value
     req_w_space = math.floor(mask_w / 2)
     req_h_space = math.floor(mask_h / 2)
 
-    src, pad_values = pad_img(image, pad_pixels, pad_value)
+    gray: np.ndarray
+    if image.ndim == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = np.copy(image)
+
+    src, pad_values = pad_img(gray, pad_pixels, pad_value)
     src_w = src.shape[0]
     src_h = src.shape[1]
 
     new_img = np.zeros(src.shape, dtype=np.float64)
     for img_x in range(req_w_space, src_w - req_w_space):
         for img_y in range(req_h_space, src_h - req_h_space):
-            v = correlation(src, mask, img_x, img_y)
-            new_img[img_x][img_y] = v
-
+            img_slice = src[
+                img_x - mask_w // 2 : img_x + mask_w // 2 + 1,
+                img_y - mask_h // 2 : img_y + mask_h // 2 + 1,
+            ]
+            new_img[img_x][img_y] = np.sum(mask * img_slice)
     new_img = unpad_img(new_img, pad_values)
     return new_img
 
